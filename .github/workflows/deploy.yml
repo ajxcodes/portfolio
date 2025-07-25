@@ -41,8 +41,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Build static site
-        working-directory: ./apps/web
-        run: pnpm build
+        run: pnpm --filter web build
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
