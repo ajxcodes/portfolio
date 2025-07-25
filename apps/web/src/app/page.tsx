@@ -3,6 +3,12 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import Link from "next/link";
 
+interface BlogPost {
+  slug: string;
+  title: string;
+  summary: string;
+}
+
 async function getPortfolioData() {
   const file = await fs.readFile(path.join(process.cwd(), 'data/portfolio-data.json'), 'utf8');
   return JSON.parse(file);
@@ -26,7 +32,7 @@ export default async function Home() {
       <div className="w-full max-w-3xl">
         <h3 className="text-3xl font-bold mb-6">Latest Posts</h3>
         <div className="space-y-4 text-left">
-          {blogPosts.map((post: any) => (
+          {blogPosts.map((post: BlogPost) => (
             <Link key={post.slug} href={`/blog/${post.slug}`} className="block p-6 bg-card rounded-lg hover:bg-primary hover:text-card-foreground transition-all duration-300 shadow-lg">
               <h4 className="text-xl font-bold mb-2">{post.title}</h4>
               <p className="opacity-80">{post.summary}</p>
