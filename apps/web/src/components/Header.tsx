@@ -5,39 +5,58 @@ import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { ThemeSwitcher } from "./ThemeSwitcher";
 import { Avatar } from "./Avatar";
+import { ContactLinks, type ContactInfo } from "./ContactLinks";
 
-export const Header = ({ name }: { name: string }) => {
-  const [isPageTitleVisible, setIsPageTitleVisible] = useState(true);
+interface HeaderProps {
+  name: string;
+  contact: ContactInfo;
+}
+
+export const Header = ({ name, contact }: HeaderProps) => {
   const pathname = usePathname();
+  // Initialize state based on the path to prevent flashes of content.
+  const [isPageTitleVisible, setIsPageTitleVisible] = useState(pathname === '/resume');
+  const [isPageContactLinksVisible, setIsPageContactLinksVisible] = useState(pathname === '/resume');
 
   useEffect(() => {
     const pageTitleEl = document.getElementById("page-title");
+    const contactLinksEl = document.getElementById("contact-links-section");
 
-    if (!pageTitleEl) {
-      // If no title element exists on the current page, always show the name in the header.
+    let titleObserver: IntersectionObserver;
+    if (pageTitleEl) {
+      titleObserver = new IntersectionObserver(
+        ([entry]) => setIsPageTitleVisible(entry.isIntersecting),
+        { rootMargin: "-80px 0px 0px 0px", threshold: 0 }
+      );
+      titleObserver.observe(pageTitleEl);
+    } else {
       setIsPageTitleVisible(false);
-      return;
     }
 
-    // When a title element is found, create and start the observer.
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        setIsPageTitleVisible(entry.isIntersecting);
-      },
-      {
-        rootMargin: "-80px 0px 0px 0px",
-        threshold: 0,
-      }
-    );
+    let contactObserver: IntersectionObserver;
+    if (contactLinksEl) {
+      contactObserver = new IntersectionObserver(
+        ([entry]) => setIsPageContactLinksVisible(entry.isIntersecting),
+        { rootMargin: "-80px 0px 0px 0px", threshold: 0 }
+      );
+      contactObserver.observe(contactLinksEl);
+    } else {
+      // If the contact section isn't on the page, it's not visible.
+      setIsPageContactLinksVisible(false);
+    }
 
-    observer.observe(pageTitleEl);
-
-    // The cleanup function is crucial. It runs when the component unmounts
-    // or when the effect re-runs due to a dependency change (like `pathname`).
     return () => {
-      observer.unobserve(pageTitleEl);
+      if (pageTitleEl && titleObserver) {
+        titleObserver.unobserve(pageTitleEl);
+      }
+      if (contactLinksEl && contactObserver) {
+        contactObserver.unobserve(contactLinksEl);
+      }
     };
   }, [pathname]); // Re-run the effect every time the page path changes.
+
+  // Show header contact links only when the page's contact links are not visible.
+  const showHeaderContactLinks = !isPageContactLinksVisible;
 
   return (
     <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-sm transition-colors duration-300">
@@ -46,9 +65,7 @@ export const Header = ({ name }: { name: string }) => {
         <div className="flex-1">
           <Link
             href="/"
-            className={`flex items-center gap-3 transition-all duration-500 ease-in-out ${
-              !isPageTitleVisible ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-4"
-            }`}
+            className={`flex items-center gap-3 transition-all duration-500 ease-in-out ${!isPageTitleVisible ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-4 pointer-events-none"}`}
             aria-hidden={isPageTitleVisible}
             tabIndex={isPageTitleVisible ? -1 : 0} // Prevent tabbing when hidden
           >
@@ -61,6 +78,13 @@ export const Header = ({ name }: { name: string }) => {
         <div className="flex items-center gap-4">
           <Link href="/" className="hover:text-primary transition-colors">Home</Link>
           <Link href="/resume" className="hover:text-primary transition-colors">Resume</Link>
+          {/* Contact links for larger screens, dynamically shown based on scroll position. */}
+          {showHeaderContactLinks && (
+            <div className="hidden sm:flex items-center gap-4">
+              <div className="w-px h-6 bg-border" />
+              <ContactLinks contact={contact} showText={false} />
+            </div>
+          )}
           <ThemeSwitcher />
         </div>
       </nav>
