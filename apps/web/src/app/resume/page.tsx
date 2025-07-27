@@ -99,7 +99,7 @@ export default async function ResumePage() {
           </a>
           <a href="https://calendar.app.google/SceZAGq14dH7X9jp9" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-primary transition-colors">
             <CalendarIcon className="h-5 w-5" />
-            <span>Let's Chat</span>
+            <span>Let&apos;s Chat</span>
           </a>
         </div>
       </div>
