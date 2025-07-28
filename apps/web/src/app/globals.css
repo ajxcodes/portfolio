@@ -1,6 +1,6 @@
-@import "tailwindcss/preflight"; 
-@import "tailwindcss/theme";
-@import "tailwindcss/utilities";
+@import "tailwindcss/theme.css";
+@import "tailwindcss/preflight.css";
+@import "tailwindcss/utilities.css";
 
 @layer base {
   :root {
@@ -10,6 +10,12 @@
     --primary: 217 45% 37%;
     --card: 240 8% 92%;
     --card-foreground: 227 12% 38%;
+    --primary-foreground: 240 8% 98%;
+
+    /* Skill button colors */
+    --skill-btn-bg: 204 90% 94%; /* sky-100 */
+    --skill-btn-text: 205 78% 24%; /* sky-900 */
+    --skill-btn-border: 202 95% 86%; /* sky-200 */
   }
 
   .dark {
@@ -19,6 +25,12 @@
     --primary: 224 88% 75%;
     --card: 230 23% 19%;
     --card-foreground: 224 28% 79%;
+    --primary-foreground: 231 15% 18%;
+
+    /* Skill button colors */
+    --skill-btn-bg: 205 78% 24%; /* sky-900 */
+    --skill-btn-text: 204 90% 94%; /* sky-100 */
+    --skill-btn-border: 204 84% 28%; /* sky-800 */
   }
 
   body {
@@ -30,5 +42,45 @@
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+
+  .skill-btn {
+    cursor: pointer;
+    border-radius: 9999px;
+    border-width: 1px;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    font-weight: 500;
+    transition-property: color, background-color, border-color;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
+    background-color: hsl(var(--skill-btn-bg));
+    color: hsl(var(--skill-btn-text));
+    border-color: hsl(var(--skill-btn-border));
+  }
+  .skill-btn:hover,
+  .skill-btn.selected {
+    background-color: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    border-color: hsl(var(--primary));
+  }
+
+  .matched-skill-tag {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 9999px;
+    padding-left: 0.75rem; /* px-3 */
+    padding-right: 0.75rem;
+    padding-top: 0.25rem; /* py-1 */
+    padding-bottom: 0.25rem;
+    font-size: 0.75rem;
+    line-height: 1rem;
+    font-weight: 600;
+    background-color: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
   }
 }
