@@ -6,10 +6,7 @@ const nextConfig: NextConfig = {
   output: "export",
   images: {
     unoptimized: true,
-  },
-  // Add the basePath for GitHub Pages deployment.
-  // This is the name of the repository.
-  basePath: isGithubActions ? "/portfolio" : "",
+  }
 };
 
 export default nextConfig;
