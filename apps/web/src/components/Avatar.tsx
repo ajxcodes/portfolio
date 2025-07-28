@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 
 export const Avatar = ({ size = 128, altText }: { size?: number, altText: string }) => {
   const [mounted, setMounted] = useState(false);
-  const { theme } = useTheme();
+  const { resolvedTheme } = useTheme();
 
   useEffect(() => {
     setMounted(true);
@@ -18,7 +18,7 @@ export const Avatar = ({ size = 128, altText }: { size?: number, altText: string
     return <div className="rounded-full bg-card" style={{ width: `${size}px`, height: `${size}px` }} />;
   }
 
-  const avatarSrc = theme === 'light' ? '/images/me_day.jpg' : '/images/me_night.png';
+  const avatarSrc = resolvedTheme === 'light' ? '/images/me_day.jpg' : '/images/me_night.png';
 
   return (
     <Image src={avatarSrc} alt={altText} width={size} height={size} className="rounded-full" priority={size > 100} />
