@@ -2,50 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
-
-// For simplicity, icons are defined here. For a larger project,
-// you might move these to a dedicated `icons.tsx` file.
-const SunIcon = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="24"
-    height="24"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    {...props}
-  >
-    <circle cx="12" cy="12" r="4" />
-    <path d="M12 2v2" />
-    <path d="M12 20v2" />
-    <path d="m4.93 4.93 1.41 1.41" />
-    <path d="m17.66 17.66 1.41 1.41" />
-    <path d="M2 12h2" />
-    <path d="M20 12h2" />
-    <path d="m6.34 17.66-1.41 1.41" />
-    <path d="m19.07 4.93-1.41 1.41" />
-  </svg>
-);
-
-const MoonIcon = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="24"
-    height="24"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    {...props}
-  >
-    <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
-  </svg>
-);
+import { SunIcon, MoonIcon, SystemThemeIcon } from "@/components/icons";
 
 export const ThemeSwitcher = () => {
   const [mounted, setMounted] = useState(false);
@@ -56,21 +13,42 @@ export const ThemeSwitcher = () => {
   }, []);
 
   if (!mounted) {
-    // Render a placeholder to prevent layout shift on initial load
-    return <div className="w-10 h-10" />;
+    // Render a skeleton placeholder to prevent layout shift and hydration mismatch
+    return (
+      <button className="p-2 rounded-full" disabled aria-label="Cycle theme">
+        <div className="h-6 w-6" />
+      </button>
+    );
   }
+
+  const cycleTheme = () => {
+    if (theme === "light") {
+      setTheme("dark");
+    } else if (theme === "dark") {
+      setTheme("system");
+    } else {
+      setTheme("light");
+    }
+  };
+
+  const getNextTheme = () => {
+    if (theme === "light") return "dark";
+    if (theme === "dark") return "system";
+    return "light";
+  };
 
   return (
     <button
-      onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+      onClick={cycleTheme}
       className="p-2 rounded-full hover:bg-primary/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-      aria-label="Toggle theme"
+      aria-label={`Change theme from ${theme} to ${getNextTheme()}`}
+      title={`Change theme to ${getNextTheme()}`}
     >
-      {theme === "light" ? (
-        <MoonIcon className="h-6 w-6" />
-      ) : (
-        <SunIcon className="h-6 w-6" />
-      )}
+      <span className="sr-only">Current theme: {theme}</span>
+      {/* Show an icon representing the CURRENT theme state */}
+      {theme === "light" && <SunIcon className="h-6 w-6" />}
+      {theme === "dark" && <MoonIcon className="h-6 w-6" />}
+      {theme === "system" && <SystemThemeIcon className="h-6 w-6" />}
     </button>
   );
 };
