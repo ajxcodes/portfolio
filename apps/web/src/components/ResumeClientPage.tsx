@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from "next/link";
 import { Avatar } from "@/components/Avatar";
 import { DownloadIcon, XCircleIcon } from '@/components/icons';
-import { ContactLinks } from '@/components/ContactLinks';
+import { ContactLinks, ContactInfo } from '@/components/ContactLinks';
 import { SkillsSection } from '@/components/SkillsSection';
 
 interface SkillGroup {
@@ -29,7 +29,7 @@ interface PreviousExperience {
 
 interface ResumeData {
   summary: string;
-  contact: any;
+  contact: ContactInfo;
   skills: SkillGroup[];
   experience: Experience[];
   previousExperience?: PreviousExperience[];
