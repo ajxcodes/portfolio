@@ -26,14 +26,17 @@
     "contact": {
       "email": "me@ajx.codes",
       "linkedin": "linkedin.com/in/alvinjorrel",
-      "github": "github.com/ajxcodes"
+      "github": "github.com/ajxcodes",
+      "calendar": "https://calendar.app.google/waCKdLPyQZeYYUEx8"
     },
     "skills": [
       {
         "category": "Languages & Frameworks",
         "items": [
           "C#",
-          ".NET (Framework, .NET 6+, MAUI)",
+          ".NET Core",
+          ".NET Framework",
+          ".NET MAUI",
           "ASP.NET (MVC, Web API)",
           "TypeScript",
           "Angular",
@@ -80,6 +83,18 @@
         "company": "Provision Analytics",
         "role": "Senior Software Developer",
         "period": "March 2023 – Present",
+        "skills": [
+          "C#",
+          ".NET Core",
+          "ASP.NET (MVC, Web API)",
+          "Microservices",
+          "Docker",
+          "Test-Driven Development (TDD)",
+          "Cosmos DB",
+          "PostgreSQL",
+          "Azure DevOps CI/CD",
+          "SOLID Design"
+        ],
         "results": [
           "Architected and led major backend modernizations, including consolidating 11 microservices into a .NET monolith and migrating the Identity Provider to Clerk, which enhanced performance and eliminated maintenance overhead.",
           "Pioneered the integration of AI-powered tools (GitHub Copilot) and automated PR reviews, cutting feature development cycles from weeks to days and elevating code quality standards across the team.",
@@ -96,12 +111,36 @@
           "Dramatically improved API performance by designing and implementing a multi-level caching strategy, which significantly reduced latency on frequently accessed data.",
           "Enhanced development lifecycle and test reliability by creating a new integration testing framework using disposable Docker containers, leading to more consistent and faster builds.",
           "Led targeted research spikes to de-risk new technologies, driving the successful adoption of new production libraries and informing key architectural decisions for the team."
+        ],
+        "skills": [
+          "C#",
+          ".NET (Framework, .NET 6+, MAUI)",
+          "Microservices",
+          "Docker",
+          "Test-Driven Development (TDD)",
+          "SOLID Design",
+          "Domain-Driven Design (DDD)",
+          "SQL Server"
         ]
       },
       {
         "company": "PurelyHR",
         "role": "Senior Software Developer",
         "period": "April 2021 – March 2022",
+        "skills": [
+          "C#",
+          ".NET Core",
+          ".NET MAUI",
+          "ASP.NET (MVC, Web API)",
+          "Microservices",
+          "Docker",
+          "Kubernetes",
+          "SOLID Design",
+          "Domain-Driven Design (DDD)",
+          "Typescript",
+          "Vue.js",
+          "SQL Server"
+        ],
         "results": [
           "Architected and initiated the migration from a monolithic application to a microservice-based architecture, utilizing Docker and Kubernetes for containerized deployment.",
           "Led the development of a cross-platform mobile application (Android/iOS) using .NET MAUI, successfully transitioning from Ionic to leverage existing C# expertise.",
@@ -112,6 +151,14 @@
         "company": "thirdstream",
         "role": "Software Engineer",
         "period": "September 2018 – March 2021",
+        "skills": [
+          "C#",
+          ".NET Core",
+          ".NET Framework",
+          "ASP.NET (MVC, Web API)",
+          "SQL Server",
+          "Angular"
+        ],
         "results": [
           "Led the production release of 5 custom digital account onboarding implementations and developed 3 new central APIs for key financial services clients.",
           "Onboarded and coached 5 new developers, fostering their independence and productivity within the first three months."
@@ -121,6 +168,17 @@
         "company": "Purdys Chocolatier",
         "role": "Software Developer",
         "period": "September 2015 – September 2018",
+        "skills": [
+          "C#",
+          ".NET Framework",
+          ".NET Core",
+          "ASP.NET (MVC, Web API)",
+          "Angular",
+          "CI/CD Pipelines",
+          "Azure DevOps CI/CD",
+          "ETL",
+          "Scripting"
+        ],
         "results": [
           "Architected and implemented a full CI/CD pipeline (JIRA -> BitBucket -> VSTS -> Octopus Deploy) for .NET applications, significantly reducing deployment time and manual errors.",
           "Successfully migrated all customer and order data to a new eCommerce platform (Aptos), utilizing automated ETL scripting to ensure 100% data integrity."

@@ -3,5 +3,8 @@
   "private": true,
   "scripts": {
     "build": "pnpm --filter web build"
+  },
+  "dependencies": {
+    "framer-motion": "^12.23.11"
   }
 }
