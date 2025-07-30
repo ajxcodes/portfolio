@@ -62,9 +62,15 @@
     color: hsl(var(--skill-btn-text)) !important;
     border-color: hsl(var(--skill-btn-border)) !important;
   }
-  .skill-btn:hover,
+  .skill-btn:hover {
+    /* A more subtle hover for unselected buttons */
+    background-color: hsl(var(--primary) / 0.1) !important;
+    border-color: hsl(var(--primary)) !important;
+    color: hsl(var(--primary) / 0.8) !important;
+  }
+
   .skill-btn.selected {
-    background-color: hsl(var(--primary)) !important;
+    background-color: hsl(var(--primary) / 0.8) !important;
     color: hsl(var(--primary-foreground)) !important;
     border-color: hsl(var(--primary)) !important;
   }
