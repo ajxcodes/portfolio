@@ -22,13 +22,21 @@
     }
   ],
   "resume": {
-    "summary": "Senior Software Engineer and technical leader with 11 years of experience specializing in .NET and building high-performing, maintainable systems. I thrive on leading complex architectural initiatives, from strategically consolidating microservices into a streamlined .NET monolith to migrating critical identity providers to modern platforms like Clerk. My focus is always on enhancing system performance while reducing operational overhead.\n\nRecently, I've championed a major leap in developer productivity by pioneering the integration of AI-powered tools like GitHub Copilot, cutting feature development cycles from weeks to days. I'm passionate about fostering a culture of quality, which I've driven by implementing comprehensive unit and integration testing strategies and taking formal ownership of code quality for core APIs. Ultimately, I love building efficient systems and empowering development teams with the optimized tools and processes they need to succeed.",
+    "summary": {
+      "lead": "A senior software engineer and technical leader with over a decade of experience in the .NET ecosystem. I specialize in architecting high-performing, maintainable systems and enhancing developer productivity through modern tooling and best practices.",
+      "highlights": [
+        "Architected and led major backend modernizations, including microservice consolidation and identity provider migrations to enhance performance and reduce maintenance.",
+        "Pioneered the integration of AI-powered tools (GitHub Copilot), cutting feature development cycles from weeks to days and elevating code quality.",
+        "Championed a culture of quality by implementing comprehensive testing strategies and assuming formal code ownership of core APIs."
+      ]
+    },
     "contact": {
       "email": "me@ajx.codes",
       "linkedin": "linkedin.com/in/alvinjorrel",
       "github": "github.com/ajxcodes",
       "calendar": "https://calendar.app.google/waCKdLPyQZeYYUEx8"
     },
+    "downloadUrl": "/ajxcodes-AlvinJorrelPascual-Resume.pdf",
     "skills": [
       {
         "category": "Languages & Frameworks",

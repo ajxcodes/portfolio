@@ -5,6 +5,7 @@
     "build": "pnpm --filter web build"
   },
   "dependencies": {
+    "clsx": "^2.1.1",
     "framer-motion": "^12.23.11"
   }
 }

@@ -1,18 +1,6 @@
 import { Avatar } from "@/components/Avatar";
-import { promises as fs } from 'fs';
-import path from 'path';
 import Link from "next/link";
-
-interface BlogPost {
-  slug: string;
-  title: string;
-  summary: string;
-}
-
-async function getPortfolioData() {
-  const file = await fs.readFile(path.join(process.cwd(), 'data/portfolio-data.json'), 'utf8');
-  return JSON.parse(file);
-}
+import { getPortfolioData, type BlogPost } from "@/lib/data";
 
 export default async function Home() {
   const data = await getPortfolioData();

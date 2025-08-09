@@ -5,7 +5,8 @@ import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { ThemeSwitcher } from "./ThemeSwitcher";
 import { Avatar } from "./Avatar";
-import { ContactLinks, type ContactInfo } from "./ContactLinks";
+import { ContactLinks } from "./ContactLinks";
+import { ContactInfo } from "@/lib/data";
 
 interface HeaderProps {
   name: string;

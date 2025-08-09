@@ -3,15 +3,9 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/providers";
 import { Header } from "@/components/Header";
-import { promises as fs } from 'fs';
-import path from 'path';
+import { getPortfolioData } from "@/lib/data";
 
 const inter = Inter({ subsets: ["latin"] });
-
-async function getPortfolioData() {
-  const file = await fs.readFile(path.join(process.cwd(), 'data/portfolio-data.json'), 'utf8');
-  return JSON.parse(file);
-}
 
 export async function generateMetadata(): Promise<Metadata> {
   const data = await getPortfolioData();

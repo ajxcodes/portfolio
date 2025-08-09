@@ -11,11 +11,7 @@ import {
   ServerCogIcon,
   TerminalIcon,
 } from "./icons";
-
-interface SkillGroup {
-  category: string;
-  items: string[];
-}
+import { SkillGroup } from "@/lib/data";
 
 interface SkillsSectionProps {
   skills: SkillGroup[];
@@ -48,16 +44,16 @@ const itemVariants: Variants = {
   },
 };
 
+const categoryIcons: { [key: string]: React.ElementType } = {
+  "Languages & Frameworks": CodeIcon,
+  "Architecture & DevOps": ServerCogIcon,
+  "Databases & Data": DatabaseIcon,
+  "Scripting & T-SQL": TerminalIcon,
+  "Principles & Methodologies": LightbulbIcon,
+};
+
 export const SkillsSection = ({ skills, selectedSkills, onSkillSelect }: SkillsSectionProps) => {
   const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
-
-  const categoryIcons: { [key: string]: React.ElementType } = {
-    "Languages & Frameworks": CodeIcon,
-    "Architecture & DevOps": ServerCogIcon,
-    "Databases & Data": DatabaseIcon,
-    "Scripting & T-SQL": TerminalIcon,
-    "Principles & Methodologies": LightbulbIcon,
-  };
 
   const toggleCategory = (category: string) => {
     setExpandedCategories(prev =>
