@@ -5,13 +5,7 @@ import {
   GitHubIcon,
   CalendarIcon,
 } from '@/components/icons';
-
-export interface ContactInfo {
-  email: string;
-  linkedin: string;
-  github: string;
-  calendar?: string;
-}
+import { type ContactInfo } from '@/lib/data';
 
 interface ContactLinksProps {
   contact: ContactInfo;
