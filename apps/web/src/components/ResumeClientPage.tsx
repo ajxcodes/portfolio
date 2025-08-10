@@ -35,8 +35,9 @@ export const ResumeClientPage = ({ resume, personalInfo }: ResumeClientPageProps
     );
   };
 
-  const handleClearSkills = () => {
+  const handleClearSkills = (e: React.MouseEvent) => {
     setSelectedSkills([]);
+    e.stopPropagation();
   };
 
   const filteredExperience = useMemo(() => {
@@ -76,7 +77,6 @@ export const ResumeClientPage = ({ resume, personalInfo }: ResumeClientPageProps
               <h2 className="text-2xl text-primary/80 font-semibold">{personalInfo.title}</h2>
               {totalExperience && (
                 <>
-                  <span className="text-2xl text-primary/30 font-light select-none">|</span>
                   <p className="text-xl text-primary/70 font-medium">{totalExperience} of experience</p>
                 </>
               )}
@@ -118,43 +118,37 @@ export const ResumeClientPage = ({ resume, personalInfo }: ResumeClientPageProps
               {isSummaryExpanded ? <ChevronUpIcon className="h-4 w-4" /> : <ChevronDownIcon className="h-4 w-4" />}
             </button>
           </div>
-          <div id="contact-links-section" className="mt-6 flex flex-col sm:flex-row items-center justify-center md:justify-start gap-6">
-            <ContactLinks contact={resume.contact} />
-            <Link
-              href={resume.downloadUrl || "/ajxcodes-AlvinJorrelPascual-Resume.pdf"}
-              download
-              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary bg-primary/10 rounded-full hover:bg-primary/20 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-              aria-label="Download Resume"
-              title="Download Resume"
-            >
-              <DownloadIcon className="h-5 w-5" />
-              Download Resume
-            </Link>
+          <div id="contact-links-section" className="mt-6">
+            <ContactLinks contact={resume.contact} downloadUrl={resume.downloadUrl} />
           </div>
         </div>
       </section>
 
       {/* Grouped Skills Section */}
-      <Section>
-        <div className="flex justify-between items-center border-b-2 border-primary/50 pb-2 mb-4">
-          <h2 className="text-3xl font-bold text-primary">Skills</h2>
-          <AnimatePresence>
-            {selectedSkills.length > 0 && (
-              <motion.button
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.2 }}
-                onClick={handleClearSkills}
-                className="flex items-center gap-1.5 text-sm font-medium text-primary/80 hover:text-primary transition-colors px-3 py-1 rounded-full hover:bg-primary/10"
-                aria-live="polite"
-              >
-                <XCircleIcon className="h-4 w-4" />
-                Clear ({selectedSkills.length})
-              </motion.button>
-            )}
-          </AnimatePresence>
-        </div>
+      <Section
+        defaultOpen
+        title={
+          <div className="flex justify-between items-center flex-grow">
+            <h2 className="text-3xl font-bold text-primary">Skills</h2>
+            <AnimatePresence>
+              {selectedSkills.length > 0 && (
+                <motion.button
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2 }}
+                  onClick={handleClearSkills}
+                  className="flex items-center gap-1.5 text-sm font-medium text-primary/80 hover:text-primary transition-colors px-3 py-1 rounded-full hover:bg-primary/10"
+                  aria-live="polite"
+                >
+                  <XCircleIcon className="h-4 w-4" />
+                  Clear ({selectedSkills.length})
+                </motion.button>
+              )}
+            </AnimatePresence>
+          </div>
+        }
+      >
         <SkillsSection
           skills={resume.skills}
           selectedSkills={selectedSkills}
@@ -163,8 +157,10 @@ export const ResumeClientPage = ({ resume, personalInfo }: ResumeClientPageProps
       </Section>
 
       {/* Experience Section (Timeline Style) */}
-      <Section>
-        <h2 className="text-3xl font-bold text-primary border-b-2 border-primary/50 pb-2 mb-4">Professional Experience</h2>
+      <Section
+        defaultOpen
+        title={<h2 className="text-3xl font-bold text-primary">Professional Experience</h2>}
+      >
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {filteredExperience.map((exp) => (
             <ExperienceItem
@@ -180,11 +176,13 @@ export const ResumeClientPage = ({ resume, personalInfo }: ResumeClientPageProps
 
       {/* Projects Section */}
       {resume.projects && resume.projects.length > 0 && (
-        <Section>
-          <h2 className="text-3xl font-bold text-primary border-b-2 border-primary/50 pb-2 mb-4 flex items-center gap-3">
-            <BriefcaseIcon className="h-7 w-7" />
-            <span>Projects</span>
-          </h2>
+        <Section
+          title={
+            <h2 className="text-3xl font-bold text-primary flex items-center gap-3">
+              <BriefcaseIcon className="h-7 w-7" />
+              <span>Projects</span>
+            </h2>
+          }>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {resume.projects.map((project) => (
               <ProjectCard key={project.name} project={project} />
@@ -195,11 +193,13 @@ export const ResumeClientPage = ({ resume, personalInfo }: ResumeClientPageProps
 
       {/* Education Section */}
       {resume.education && resume.education.length > 0 && (
-        <Section>
-          <h2 className="text-3xl font-bold text-primary border-b-2 border-primary/50 pb-2 mb-4 flex items-center gap-3">
-            <GraduationCapIcon className="h-7 w-7" />
-            <span>Education</span>
-          </h2>
+        <Section
+          title={
+            <h2 className="text-3xl font-bold text-primary flex items-center gap-3">
+              <GraduationCapIcon className="h-7 w-7" />
+              <span>Education</span>
+            </h2>
+          }>
           <div className="space-y-4">
             {resume.education.map((edu: Education) => (
               <div key={edu.institution} className="bg-card/50 p-4 rounded-lg border border-border/10">
@@ -214,8 +214,10 @@ export const ResumeClientPage = ({ resume, personalInfo }: ResumeClientPageProps
 
       {/* Previous Experience Section */}
       {resume.previousExperience && resume.previousExperience.length > 0 && (
-        <Section className="mb-0">
-          <h2 className="text-3xl font-bold text-primary border-b-2 border-primary/50 pb-2 mb-4">Previous Experience</h2>
+        <Section
+          className="mb-0"
+          title={<h2 className="text-3xl font-bold text-primary">Previous Experience</h2>}
+        >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {resume.previousExperience.map((exp: PreviousExperience) => {
               const tenure = calculateTenure(exp.period);
