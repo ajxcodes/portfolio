@@ -13,6 +13,7 @@ export interface ContactInfo {
   phone: string;
   website: string;
   linkedin: string;
+  calendar: string;
   github: string;
 }
 
