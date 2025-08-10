@@ -90,11 +90,12 @@
         "items": [
           "GitHub",
           "GitHub Copilot",
-          "TargetProcess",
+          "Notion",
           "JIRA",
           "Visual Studio",
           "Visual Studio Code",
           "JetBrains Rider",
+          "TargetProcess",
           "Octopus Deploy"
 
         ]
@@ -126,7 +127,8 @@
           "GitHub Copilot",
           "TargetProcess",
           "JetBrains Rider",
-          "Visual Studio Code"
+          "Visual Studio Code",
+          "Notion"
         ],
         "results": [
           "Architected and led major backend modernizations, including consolidating 11 microservices into a .NET monolith and migrating the Identity Provider to Clerk, which enhanced performance and eliminated maintenance overhead.",
@@ -195,6 +197,7 @@
           ".NET Framework",
           "ASP.NET (MVC, Web API)",
           "SQL Server",
+          "Azure DevOps CI/CD",
           "Angular",
           "Visual Studio"
         ],
@@ -219,7 +222,8 @@
           "SQL Server",
           "ETL",
           "Visual Studio",
-          "JIRA"
+          "JIRA",
+          "Octopus Deploy"
         ],
         "results": [
           "Architected and implemented a full CI/CD pipeline (JIRA -> BitBucket -> VSTS -> Octopus Deploy) for .NET applications, significantly reducing deployment time and manual errors.",

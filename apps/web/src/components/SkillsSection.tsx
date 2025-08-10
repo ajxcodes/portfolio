@@ -19,7 +19,7 @@ interface SkillsSectionProps {
   onSkillSelect: (skill: string) => void;
 }
 
-const SKILLS_TO_SHOW_INITIALLY = 6;
+const SKILLS_TO_SHOW_INITIALLY = 5;
 
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
