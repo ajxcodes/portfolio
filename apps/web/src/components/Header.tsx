@@ -11,9 +11,10 @@ import { ContactInfo } from "@/lib/data";
 interface HeaderProps {
   name: string;
   contact: ContactInfo;
+  downloadUrl?: string;
 }
 
-export const Header = ({ name, contact }: HeaderProps) => {
+export const Header = ({ name, contact, downloadUrl }: HeaderProps) => {
   const pathname = usePathname();
   // Initialize state based on the path to prevent flashes of content.
   const [isPageTitleVisible, setIsPageTitleVisible] = useState(pathname === '/resume');
@@ -83,7 +84,7 @@ export const Header = ({ name, contact }: HeaderProps) => {
           {showHeaderContactLinks && (
             <div className="hidden sm:flex items-center gap-4">
               <div className="w-px h-6 bg-border" />
-              <ContactLinks contact={contact} showText={false} />
+              <ContactLinks contact={contact} showText={false} downloadUrl={downloadUrl} />
             </div>
           )}
           <ThemeSwitcher />

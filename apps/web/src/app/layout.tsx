@@ -25,7 +25,7 @@ export default async function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <ThemeProvider>
-          <Header contact={data.resume.contact} name={data.personalInfo.name} />
+          <Header contact={data.resume.contact} name={data.personalInfo.name} downloadUrl={data.resume.downloadUrl} />
           <main className="container mx-auto px-4 py-8">{children}</main>
         </ThemeProvider>
       </body>

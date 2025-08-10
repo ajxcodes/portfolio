@@ -4,15 +4,17 @@ import {
   LinkedInIcon,
   GitHubIcon,
   CalendarIcon,
+  DownloadIcon,
 } from '@/components/icons';
 import { type ContactInfo } from '@/lib/data';
 
 interface ContactLinksProps {
   contact: ContactInfo;
   showText?: boolean;
+  downloadUrl?: string;
 }
 
-export const ContactLinks = ({ contact, showText = true }: ContactLinksProps) => {
+export const ContactLinks = ({ contact, showText = true, downloadUrl }: ContactLinksProps) => {
   // A defensive check prevents the component from crashing if the contact prop is missing.
   if (!contact) {
     console.error("ContactLinks component was rendered without the required 'contact' prop.");
@@ -45,11 +47,18 @@ export const ContactLinks = ({ contact, showText = true }: ContactLinksProps) =>
       text: "Let's Chat",
       label: 'Schedule a meeting',
     }] : []),
+    ...(downloadUrl ? [{
+      href: downloadUrl,
+      Icon: DownloadIcon,
+      text: "Resume",
+      label: 'Download Resume',
+      download: true,
+    }] : []),
   ];
 
   return (
     <div className="flex justify-center items-center gap-x-6 gap-y-2 flex-wrap text-lg">
-      {contactItems.map(({ href, Icon, text, label }) => {
+      {contactItems.map(({ href, Icon, text, label, download }) => {
         const isExternal = href.startsWith('http');
         return (
           <a
@@ -59,6 +68,7 @@ export const ContactLinks = ({ contact, showText = true }: ContactLinksProps) =>
             target={isExternal ? '_blank' : undefined}
             rel={isExternal ? 'noopener noreferrer' : undefined}
             className="flex items-center gap-2 hover:text-primary transition-colors"
+            download={download}
           >
             <Icon className="h-5 w-5" />
             {showText && <span>{text}</span>}
