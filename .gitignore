@@ -43,5 +43,5 @@ next-env.d.ts
 
 .idea
 
-apps/api/*/bin
-apps/api/*/obj
+apps/api/src/*/bin
+apps/api/src/*/obj
