@@ -34,5 +34,6 @@ RUN mkdir -p /home/app/.aspnet/https/ && chown -R app:app /home/app/.aspnet
 # Switch to the non-root 'app' user for security
 USER app
 
+EXPOSE 443
 # This is the command that will run the application
 ENTRYPOINT ["dotnet", "Portfolio.Api.dll"]
