@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Portfolio.Api", "Portfolio.Api\Portfolio.Api.csproj", "{1FCA06AE-C1A4-4844-941C-8AF476DFE4E6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Portfolio.Api", "src\Portfolio.Api\Portfolio.Api.csproj", "{EF3902F7-D34C-4A91-B2D4-E9931EC06614}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -8,9 +8,9 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{1FCA06AE-C1A4-4844-941C-8AF476DFE4E6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{1FCA06AE-C1A4-4844-941C-8AF476DFE4E6}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{1FCA06AE-C1A4-4844-941C-8AF476DFE4E6}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{1FCA06AE-C1A4-4844-941C-8AF476DFE4E6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EF3902F7-D34C-4A91-B2D4-E9931EC06614}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EF3902F7-D34C-4A91-B2D4-E9931EC06614}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EF3902F7-D34C-4A91-B2D4-E9931EC06614}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EF3902F7-D34C-4A91-B2D4-E9931EC06614}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
