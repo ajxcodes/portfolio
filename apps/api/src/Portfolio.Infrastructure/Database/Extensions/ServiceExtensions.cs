@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Portfolio.Application.Blog.Repositories;
 using Portfolio.Infrastructure.Database.Contexts;
@@ -10,7 +9,7 @@ namespace Portfolio.Infrastructure.Database.Extensions;
 public static class ServiceExtensions
 {
     public static IServiceCollection
-        ConfigureDatabase(this IServiceCollection services, IConfiguration configuration) =>
+        ConfigureDatabase(this IServiceCollection services) =>
         services.AddDbContext<PortfolioDbContext>(options =>
                 options.UseNpgsql(GetConnectionString()))
             .ConfigureRepositories();

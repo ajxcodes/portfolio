@@ -9,6 +9,6 @@ public static class ServiceExtensions
     public static IServiceCollection ConfigureInfrastructure(this IServiceCollection services,
         IConfiguration configuration)
     {
-        return services.ConfigureDatabase(configuration);
+        return services.ConfigureDatabase();
     }
 }
