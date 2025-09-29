@@ -6,9 +6,11 @@ services:
       dockerfile: src/Portfolio.Api/Dockerfile
     ports:
       - "5000:80"
+      - "5808:8080"
+    env_file: ".env"
     environment:
       - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT}
-      - ConnectionStrings__DefaultConnection=Host=${DB_HOST};Database=${DB_NAME};Username=${DB_USER};Password=${DB_PASSWORD}
+      - DB_HOST=db
     depends_on:
       - db
 
@@ -23,6 +25,8 @@ services:
 
   db:
     image: postgres:16
+    env_file:
+      - .env
     environment:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}

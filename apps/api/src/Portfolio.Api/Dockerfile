@@ -7,6 +7,9 @@ WORKDIR /src
 # Source paths are relative to the build context (likely the repository root)
 # Destination paths are relative to WORKDIR /src
 COPY src/Portfolio.Api/*.csproj Portfolio.Api/
+COPY src/Portfolio.Domain/*.csproj Portfolio.Domain/
+COPY src/Portfolio.Application/*.csproj Portfolio.Application/
+COPY src/Portfolio.Infrastructure/*.csproj Portfolio.Infrastructure/
 # You might need a .sln file copy here too if you have one
 # COPY Portfolio.sln .
 RUN dotnet restore Portfolio.Api/Portfolio.Api.csproj
