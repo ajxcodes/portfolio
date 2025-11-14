@@ -1,12 +1,9 @@
 import type { NextConfig } from "next";
 
-const isGithubActions = process.env.GITHUB_ACTIONS === "true";
-
 const nextConfig: NextConfig = {
-  output: "export",
-  images: {
-    unoptimized: true,
-  }
+  // This will create a standalone folder which can be deployed on its own.
+  // It's essential for the optimized Dockerfile.
+  output: "standalone",
 };
 
 export default nextConfig;
