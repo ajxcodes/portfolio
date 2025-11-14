@@ -16,18 +16,29 @@ if (builder.Environment.IsDevelopment())
 
 builder.Configuration.AddEnvironmentVariables();
 builder.Services.AddControllers();
+const string myAllowSpecificOrigins = "_myAllowSpecificOrigins";
 builder.Services
     .ConfigureApplication()
     .ConfigureInfrastructure(builder.Configuration)
     .AddEndpointsApiExplorer()
-    .AddSwaggerGen();
+    .AddSwaggerGen().AddCors(options =>
+    {
+        options.AddPolicy(name: myAllowSpecificOrigins,
+            policy =>
+            {
+                // Allow your Next.js app's origin
+                policy.AllowAnyOrigin()
+                    .AllowAnyHeader()
+                    .AllowAnyMethod();
+            });
+    });
 
 var app = builder.Build();
 
-    app.UseSwagger()
-        .UseSwaggerUI()
-        .UseHttpsRedirection();
-    
-    app.MapControllers();
-    
-    app.Run();
+app.UseSwagger()
+    .UseSwaggerUI()
+    .UseHttpsRedirection()
+    .UseCors(myAllowSpecificOrigins);
+
+app.MapControllers();
+app.Run();

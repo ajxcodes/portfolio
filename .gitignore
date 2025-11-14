@@ -45,3 +45,4 @@ next-env.d.ts
 
 apps/api/src/*/bin
 apps/api/src/*/obj
+apps/api/
