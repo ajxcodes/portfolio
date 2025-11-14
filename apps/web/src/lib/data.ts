@@ -110,15 +110,22 @@ export async function getPortfolioData(): Promise<PortfolioData> {
 // New function to get a single blog post by its slug
 export async function getBlogPostBySlug(slug: string): Promise<BlogPost | undefined> {
   try {
-    // Fetch the specific blog post directly from the API.
-    // This assumes your API supports an endpoint like /api/blog/posts/{slug}
     const apiUrl = process.env.API_BASE_URL || 'http://localhost:5808';
     const res = await fetch(`${apiUrl}/api/blog/posts/${slug}`, { cache: 'no-store' });
-
-    if (!res.ok) return undefined;
-    return res.json();
+    if (res.ok) {
+      return await res.json();
+    }
   } catch (error) {
-    console.error(`Failed to fetch blog post with slug "${slug}":`, error);
+    console.error(`Failed to fetch blog post with slug "${slug}" from API:`, error);
+  }
+
+  // Fallback to static data stored in public/data/portfolio-data.json
+  try {
+    const file = await fs.readFile(path.join(process.cwd(), 'public', 'data', 'portfolio-data.json'), 'utf8');
+    const portfolioData: PortfolioData = JSON.parse(file);
+    return portfolioData.blogPosts.find((p) => p.slug === slug);
+  } catch (err) {
+    console.error('Failed to read static blog posts fallback', err);
     return undefined;
   }
 }
