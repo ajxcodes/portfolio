@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace Portfolio.Infrastructure.Database.Migrations
+namespace Portfolio.Infrastructure.Migrations
 {
     /// <inheritdoc />
     public partial class Initial : Migration
@@ -23,7 +23,8 @@ namespace Portfolio.Infrastructure.Database.Migrations
                     DatePosted = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     PostedBy = table.Column<string>(type: "text", nullable: false),
                     DateModified = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    ModifiedBy = table.Column<string>(type: "text", nullable: true)
+                    ModifiedBy = table.Column<string>(type: "text", nullable: true),
+                    Visible = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>
                 {

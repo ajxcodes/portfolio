@@ -41,4 +41,5 @@ app.UseSwagger()
     .UseCors(myAllowSpecificOrigins);
 
 app.MapControllers();
+await app.Services.RunMigrations();
 app.Run();

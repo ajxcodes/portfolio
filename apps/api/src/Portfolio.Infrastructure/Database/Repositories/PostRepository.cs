@@ -8,4 +8,5 @@ namespace Portfolio.Infrastructure.Database.Repositories;
 public class PostRepository(PortfolioDbContext context) : IPostRepository
 {
     public Task<List<Post>> ListAsync() => context.Set<Post>().ToListAsync();
+    public Task<Post> GetAsync(Guid id) =>  context.Set<Post>().FirstAsync(p => p.Id == id);
 }

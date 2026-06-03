@@ -11,4 +11,5 @@ public class Post
     public string PostedBy { get; set; } // author username
     public DateTime? DateModified { get; set; }
     public string? ModifiedBy { get; set; } // modified by username
+    public bool Visible { get; set; } = false;
 }
