@@ -10,6 +10,8 @@ COPY src/Portfolio.Api/*.csproj Portfolio.Api/
 COPY src/Portfolio.Domain/*.csproj Portfolio.Domain/
 COPY src/Portfolio.Application/*.csproj Portfolio.Application/
 COPY src/Portfolio.Infrastructure/*.csproj Portfolio.Infrastructure/
+COPY src/Portfolio.Faker/*.csproj Portfolio.Faker/
+
 # You might need a .sln file copy here too if you have one
 # COPY Portfolio.sln .
 RUN dotnet restore Portfolio.Api/Portfolio.Api.csproj

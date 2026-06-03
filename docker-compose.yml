@@ -1,6 +1,7 @@
 version: '3.8'
 services:
   api:
+    container_name: api
     build:
       context: ./apps/api
       dockerfile: src/Portfolio.Api/Dockerfile
@@ -15,15 +16,17 @@ services:
       - db
 
   web:
+    container_name: web
     build:
       context: ./apps/web
       dockerfile: Dockerfile
     ports:
-      - "3000:80"
+      - "3000:3000"
     depends_on:
       - api
 
   db:
+    container_name: db
     image: postgres:16
     env_file:
       - .env
