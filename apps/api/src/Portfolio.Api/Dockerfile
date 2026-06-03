@@ -1,6 +1,6 @@
 ﻿# Stage 1: Build the application
 # Using a specific version is better than :9.0 for reproducibility
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
 # Copy project files and restore dependencies first to leverage Docker layer caching
@@ -24,7 +24,7 @@ COPY src/. .
 RUN dotnet publish Portfolio.Api/Portfolio.Api.csproj -c Release -o /app/publish --no-restore
 
 # Stage 2: Create the final, lean runtime image
-FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS final
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
 COPY --from=build /app/publish .
 
