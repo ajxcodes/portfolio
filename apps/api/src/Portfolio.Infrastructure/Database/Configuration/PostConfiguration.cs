@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Portfolio.Domain.Blog;
-using Portfolio.Faker.Blog;
 
 namespace Portfolio.Infrastructure.Database.Configuration;
 
