@@ -10,4 +10,7 @@ public class PostsController(IPostService service) : ControllerBase
 {
     [HttpGet]
     public async Task<IEnumerable<PostResponse>> ListAsync() => await service.ListAsync();
+
+    [HttpGet("{id}")]
+    public async Task<PostResponse> GetAsync(Guid id) => await service.GetAsync(id);
 }

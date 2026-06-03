@@ -1,5 +1,7 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Portfolio.Infrastructure.Database.Contexts;
 using Portfolio.Infrastructure.Database.Extensions;
 
 namespace Portfolio.Infrastructure;
@@ -10,5 +12,12 @@ public static class ServiceExtensions
         IConfiguration configuration)
     {
         return services.ConfigureDatabase();
+    }
+
+    public static async Task RunMigrations(this IServiceProvider serviceProvider)
+    {
+        using var scope = serviceProvider.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<PortfolioDbContext>();
+        await dbContext.Database.MigrateAsync();
     }
 }
