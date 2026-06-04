@@ -8,9 +8,9 @@ public record PostResponse
     public required string Slug { get; init; }
     public required string Title { get; init; }
     public string? Summary { get; init; }
-    public string Content { get; init; }
+    public required string Content { get; init; }
     public required DateTime DatePosted { get; init; }
-    public string PostedBy { get; init; } // author username
+    public required string PostedBy { get; init; } // author username
     public DateTime? DateModified { get; set; }
     public string? ModifiedBy { get; set; } // modified by username
 
