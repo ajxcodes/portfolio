@@ -1,0 +1,290 @@
+name: AI Pull Request Reviewer
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - 'apps/api/**'
+      - 'apps/web/**'
+
+permissions:
+  pull-requests: write
+  issues: write
+  contents: read
+
+jobs:
+  review:
+    name: Code Review (Gemini AI)
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0 # Fetch all history so we can generate diffs
+
+    - name: Generate PR Diff
+      run: |
+        git fetch origin ${{ github.base_ref }}
+        # Generate diff between the target branch and the PR branch
+        git diff origin/${{ github.base_ref }}...HEAD > pr_diff.txt
+        # Check size of diff
+        ls -la pr_diff.txt
+
+    - name: Analyze and Comment with Gemini
+      uses: actions/github-script@v7
+      env:
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const fs = require('fs');
+          const path = 'pr_diff.txt';
+          
+          if (!fs.existsSync(path)) {
+            console.log("No diff file found.");
+            return;
+          }
+          
+          let diffText = fs.readFileSync(path, 'utf8');
+          if (!diffText.trim()) {
+            console.log("Diff is empty.");
+            return;
+          }
+
+          // Truncate if diff is exceptionally large (e.g. > 150KB) to prevent token limits
+          const maxCharLimit = 150000;
+          if (diffText.length > maxCharLimit) {
+            diffText = diffText.substring(0, maxCharLimit) + "\n\n...[Diff truncated due to size limit]...";
+          }
+
+          const apiKey = process.env.GEMINI_API_KEY;
+          if (!apiKey) {
+            console.log("GEMINI_API_KEY secret is not set. Skipping AI review.");
+            return;
+          }
+
+          // 1. Fetch existing review threads on the PR using GraphQL
+          let unresolvedBotThreads = [];
+          try {
+            const threadQuery = `
+              query($owner: String!, $repo: String!, $number: Int!) {
+                repository(owner: $owner, name: $repo) {
+                  pullRequest(number: $number) {
+                    reviewThreads(first: 100) {
+                      nodes {
+                        id
+                        isResolved
+                        path
+                        line
+                        comments(first: 50) {
+                          nodes {
+                            id
+                            body
+                            author {
+                              login
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            `;
+
+            const threadResponse = await github.graphql(threadQuery, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              number: context.issue.number
+            });
+
+            const threads = threadResponse.repository.pullRequest.reviewThreads.nodes;
+            for (const thread of threads) {
+              if (!thread.isResolved) {
+                // Check if the bot made any comment in this thread
+                const botComment = thread.comments.nodes.find(c => 
+                  c.body.includes("🤖 **Antigravity AI Suggestion**") || c.author.login === "github-actions[bot]"
+                );
+                if (botComment) {
+                  unresolvedBotThreads.push({
+                    threadId: thread.id,
+                    path: thread.path,
+                    line: thread.line,
+                    body: botComment.body
+                  });
+                }
+              }
+            }
+          } catch (e) {
+            console.error("Failed to query unresolved threads:", e);
+          }
+
+          const previousThreadsText = unresolvedBotThreads.length > 0 
+            ? JSON.stringify(unresolvedBotThreads, null, 2)
+            : "No unresolved previous issues.";
+
+          const prompt = `You are Antigravity, an expert senior software engineer and security auditor reviewing a pull request for an enterprise portfolio website.
+          
+          Context & Current Standards:
+          - Today's date is June 4, 2026.
+          - .NET 10.0 (net10.0) is released, active, and is the target framework for the C# backend. Do NOT flag .NET 10 as invalid, preview, or unavailable.
+          - Next.js 15 and React 19 are the active versions in the web project.
+          
+          You must respond with a SINGLE JSON object with the following structure:
+          {
+            "summary": "A markdown string containing a high-level summary of the PR and a bullet-pointed changelog.",
+            "resolvedThreads": ["threadId1", "threadId2"],
+            "comments": [
+              {
+                "path": "apps/api/src/Portfolio.Domain/Blog/Tag.cs",
+                "line": 15,
+                "body": "🤖 **Antigravity AI Suggestion**\\n\\nConsider making this property read-only..."
+              }
+            ]
+          }
+
+          Evaluation Rules:
+          1. **PR Summary (\`summary\`)**: Provide a clear, professional summary of the PR's achievements and files changed. This will be updated directly in the PR description body.
+          2. **Old Issues Resolve (\`resolvedThreads\`)**: Compare the new Git Diff against the unresolved reviews list below. If the changes in the Diff successfully fix an issue, include its 'threadId' in the array so we can resolve the conversation thread.
+          3. **New Issues (\`comments\`)**: Find logic flaws, security vulnerabilities, or performance issues in the modified files. Identify the specific file path and the line number in the *new* file (right side of the diff) where the issue is. Every comment body MUST start with "🤖 **Antigravity AI Suggestion**\\n\\n". If the code looks great, keep the comments list empty.
+
+          Here are the unresolved previous AI reviews on this PR:
+          \`\`\`json
+          ${previousThreadsText}
+          \`\`\`
+
+          Here is the git diff of the PR changes:
+          \`\`\`diff
+          ${diffText}
+          \`\`\`
+          `;
+
+          try {
+            const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + apiKey;
+            const response = await fetch(url, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                contents: [{
+                  parts: [{ text: prompt }]
+                }],
+                generationConfig: {
+                  temperature: 0.1,
+                  responseMimeType: "application/json"
+                }
+              })
+            });
+
+            if (!response.ok) {
+              const errText = await response.text();
+              throw new Error(`Gemini API error: ${response.status} - ${errText}`);
+            }
+
+            const data = await response.json();
+            
+            let rawJson = '';
+            if (data && data.candidates && data.candidates.length > 0 &&
+                data.candidates[0].content && data.candidates[0].content.parts &&
+                data.candidates[0].content.parts.length > 0 && data.candidates[0].content.parts[0].text) {
+              rawJson = data.candidates[0].content.parts[0].text.trim();
+            } else {
+              console.log("Gemini API response did not contain expected text candidates: " + JSON.stringify(data));
+              return;
+            }
+
+            // Parse response JSON
+            const reviewData = JSON.parse(rawJson);
+
+            // 1. Update the Pull Request Description
+            if (reviewData.summary) {
+              const { data: pr } = await github.rest.pulls.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.issue.number
+              });
+
+              const currentBody = pr.body || '';
+              const marker = "<!-- AI_SUMMARY_START -->";
+              const markerEnd = "<!-- AI_SUMMARY_END -->";
+              let cleanBody = currentBody;
+
+              if (currentBody.includes(marker)) {
+                const startIndex = currentBody.indexOf(marker);
+                const endIndex = currentBody.indexOf(markerEnd);
+                if (endIndex !== -1) {
+                  cleanBody = currentBody.substring(0, startIndex).trim() + "\n" + currentBody.substring(endIndex + markerEnd.length).trim();
+                } else {
+                  cleanBody = currentBody.substring(0, startIndex).trim();
+                }
+              }
+
+              const newBody = `${cleanBody.trim()}\n\n${marker}\n### 🤖 AI-Generated Summary\n\n${reviewData.summary}\n\n${markerEnd}`;
+              
+              await github.rest.pulls.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.issue.number,
+                body: newBody
+              });
+              console.log("Successfully updated PR description with AI summary.");
+            }
+
+            // 2. Auto-Resolve Fixed Conversation Threads
+            if (reviewData.resolvedThreads && reviewData.resolvedThreads.length > 0) {
+              for (const threadId of reviewData.resolvedThreads) {
+                try {
+                  await github.graphql(`
+                    mutation($threadId: ID!) {
+                      resolveReviewThread(input: { threadId: $threadId }) {
+                        thread {
+                          id
+                          isResolved
+                        }
+                      }
+                    }
+                  `, { threadId });
+                  console.log(`Successfully resolved thread ${threadId}`);
+                } catch (err) {
+                  console.error(`Failed to resolve thread ${threadId}:`, err);
+                }
+              }
+            }
+
+            // 3. Post New Inline Code Review Comments
+            if (reviewData.comments && reviewData.comments.length > 0) {
+              const { data: prInfo } = await github.rest.pulls.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.issue.number
+              });
+
+              for (const comment of reviewData.comments) {
+                try {
+                  await github.rest.pulls.createReviewComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    pull_number: context.issue.number,
+                    commit_id: prInfo.head.sha,
+                    path: comment.path,
+                    line: parseInt(comment.line),
+                    side: 'RIGHT',
+                    body: comment.body
+                  });
+                  console.log(`Created inline comment on ${comment.path}:${comment.line}`);
+                } catch (err) {
+                  console.log(`Failed to create inline comment on ${comment.path}:${comment.line}. Falling back to issue comment. Error: ${err.message}`);
+                  // Fallback: post as general PR comment if line mapping fails
+                  await github.rest.issues.createComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: context.issue.number,
+                    body: `**Feedback on ${comment.path} (Line ${comment.line}):**\n\n${comment.body}`
+                  });
+                }
+              }
+            }
+          } catch (error) {
+            console.error("Error generating or posting review:", error);
+          }
