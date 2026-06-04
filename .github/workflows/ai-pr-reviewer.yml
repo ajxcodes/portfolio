@@ -1,0 +1,120 @@
+name: AI Pull Request Reviewer
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - 'apps/api/**'
+      - 'apps/web/**'
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  review:
+    name: Code Review (Gemini AI)
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0 # Fetch all history so we can generate diffs
+
+    - name: Generate PR Diff
+      run: |
+        git fetch origin ${{ github.base_ref }}
+        # Generate diff between the target branch and the PR branch
+        git diff origin/${{ github.base_ref }}...HEAD > pr_diff.txt
+        # Check size of diff
+        ls -la pr_diff.txt
+
+    - name: Analyze and Comment with Gemini
+      uses: actions/github-script@v7
+      env:
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const fs = require('fs');
+          const path = 'pr_diff.txt';
+          
+          if (!fs.existsSync(path)) {
+            console.log("No diff file found.");
+            return;
+          }
+          
+          let diffText = fs.readFileSync(path, 'utf8');
+          if (!diffText.trim()) {
+            console.log("Diff is empty.");
+            return;
+          }
+
+          // Truncate if diff is exceptionally large (e.g. > 150KB) to prevent token limits
+          const maxCharLimit = 150000;
+          if (diffText.length > maxCharLimit) {
+            diffText = diffText.substring(0, maxCharLimit) + "\n\n...[Diff truncated due to size limit]...";
+          }
+
+          const apiKey = process.env.GEMINI_API_KEY;
+          if (!apiKey) {
+            console.log("GEMINI_API_KEY secret is not set. Skipping AI review.");
+            return;
+          }
+
+          const prompt = `You are Antigravity, an expert senior software engineer and security auditor reviewing a pull request for an enterprise portfolio website.
+          
+          Below is the git diff of the changes. Please conduct a code review and highlight:
+          1. **Logic/Syntax Bugs**: Any bugs, unexpected side effects, or incorrect logic.
+          2. **Security Vulnerabilities**: Plain-text secrets, authorization bypasses, SQL injection risks.
+          3. **Performance or Architectural Improvements**: Redundant loops, inefficient database queries, clean code principles.
+          
+          Guidelines:
+          - If the code looks great, summarize the main achievements of the PR briefly and give a positive sign-off.
+          - Keep findings concise and constructive.
+          - Use collapsible HTML tags <details><summary>Click to view suggestion</summary>...</details> to display suggested code fixes.
+          
+          Here is the git diff:
+          \`\`\`diff
+          ${diffText}
+          \`\`\`
+          `;
+
+          try {
+            const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + apiKey;
+            const response = await fetch(url, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                contents: [{
+                  parts: [{ text: prompt }]
+                }],
+                generationConfig: {
+                  temperature: 0.2
+                }
+              })
+            });
+
+            if (!response.ok) {
+              const errText = await response.text();
+              throw new Error(`Gemini API error: ${response.status} - ${errText}`);
+            }
+
+            const data = await response.json();
+            const reviewText = data.candidates[0].content.parts[0].text;
+
+            if (reviewText && reviewText.trim()) {
+              // Post review comment to the Pull Request
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: reviewText
+              });
+              console.log("Successfully posted AI review comment.");
+            }
+          } catch (error) {
+            console.error("Error generating or posting review:", error);
+          }
