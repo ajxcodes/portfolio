@@ -1,11 +1,11 @@
-﻿# Stage 1: Build the application
+# Stage 1: Build the application
 # Using a specific version is better than :9.0 for reproducibility
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
-# Copy project files and restore dependencies first to leverage Docker layer caching
-# Source paths are relative to the build context (likely the repository root)
-# Destination paths are relative to WORKDIR /src
+# Copy central package management files and project files to leverage Docker layer caching
+COPY Directory.Packages.props .
+COPY global.json .
 COPY src/Portfolio.Api/*.csproj Portfolio.Api/
 COPY src/Portfolio.Domain/*.csproj Portfolio.Domain/
 COPY src/Portfolio.Application/*.csproj Portfolio.Application/
