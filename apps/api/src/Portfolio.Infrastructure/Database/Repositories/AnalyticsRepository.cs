@@ -39,6 +39,32 @@ public class AnalyticsRepository(PortfolioDbContext context) : IAnalyticsReposit
             .ToListAsync();
     }
 
+    public Task<int> GetTotalPageViewsCountAsync()
+    {
+        return context.PageViewLogs.CountAsync();
+    }
+
+    public Task<int> GetUniquePageViewsCountAsync()
+    {
+        return context.PageViewLogs
+            .Select(pv => pv.IpAddress ?? "")
+            .Distinct()
+            .CountAsync();
+    }
+
+    public Task<int> GetTotalLinkClicksCountAsync()
+    {
+        return context.LinkClickLogs.CountAsync();
+    }
+
+    public Task<int> GetUniqueLinkClicksCountAsync()
+    {
+        return context.LinkClickLogs
+            .Select(c => new { Ip = c.IpAddress ?? "", c.LinkId })
+            .Distinct()
+            .CountAsync();
+    }
+
     public Task SaveChangesAsync()
     {
         return context.SaveChangesAsync();

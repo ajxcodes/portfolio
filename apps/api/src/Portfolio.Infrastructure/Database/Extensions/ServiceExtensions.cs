@@ -18,22 +18,21 @@ public static class ServiceExtensions
     const string IdeDebugging = "IDE_DEBUGGING";
     const string Localhost = "localhost";
     private static readonly string ConnectionString = "Host={0};Database={1};Username={2};Password={3}";
-    extension(IServiceCollection services)
+    public static IServiceCollection ConfigureDatabase(this IServiceCollection services)
     {
-        public IServiceCollection
-            ConfigureDatabase() =>
-            services.AddDbContext<PortfolioDbContext>(options =>
-                    options.UseNpgsql(GetConnectionString()))
-                .ConfigureRepositories();
+        services.AddDbContext<PortfolioDbContext>(options =>
+                options.UseNpgsql(GetConnectionString()))
+            .ConfigureRepositories();
+        return services;
+    }
 
-        private IServiceCollection ConfigureRepositories()
-        {
-            services.AddScoped<IPostRepository, PostRepository>();
-            services.AddScoped<IResumeRepository, ResumeRepository>();
-            services.AddScoped<IAnalyticsRepository, AnalyticsRepository>();
-            services.AddScoped<IAuditRepository, AuditRepository>();
-            return services;
-        }
+    private static IServiceCollection ConfigureRepositories(this IServiceCollection services)
+    {
+        services.AddScoped<IPostRepository, PostRepository>();
+        services.AddScoped<IResumeRepository, ResumeRepository>();
+        services.AddScoped<IAnalyticsRepository, AnalyticsRepository>();
+        services.AddScoped<IAuditRepository, AuditRepository>();
+        return services;
     }
 
     private static string GetConnectionString()

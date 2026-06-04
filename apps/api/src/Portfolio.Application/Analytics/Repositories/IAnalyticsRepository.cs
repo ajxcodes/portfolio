@@ -11,5 +11,9 @@ public interface IAnalyticsRepository
     Task LogLinkClickAsync(LinkClickLog log);
     Task<List<PageViewLog>> GetPageViewsAsync(int limit);
     Task<List<LinkClickLog>> GetLinkClicksAsync(int limit);
+    Task<int> GetTotalPageViewsCountAsync();
+    Task<int> GetUniquePageViewsCountAsync();
+    Task<int> GetTotalLinkClicksCountAsync();
+    Task<int> GetUniqueLinkClicksCountAsync();
     Task SaveChangesAsync();
 }
