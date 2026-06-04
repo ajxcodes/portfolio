@@ -10,6 +10,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Portfolio.Infrastructure", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Portfolio.Faker", "src\Portfolio.Faker\Portfolio.Faker.csproj", "{A0B398BD-28EE-4CA6-BE10-C2CC75D8E0A1}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Portfolio.Tests", "src\Portfolio.Tests\Portfolio.Tests.csproj", "{D97B5CB0-756B-490A-A1A6-053D90DC7A5D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -36,5 +38,9 @@ Global
 		{A0B398BD-28EE-4CA6-BE10-C2CC75D8E0A1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A0B398BD-28EE-4CA6-BE10-C2CC75D8E0A1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A0B398BD-28EE-4CA6-BE10-C2CC75D8E0A1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D97B5CB0-756B-490A-A1A6-053D90DC7A5D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D97B5CB0-756B-490A-A1A6-053D90DC7A5D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D97B5CB0-756B-490A-A1A6-053D90DC7A5D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D97B5CB0-756B-490A-A1A6-053D90DC7A5D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

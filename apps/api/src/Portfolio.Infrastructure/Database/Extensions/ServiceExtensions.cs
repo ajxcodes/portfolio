@@ -1,6 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Portfolio.Application.Blog.Repositories;
+using Portfolio.Application.Resume.Repositories;
+using Portfolio.Application.Analytics.Repositories;
+using Portfolio.Application.Audit.Repositories;
 using Portfolio.Infrastructure.Database.Contexts;
 using Portfolio.Infrastructure.Database.Repositories;
 
@@ -25,7 +28,11 @@ public static class ServiceExtensions
 
         private IServiceCollection ConfigureRepositories()
         {
-            return services.AddScoped<IPostRepository, PostRepository>();
+            services.AddScoped<IPostRepository, PostRepository>();
+            services.AddScoped<IResumeRepository, ResumeRepository>();
+            services.AddScoped<IAnalyticsRepository, AnalyticsRepository>();
+            services.AddScoped<IAuditRepository, AuditRepository>();
+            return services;
         }
     }
 

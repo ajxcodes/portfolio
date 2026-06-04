@@ -21,6 +21,8 @@ public class PostService(IPostRepository repository) : IPostService
     public async Task<PostResponse> GetAsync(Guid id)
     {
         var post = await repository.GetAsync(id);
-        return PostResponse.FromDomain(post);
+        return post == null
+            ? throw new InvalidOperationException($"Post with id {id} not found")
+            : PostResponse.FromDomain(post);
     }
 }
