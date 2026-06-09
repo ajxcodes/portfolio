@@ -37,6 +37,7 @@ jobs:
       uses: actions/github-script@v7
       env:
         GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
@@ -212,20 +213,59 @@ jobs:
               break; // Success! Break out of the loop
             }
 
-            if (!success) {
-               throw new Error("All model requests failed.");
+            let rawJson = '';
+            
+            if (success) {
+              const data = await response.json();
+              if (data && data.candidates && data.candidates.length > 0 &&
+                  data.candidates[0].content && data.candidates[0].content.parts &&
+                  data.candidates[0].content.parts.length > 0 && data.candidates[0].content.parts[0].text) {
+                rawJson = data.candidates[0].content.parts[0].text.trim();
+              } else {
+                console.log("Gemini API response did not contain expected text candidates.");
+                success = false;
+              }
             }
 
-            const data = await response.json();
-            
-            let rawJson = '';
-            if (data && data.candidates && data.candidates.length > 0 &&
-                data.candidates[0].content && data.candidates[0].content.parts &&
-                data.candidates[0].content.parts.length > 0 && data.candidates[0].content.parts[0].text) {
-              rawJson = data.candidates[0].content.parts[0].text.trim();
-            } else {
-              console.log("Gemini API response did not contain expected text candidates: " + JSON.stringify(data));
-              return;
+            if (!success) {
+               console.log("Gemini requests failed or quota exceeded. Attempting fallback to GitHub Copilot (Models API)...");
+               const ghToken = process.env.GITHUB_TOKEN;
+               if (!ghToken) {
+                 throw new Error("All Gemini requests failed and no GITHUB_TOKEN is available for Copilot fallback.");
+               }
+               
+               const copilotUrl = 'https://models.inference.ai.azure.com/chat/completions';
+               const copilotResponse = await fetch(copilotUrl, {
+                 method: 'POST',
+                 headers: {
+                   'Content-Type': 'application/json',
+                   'Authorization': `Bearer ${ghToken}`
+                 },
+                 body: JSON.stringify({
+                   model: 'gpt-4o',
+                   messages: [
+                     {
+                       role: 'system',
+                       content: "You are Antigravity, an expert senior software engineer and security auditor reviewing a pull request for an enterprise portfolio website.\n\nYou must respond with a SINGLE JSON object exactly matching this structure:\n{\n  \"summary\": \"...\",\n  \"resolvedThreads\": [\"id1\"],\n  \"comments\": [\n    { \"path\": \"...\", \"line\": 15, \"body\": \"🤖 **Antigravity AI Suggestion**\\n\\n...\" }\n  ]\n}"
+                     },
+                     {
+                       role: 'user',
+                       content: `Evaluation Rules:\n1. PR Summary ('summary')\n2. Old Issues Resolve ('resolvedThreads'): Return array of resolved threadIds.\n3. New Issues ('comments'): Inline comments for logic/security flaws.\n\nHere are the unresolved previous AI reviews:\n${previousThreadsText}\n\nHere is the git diff of the PR changes:\n\`\`\`diff\n${diffText}\n\`\`\``
+                     }
+                   ],
+                   temperature: 0.1,
+                   response_format: { type: "json_object" }
+                 })
+               });
+               
+               if (!copilotResponse.ok) {
+                 const errText = await copilotResponse.text();
+                 throw new Error(`Copilot API fallback failed: ${copilotResponse.status} - ${errText}`);
+               }
+               
+               const copilotData = await copilotResponse.json();
+               rawJson = copilotData.choices[0].message.content.trim();
+               console.log("Successfully generated review using Copilot fallback!");
             }
 
             // Parse response JSON
@@ -322,14 +362,14 @@ jobs:
           } catch (error) {
             console.error("Error generating or posting review:", error);
             
-            // Post a comment to the PR if the API quota was exceeded
-            if (error.message && (error.message.includes('QUOTA_EXCEEDED') || error.message.includes('429'))) {
+            // Post a comment to the PR if the API quota was exceeded or Copilot fallback failed
+            if (error.message && (error.message.includes('QUOTA_EXCEEDED') || error.message.includes('429') || error.message.includes('Copilot API fallback failed'))) {
               try {
                 await github.rest.issues.createComment({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   issue_number: context.issue.number,
-                  body: "⚠️ **AI PR Review Skipped**: The Gemini API quota has been exceeded or rate-limited. The automated code review could not be completed at this time."
+                  body: "⚠️ **AI PR Review Skipped**: The AI provider API quotas (Gemini/Copilot) have been exceeded or rate-limited. The automated code review could not be completed at this time."
                 });
                 console.log("Posted quota exceeded warning to PR.");
               } catch (e) {

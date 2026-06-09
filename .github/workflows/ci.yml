@@ -156,42 +156,4 @@ jobs:
         path: apps/web/playwright-report/
         retries-on-error: true
 
-  deploy-render:
-    name: Trigger Render Deploy & Track Status
-    needs: [backend-tests, frontend-build, frontend-tests, playwright-e2e]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    runs-on: ubuntu-latest
-    steps:
-    - name: Trigger Web API Render Deploy
-      run: |
-        if [ -n "${{ secrets.RENDER_DEPLOY_HOOK_API }}" ]; then
-          curl -f -X POST "${{ secrets.RENDER_DEPLOY_HOOK_API }}"
-        else
-          echo "RENDER_DEPLOY_HOOK_API secret is not set, skipping API trigger."
-        fi
-
-    - name: Trigger Frontend Web Render Deploy
-      run: |
-        if [ -n "${{ secrets.RENDER_DEPLOY_HOOK_WEB }}" ]; then
-          curl -f -X POST "${{ secrets.RENDER_DEPLOY_HOOK_WEB }}"
-        else
-          echo "RENDER_DEPLOY_HOOK_WEB secret is not set, skipping Web trigger."
-        fi
-
-    - name: Register GitHub Environment Deployment
-      env:
-        GH_TOKEN: ${{ github.token }}
-      run: |
-        # Create deployment and capture ID
-        DEPLOYMENT_ID=$(gh api repos/${{ github.repository }}/deployments \
-          -f ref=main \
-          -f environment=production \
-          -f description="Automatic deployment after successful CI checks" \
-          --jq '.id')
-        
-        # Create successful deployment status link
-        gh api repos/${{ github.repository }}/deployments/$DEPLOYMENT_ID/statuses \
-          -f state=success \
-          -f description="CI validation passed. Render build triggered." \
-          -f log_url="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
