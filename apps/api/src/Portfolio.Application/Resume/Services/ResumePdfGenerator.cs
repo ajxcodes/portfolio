@@ -47,7 +47,7 @@ public class ResumePdfGenerator : IResumePdfGenerator
                         l.LinkType?.KeyIdentifier == "email" || l.LinkType?.Name?.Equals("Email", StringComparison.OrdinalIgnoreCase) == true);
                     if (emailLink != null)
                     {
-                        contactParts.Add(emailLink.Url.Replace("mailto:", ""));
+                        contactParts.Add(FormatContactUrl(emailLink.Url, "email"));
                     }
 
                     // Add Phone / Other links
@@ -55,7 +55,7 @@ public class ResumePdfGenerator : IResumePdfGenerator
                         l.LinkType?.KeyIdentifier == "phone" || l.LinkType?.Name?.Equals("Phone", StringComparison.OrdinalIgnoreCase) == true);
                     if (phoneLink != null)
                     {
-                        contactParts.Add(phoneLink.Url);
+                        contactParts.Add(FormatContactUrl(phoneLink.Url, "phone"));
                     }
 
                     // Add LinkedIn
@@ -63,7 +63,7 @@ public class ResumePdfGenerator : IResumePdfGenerator
                         l.LinkType?.KeyIdentifier == "linkedin" || l.LinkType?.Name?.Equals("LinkedIn", StringComparison.OrdinalIgnoreCase) == true);
                     if (linkedinLink != null)
                     {
-                        contactParts.Add(linkedinLink.Url.Replace("https://", "").Replace("www.", ""));
+                        contactParts.Add(FormatContactUrl(linkedinLink.Url, "linkedin"));
                     }
 
                     // Add GitHub
@@ -71,7 +71,7 @@ public class ResumePdfGenerator : IResumePdfGenerator
                         l.LinkType?.KeyIdentifier == "github" || l.LinkType?.Name?.Equals("GitHub", StringComparison.OrdinalIgnoreCase) == true);
                     if (githubLink != null)
                     {
-                        contactParts.Add(githubLink.Url.Replace("https://", "").Replace("www.", ""));
+                        contactParts.Add(FormatContactUrl(githubLink.Url, "github"));
                     }
 
                     // Add Portfolio / Website Link
@@ -79,7 +79,7 @@ public class ResumePdfGenerator : IResumePdfGenerator
                         l.LinkType?.KeyIdentifier == "website" || l.LinkType?.Name?.Equals("Website", StringComparison.OrdinalIgnoreCase) == true);
                     if (websiteLink != null)
                     {
-                        contactParts.Add(websiteLink.Url.Replace("https://", "").Replace("www.", ""));
+                        contactParts.Add(FormatContactUrl(websiteLink.Url, "website"));
                     }
 
                     if (contactParts.Any())
@@ -217,5 +217,17 @@ public class ResumePdfGenerator : IResumePdfGenerator
                 });
             });
         }).GeneratePdf();
+    }
+
+    private static string FormatContactUrl(string url, string type)
+    {
+        if (string.IsNullOrWhiteSpace(url)) return url;
+
+        return type.ToLowerInvariant() switch
+        {
+            "email" => url.Replace("mailto:", ""),
+            "linkedin" or "github" or "website" => url.Replace("https://", "").Replace("http://", "").Replace("www.", "").TrimEnd('/'),
+            _ => url
+        };
     }
 }

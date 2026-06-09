@@ -7,10 +7,13 @@ using Portfolio.Domain.Resume;
 using Portfolio.Domain.Analytics;
 using Portfolio.Domain.Audit;
 
+using System.Text.Json;
+
 namespace Portfolio.Infrastructure.Database.Contexts;
 
 public class PortfolioDbContext(DbContextOptions options, IHttpContextAccessor? httpContextAccessor = null) : DbContext(options)
 {
+    private static readonly JsonSerializerOptions AuditJsonOptions = new() { WriteIndented = true };
     private readonly IHttpContextAccessor? _httpContextAccessor = httpContextAccessor;
 
     public DbSet<Post> Posts { get; set; } = null!;
@@ -124,7 +127,7 @@ public class PortfolioDbContext(DbContextOptions options, IHttpContextAccessor? 
                 }
             }
 
-            var changesJson = System.Text.Json.JsonSerializer.Serialize(changes);
+            var changesJson = JsonSerializer.Serialize(changes, AuditJsonOptions);
 
             auditEntries.Add(new AuditLog
             {
