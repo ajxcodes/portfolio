@@ -8,7 +8,7 @@ namespace Portfolio.Infrastructure.Database.Converters;
 
 public class AesEncryptionConverter : ValueConverter<string, string>
 {
-    private static readonly string EncryptionKey = Environment.GetEnvironmentVariable("ENCRYPTION_KEY") ?? "dev-encryption-key-32-chars-long!";
+    private static readonly string EncryptionKey = Environment.GetEnvironmentVariable("ENCRYPTION_KEY") ?? throw new InvalidOperationException("ENCRYPTION_KEY environment variable is not set.");
 
     public AesEncryptionConverter() : base(
         v => Encrypt(v),
@@ -43,33 +43,26 @@ public class AesEncryptionConverter : ValueConverter<string, string>
     {
         if (string.IsNullOrEmpty(cipherText)) return cipherText;
 
-        try
-        {
-            byte[] fullCipher = Convert.FromBase64String(cipherText);
-            byte[] keyBytes = GetKeyBytes(EncryptionKey);
+        byte[] fullCipher = Convert.FromBase64String(cipherText);
+        byte[] keyBytes = GetKeyBytes(EncryptionKey);
 
-            using var aes = Aes.Create();
-            aes.Key = keyBytes;
+        using var aes = Aes.Create();
+        aes.Key = keyBytes;
 
-            byte[] iv = new byte[aes.BlockSize / 8];
-            byte[] cipher = new byte[fullCipher.Length - iv.Length];
+        byte[] iv = new byte[aes.BlockSize / 8];
+        byte[] cipher = new byte[fullCipher.Length - iv.Length];
 
-            Array.Copy(fullCipher, 0, iv, 0, iv.Length);
-            Array.Copy(fullCipher, iv.Length, cipher, 0, cipher.Length);
+        Array.Copy(fullCipher, 0, iv, 0, iv.Length);
+        Array.Copy(fullCipher, iv.Length, cipher, 0, cipher.Length);
 
-            aes.IV = iv;
+        aes.IV = iv;
 
-            using var decryptor = aes.CreateDecryptor(aes.Key, aes.IV);
-            using var ms = new MemoryStream(cipher);
-            using var cs = new CryptoStream(ms, decryptor, CryptoStreamMode.Read);
-            using var sr = new StreamReader(cs);
+        using var decryptor = aes.CreateDecryptor(aes.Key, aes.IV);
+        using var ms = new MemoryStream(cipher);
+        using var cs = new CryptoStream(ms, decryptor, CryptoStreamMode.Read);
+        using var sr = new StreamReader(cs);
 
-            return sr.ReadToEnd();
-        }
-        catch
-        {
-            return cipherText;
-        }
+        return sr.ReadToEnd();
     }
 
     private static byte[] GetKeyBytes(string key)
