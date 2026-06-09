@@ -80,6 +80,7 @@ jobs:
                         isResolved
                         path
                         line
+                        originalLine
                         comments(first: 50) {
                           nodes {
                             id
@@ -107,13 +108,13 @@ jobs:
               if (!thread.isResolved) {
                 // Check if the bot made any comment in this thread
                 const botComment = thread.comments.nodes.find(c => 
-                  c.body.includes("🤖 **Antigravity AI Suggestion**") || c.author.login === "github-actions[bot]"
+                  c.body.includes("🤖 **Antigravity AI Suggestion**") || c.author?.login?.includes("github-actions")
                 );
                 if (botComment) {
                   unresolvedBotThreads.push({
                     threadId: thread.id,
                     path: thread.path,
-                    line: thread.line,
+                    line: thread.line || thread.originalLine || "unknown",
                     body: botComment.body
                   });
                 }
