@@ -38,7 +38,7 @@ test.describe("Interactive Resume Page", () => {
     });
 
     // Load local development page
-    await page.goto("/");
+    await page.goto("/resume");
   });
 
   test("should toggle collapsible sections on click", async ({ page }) => {
