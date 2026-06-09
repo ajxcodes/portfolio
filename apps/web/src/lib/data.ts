@@ -133,7 +133,7 @@ export async function getPortfolioData(): Promise<PortfolioData> {
   // Start with a clone of the default data
   const portfolioData: PortfolioData = JSON.parse(JSON.stringify(defaultData));
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || process.env.API_BASE_URL || 'http://localhost:5808';
+  const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5808';
 
   // 1. Fetch active resume profile
   try {
@@ -246,7 +246,7 @@ export async function getPortfolioData(): Promise<PortfolioData> {
 // Function to get a single blog post by its slug from the API
 export async function getBlogPostBySlug(slug: string): Promise<BlogPost | undefined> {
   try {
-    const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || process.env.API_BASE_URL || 'http://localhost:5808';
+    const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5808';
     const res = await fetch(`${apiUrl}/api/blog/posts`, {
       cache: 'no-store',
     });
