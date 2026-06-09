@@ -7,6 +7,7 @@ public class SkillCategory
 {
     public Guid Id { get; set; } = Guid.CreateVersion7();
     public string CategoryName { get; set; } = string.Empty;
+    public string? IconName { get; set; }
     public int DisplayOrder { get; set; } = 0;
 
     // Navigation properties

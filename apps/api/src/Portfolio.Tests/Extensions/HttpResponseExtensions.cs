@@ -1,6 +1,3 @@
-using System.Net.Http;
-using System.Threading.Tasks;
-
 namespace Portfolio.Tests.Extensions;
 
 public static class HttpResponseExtensions

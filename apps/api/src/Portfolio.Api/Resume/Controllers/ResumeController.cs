@@ -1,16 +1,20 @@
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Portfolio.Application.Resume.Services;
+using Portfolio.Application.Storage.Services;
 using Portfolio.Domain.Resume;
+using Portfolio.Infrastructure.Database.Contexts;
 
 namespace Portfolio.Api.Resume.Controllers;
 
 [ApiController]
 [Route("api/resume")]
-public class ResumeController(IResumeService service) : ControllerBase
+public class ResumeController(
+    IResumeService service,
+    IStorageService? storageService = null,
+    IResumePdfGenerator? pdfGenerator = null,
+    PortfolioDbContext? context = null) : ControllerBase
 {
     [HttpGet("active")]
     [AllowAnonymous]
@@ -24,6 +28,51 @@ public class ResumeController(IResumeService service) : ControllerBase
         return Ok(activeProfile);
     }
 
+    [HttpPost("active/download")]
+    [AllowAnonymous]
+    public async Task<IActionResult> PrepareDownloadAsync()
+    {
+        if (storageService == null || pdfGenerator == null)
+        {
+            return StatusCode(500, "PDF generation or storage services are not configured.");
+        }
+
+        var activeProfile = await service.GetActiveProfileAsync();
+        if (activeProfile == null)
+        {
+            return NotFound("No active profile configured");
+        }
+
+        var skillCategories = await service.ListSkillsAsync();
+        
+        var updatedAtTicks = activeProfile.UpdatedAt.Ticks;
+        var customKey = $"resumes/resume_{activeProfile.Id}_{updatedAtTicks}.pdf";
+
+        // Check if already cached in S3/MinIO
+        var existingUrl = await storageService.GetFileUrlIfExistsAsync(customKey);
+        if (!string.IsNullOrEmpty(existingUrl))
+        {
+            return Ok(new { DownloadUrl = existingUrl });
+        }
+
+        // Generate PDF
+        var pdfBytes = pdfGenerator.GeneratePdf(activeProfile, skillCategories);
+
+        // Upload to S3
+        using var ms = new MemoryStream(pdfBytes);
+        var uploadUrl = await storageService.UploadFileAsync(ms, "resume.pdf", "application/pdf", customKey);
+
+        return Ok(new { DownloadUrl = uploadUrl });
+    }
+
+    [HttpGet("skills")]
+    [AllowAnonymous]
+    public async Task<ActionResult<IEnumerable<SkillCategory>>> GetSkillsAsync()
+    {
+        var skills = await service.ListSkillsAsync();
+        return Ok(skills);
+    }
+
     [HttpGet]
     [Authorize]
     public async Task<ActionResult<IEnumerable<ResumeProfile>>> GetAllAsync()
@@ -32,7 +81,7 @@ public class ResumeController(IResumeService service) : ControllerBase
         return Ok(profiles);
     }
 
-    [HttpGet("{id}")]
+    [HttpGet("{id:guid}")]
     [Authorize]
     public async Task<ActionResult<ResumeProfile>> GetByIdAsync(Guid id)
     {
@@ -80,6 +129,90 @@ public class ResumeController(IResumeService service) : ControllerBase
         };
 
         var createdProfile = await service.CreateProfileAsync(profile);
+
+        if (context != null)
+        {
+            // Add links
+            if (request.Links != null)
+            {
+                foreach (var linkDto in request.Links)
+                {
+                    var linkType = await context.ResumeProfileLinkTypes
+                        .FirstOrDefaultAsync(lt => lt.KeyIdentifier == linkDto.LinkTypeKey);
+                    if (linkType == null)
+                    {
+                        linkType = new ResumeProfileLinkType
+                        {
+                            Id = Guid.CreateVersion7(),
+                            Name = linkDto.LinkTypeName,
+                            KeyIdentifier = linkDto.LinkTypeKey
+                        };
+                        await context.ResumeProfileLinkTypes.AddAsync(linkType);
+                    }
+                    var profileLink = new ResumeProfileLink
+                    {
+                        Id = Guid.CreateVersion7(),
+                        ProfileId = profile.Id,
+                        LinkTypeId = linkType.Id,
+                        Url = linkDto.Url,
+                        UpdatedAt = DateTime.UtcNow
+                    };
+                    await context.ResumeProfileLinks.AddAsync(profileLink);
+                }
+            }
+
+            // Add work experiences
+            if (request.WorkExperiences != null)
+            {
+                foreach (var expDto in request.WorkExperiences)
+                {
+                    var experience = new WorkExperience
+                    {
+                        Id = Guid.CreateVersion7(),
+                        ProfileId = profile.Id,
+                        Company = expDto.Company,
+                        Role = expDto.Role,
+                        Period = expDto.Period,
+                        Location = expDto.Location,
+                        IsPrevious = expDto.IsPrevious,
+                        DisplayOrder = expDto.DisplayOrder
+                    };
+                    await context.WorkExperiences.AddAsync(experience);
+
+                    if (expDto.Highlights.Count > 0)
+                    {
+                        int hOrder = 0;
+                        foreach (var text in expDto.Highlights)
+                        {
+                            var highlight = new ExperienceHighlight
+                            {
+                                Id = Guid.CreateVersion7(),
+                                ExperienceId = experience.Id,
+                                ResultText = text,
+                                DisplayOrder = hOrder++
+                            };
+                            await context.ExperienceHighlights.AddAsync(highlight);
+                        }
+                    }
+
+                    if (expDto.SkillIds != null)
+                    {
+                        foreach (var skillId in expDto.SkillIds)
+                        {
+                            var wes = new WorkExperienceSkill
+                            {
+                                WorkExperienceId = experience.Id,
+                                SkillId = skillId
+                            };
+                            await context.WorkExperienceSkills.AddAsync(wes);
+                        }
+                    }
+                }
+            }
+
+            await context.SaveChangesAsync();
+        }
+
         return CreatedAtAction(nameof(GetByIdAsync), new { id = createdProfile.Id }, createdProfile);
     }
 
@@ -101,6 +234,96 @@ public class ResumeController(IResumeService service) : ControllerBase
         profile.UpdatedAt = DateTime.UtcNow;
 
         await service.UpdateProfileAsync(profile);
+
+        if (context != null)
+        {
+            // Delete old links
+            var oldLinks = await context.ResumeProfileLinks.Where(l => l.ProfileId == id).ToListAsync();
+            context.ResumeProfileLinks.RemoveRange(oldLinks);
+
+            // Add new links
+            if (request.Links != null)
+            {
+                foreach (var linkDto in request.Links)
+                {
+                    var linkType = await context.ResumeProfileLinkTypes
+                        .FirstOrDefaultAsync(lt => lt.KeyIdentifier == linkDto.LinkTypeKey);
+                    if (linkType == null)
+                    {
+                        linkType = new ResumeProfileLinkType
+                        {
+                            Id = Guid.CreateVersion7(),
+                            Name = linkDto.LinkTypeName,
+                            KeyIdentifier = linkDto.LinkTypeKey
+                        };
+                        await context.ResumeProfileLinkTypes.AddAsync(linkType);
+                    }
+                    var profileLink = new ResumeProfileLink
+                    {
+                        Id = Guid.CreateVersion7(),
+                        ProfileId = id,
+                        LinkTypeId = linkType.Id,
+                        Url = linkDto.Url,
+                        UpdatedAt = DateTime.UtcNow
+                    };
+                    await context.ResumeProfileLinks.AddAsync(profileLink);
+                }
+            }
+
+            // Delete old work experiences
+            var oldExps = await context.WorkExperiences.Where(we => we.ProfileId == id).ToListAsync();
+            context.WorkExperiences.RemoveRange(oldExps);
+
+            // Add new work experiences
+            if (request.WorkExperiences != null)
+            {
+                foreach (var expDto in request.WorkExperiences)
+                {
+                    var experience = new WorkExperience
+                    {
+                        Id = Guid.CreateVersion7(),
+                        ProfileId = id,
+                        Company = expDto.Company,
+                        Role = expDto.Role,
+                        Period = expDto.Period,
+                        Location = expDto.Location,
+                        IsPrevious = expDto.IsPrevious,
+                        DisplayOrder = expDto.DisplayOrder
+                    };
+                    await context.WorkExperiences.AddAsync(experience);
+
+                    if (expDto.Highlights.Count > 0)
+                    {
+                        var hOrder = 0;
+                        foreach (var text in expDto.Highlights)
+                        {
+                            var highlight = new ExperienceHighlight
+                            {
+                                Id = Guid.CreateVersion7(),
+                                ExperienceId = experience.Id,
+                                ResultText = text,
+                                DisplayOrder = hOrder++
+                            };
+                            await context.ExperienceHighlights.AddAsync(highlight);
+                        }
+                    }
+
+                    if (expDto.SkillIds == null) continue;
+                    foreach (var skillId in expDto.SkillIds)
+                    {
+                        var wes = new WorkExperienceSkill
+                        {
+                            WorkExperienceId = experience.Id,
+                            SkillId = skillId
+                        };
+                        await context.WorkExperienceSkills.AddAsync(wes);
+                    }
+                }
+            }
+
+            await context.SaveChangesAsync();
+        }
+
         return NoContent();
     }
 
@@ -124,13 +347,34 @@ public class ResumeController(IResumeService service) : ControllerBase
     }
 }
 
+public class ResumeLinkDto
+{
+    public string LinkTypeName { get; set; } = string.Empty;
+    public string LinkTypeKey { get; set; } = string.Empty;
+    public string Url { get; set; } = string.Empty;
+}
+
+public class WorkExperienceDto
+{
+    public string Company { get; set; } = string.Empty;
+    public string Role { get; set; } = string.Empty;
+    public string Period { get; set; } = string.Empty;
+    public string? Location { get; set; }
+    public bool IsPrevious { get; set; }
+    public int DisplayOrder { get; set; }
+    public List<string> Highlights { get; set; } = new();
+    public List<Guid>? SkillIds { get; set; }
+}
+
 public class CreateResumeRequest
 {
-    public string Name { get; set; } = string.Empty;
-    public string Title { get; set; } = string.Empty;
-    public string Intro { get; set; } = string.Empty;
-    public string? PhotoUrlLight { get; set; }
-    public string? PhotoUrlDark { get; set; }
+    public string Name { get; init; } = string.Empty;
+    public string Title { get; init; } = string.Empty;
+    public string Intro { get; init; } = string.Empty;
+    public string? PhotoUrlLight { get; init; }
+    public string? PhotoUrlDark { get; init; }
+    public List<ResumeLinkDto>? Links { get; set; }
+    public List<WorkExperienceDto>? WorkExperiences { get; set; }
 }
 
 public class UpdateResumeRequest
@@ -140,4 +384,6 @@ public class UpdateResumeRequest
     public string Intro { get; set; } = string.Empty;
     public string? PhotoUrlLight { get; set; }
     public string? PhotoUrlDark { get; set; }
+    public List<ResumeLinkDto>? Links { get; set; }
+    public List<WorkExperienceDto>? WorkExperiences { get; set; }
 }

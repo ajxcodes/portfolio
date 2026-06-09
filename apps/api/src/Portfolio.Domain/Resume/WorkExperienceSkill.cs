@@ -1,5 +1,3 @@
-using System;
-
 namespace Portfolio.Domain.Resume;
 
 public class WorkExperienceSkill

@@ -13,6 +13,8 @@
         <PackageReference Include="Swashbuckle.AspNetCore" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
         <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
+        <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" />
+        <PackageReference Include="HarfBuzzSharp.NativeAssets.Linux" />
     </ItemGroup>
 
     <ItemGroup>

@@ -33,7 +33,12 @@ public class ResumeRepository(PortfolioDbContext context) : IResumeRepository
     {
         return context.ResumeProfiles
             .Include(p => p.Links)
+                .ThenInclude(l => l.LinkType)
+            .Include(p => p.WorkExperiences.OrderBy(we => we.DisplayOrder))
+                .ThenInclude(we => we.Highlights.OrderBy(eh => eh.DisplayOrder))
             .Include(p => p.WorkExperiences)
+                .ThenInclude(we => we.WorkExperienceSkills)
+                    .ThenInclude(wes => wes.Skill)
             .FirstOrDefaultAsync(p => p.Id == id);
     }
 
@@ -44,7 +49,11 @@ public class ResumeRepository(PortfolioDbContext context) : IResumeRepository
 
     public Task UpdateProfileAsync(ResumeProfile profile)
     {
-        context.ResumeProfiles.Update(profile);
+        var entry = context.Entry(profile);
+        if (entry.State == EntityState.Detached)
+        {
+            context.ResumeProfiles.Update(profile);
+        }
         return Task.CompletedTask;
     }
 
@@ -73,6 +82,35 @@ public class ResumeRepository(PortfolioDbContext context) : IResumeRepository
     public async Task AddSkillAsync(Skill skill)
     {
         await context.Skills.AddAsync(skill);
+    }
+
+    public Task UpdateSkillCategoryAsync(SkillCategory category)
+    {
+        var entry = context.Entry(category);
+        if (entry.State == EntityState.Detached)
+        {
+            context.SkillCategories.Update(category);
+        }
+        return Task.CompletedTask;
+    }
+
+    public async Task DeleteSkillCategoryAsync(Guid id)
+    {
+        var category = await context.SkillCategories.FindAsync(id);
+        if (category != null)
+        {
+            context.SkillCategories.Remove(category);
+        }
+    }
+
+    public Task UpdateSkillAsync(Skill skill)
+    {
+        var entry = context.Entry(skill);
+        if (entry.State == EntityState.Detached)
+        {
+            context.Skills.Update(skill);
+        }
+        return Task.CompletedTask;
     }
 
     public async Task DeleteSkillAsync(Guid id)

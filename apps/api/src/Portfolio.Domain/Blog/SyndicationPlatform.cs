@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-
 namespace Portfolio.Domain.Blog;
 
 public class SyndicationPlatform

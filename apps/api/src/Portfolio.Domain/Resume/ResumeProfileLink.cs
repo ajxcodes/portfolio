@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using Portfolio.Domain.Analytics;
 
 namespace Portfolio.Domain.Resume;

@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-
 namespace Portfolio.Domain.Resume;
 
 public class ResumeProfile

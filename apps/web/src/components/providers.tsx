@@ -1,6 +1,12 @@
 "use client";
 
 import { ThemeProvider as NextThemesProvider, type ThemeProviderProps } from "next-themes";
+import { useTrafficTracker } from "@/hooks/useTrafficTracker";
+
+function TrafficTracker() {
+  useTrafficTracker();
+  return null;
+}
 
 export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
   return (
@@ -9,6 +15,9 @@ export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
       attribute="class"
       defaultTheme="dark"
       enableSystem
-    >{children}</NextThemesProvider>
+    >
+      <TrafficTracker />
+      {children}
+    </NextThemesProvider>
   );
 }

@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using NSubstitute;
 using Portfolio.Application.Resume.Repositories;
 using Portfolio.Application.Resume.Services;
@@ -55,7 +52,7 @@ public class ResumeServiceTests
 
         await _repositoryMock.Received(1).UpdateProfileAsync(p1);
         await _repositoryMock.Received(1).UpdateProfileAsync(p2);
-        await _repositoryMock.Received(1).SaveChangesAsync();
+        await _repositoryMock.Received(2).SaveChangesAsync();
     }
 
     [Fact]

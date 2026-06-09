@@ -1,20 +1,20 @@
-using System;
-using System.IO;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Portfolio.Infrastructure.Database.Contexts;
 using Testcontainers.PostgreSql;
+using Testcontainers.Minio;
 using Xunit;
+
+[assembly: CollectionBehavior(DisableTestParallelization = true)]
 
 namespace Portfolio.Tests.Infrastructure;
 
 public class DbTestFixture : IAsyncLifetime
 {
     public PostgreSqlContainer DbContainer { get; private set; } = null!;
+    public MinioContainer MinioContainer { get; private set; } = null!;
     public WebApplicationFactory<Program> Factory { get; private set; } = null!;
 
     [DllImport("libc", EntryPoint = "getuid")]
@@ -27,7 +27,19 @@ public class DbTestFixture : IAsyncLifetime
         DbContainer = new PostgreSqlBuilder("postgres:15-alpine")
             .Build();
 
-        await DbContainer.StartAsync();
+        MinioContainer = new MinioBuilder("minio/minio")
+            .WithUsername("minioadmin")
+            .WithPassword("minioadminpassword")
+            .Build();
+
+        await Task.WhenAll(DbContainer.StartAsync(), MinioContainer.StartAsync());
+
+        // Set S3 environment variables for integration tests using the local MinIO container
+        Environment.SetEnvironmentVariable("S3_ENDPOINT", MinioContainer.GetConnectionString());
+        Environment.SetEnvironmentVariable("S3_ACCESS_KEY", "minioadmin");
+        Environment.SetEnvironmentVariable("S3_SECRET_KEY", "minioadminpassword");
+        Environment.SetEnvironmentVariable("S3_BUCKET_NAME", "test-portfolio-media");
+        Environment.SetEnvironmentVariable("S3_PUBLIC_URL", "");
 
         Factory = new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
         {
@@ -61,10 +73,10 @@ public class DbTestFixture : IAsyncLifetime
         {
             await Factory.DisposeAsync();
         }
-        if (DbContainer != null)
-        {
-            await DbContainer.DisposeAsync();
-        }
+        await Task.WhenAll(
+            DbContainer != null ? DbContainer.DisposeAsync().AsTask() : Task.CompletedTask,
+            MinioContainer != null ? MinioContainer.DisposeAsync().AsTask() : Task.CompletedTask
+        );
     }
 
     private void ConfigureDockerHostForPodman()

@@ -1,13 +1,8 @@
-using System;
-using System.Linq;
-using System.Net.Http;
 using System.Net.Http.Json;
-using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Portfolio.Api.Analytics.Controllers;
 using Portfolio.Application.Analytics.Services;
-using Portfolio.Domain.Analytics;
 using Portfolio.Domain.Resume;
 using Portfolio.Infrastructure.Database.Contexts;
 using Portfolio.Tests.Infrastructure;

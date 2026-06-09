@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { motion, Variants } from "framer-motion";
+import * as LucideIcons from "lucide-react";
+import clsx from "clsx";
 import {
   ChevronDownIcon,
   ChevronUpIcon,
@@ -17,6 +19,8 @@ interface SkillsSectionProps {
   skills: SkillGroup[];
   selectedSkills: string[];
   onSkillSelect: (skill: string) => void;
+  layoutMode?: "grid" | "sidebar";
+  skillCounts?: Record<string, number>;
 }
 
 const SKILLS_TO_SHOW_INITIALLY = 5;
@@ -52,7 +56,7 @@ const categoryIcons: { [key: string]: React.ElementType } = {
   "Principles & Methodologies": LightbulbIcon,
 };
 
-export const SkillsSection = ({ skills, selectedSkills, onSkillSelect }: SkillsSectionProps) => {
+export const SkillsSection = ({ skills, selectedSkills, onSkillSelect, layoutMode = "grid", skillCounts }: SkillsSectionProps) => {
   const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
 
   const toggleCategory = (category: string) => {
@@ -65,13 +69,17 @@ export const SkillsSection = ({ skills, selectedSkills, onSkillSelect }: SkillsS
 
   return (
     <motion.div
-      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+      className={layoutMode === "sidebar" ? "grid grid-cols-1 gap-4" : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"}
       variants={containerVariants}
       initial="hidden"
       animate="visible"
     >
       {skills.map((skillGroup: SkillGroup) => {
-        const Icon = categoryIcons[skillGroup.category];
+        let Icon = categoryIcons[skillGroup.category];
+        if (skillGroup.iconName && (LucideIcons as any)[skillGroup.iconName]) {
+          Icon = (LucideIcons as any)[skillGroup.iconName] as React.ElementType;
+        }
+        
         const isExpanded = expandedCategories.includes(skillGroup.category);
         const hasMore = skillGroup.items.length > SKILLS_TO_SHOW_INITIALLY;
         const skillsToShow = isExpanded ? skillGroup.items : skillGroup.items.slice(0, SKILLS_TO_SHOW_INITIALLY);
@@ -80,24 +88,38 @@ export const SkillsSection = ({ skills, selectedSkills, onSkillSelect }: SkillsS
           <motion.div
             key={skillGroup.category}
             variants={itemVariants}
-            whileHover={{ y: -4, scale: 1.02, boxShadow: "0px 10px 15px -3px rgba(0, 0, 0, 0.1), 0px 4px 6px -2px rgba(0, 0, 0, 0.05)" }}
-            transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            className="bg-card/70 backdrop-blur-sm p-6 rounded-lg border border-border/20 flex flex-col"
+            className="terminal-card p-6 rounded-xl flex flex-col"
           >
             <div className="flex items-center gap-3 mb-4">
               {Icon && <Icon className="h-6 w-6 text-primary" />}
               <h3 className="text-lg font-bold text-primary">{skillGroup.category}</h3>
             </div>
             <div className="flex flex-wrap gap-2">
-              {skillsToShow.map((skill: string) => (
-                <button
-                  key={skill}
-                  onClick={() => onSkillSelect(skill)}
-                  className={`skill-btn ${selectedSkills.includes(skill) ? 'selected' : ''}`}
-                >
-                  {skill}
-                </button>
-              ))}
+              {skillsToShow.map((skill: string) => {
+                const isSelected = selectedSkills.includes(skill);
+                return (
+                  <button
+                    key={skill}
+                    onClick={() => onSkillSelect(skill)}
+                    className={clsx(
+                      "skill-btn relative overflow-visible",
+                      isSelected && "selected"
+                    )}
+                  >
+                    {skill}
+                    {isSelected && skillCounts && skillCounts[skill] > 0 && (
+                      <motion.span
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ type: "spring", stiffness: 500, damping: 25 }}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white text-[9.5px] font-sans font-extrabold rounded-full min-w-[18px] h-[18px] flex items-center justify-center shadow-lg select-none z-10 border border-white/10"
+                      >
+                        {skillCounts[skill]}
+                      </motion.span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
             {hasMore && (
               <button onClick={() => toggleCategory(skillGroup.category)} className="flex items-center justify-center gap-1 text-sm text-primary/80 hover:text-primary mt-auto pt-2 border-t border-border/20">

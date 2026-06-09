@@ -1,7 +1,3 @@
-using System;
-using System.Linq;
-using System.Net.Http;
-using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Portfolio.Domain.Resume;
@@ -30,6 +26,10 @@ public class ResumeIntegrationTests : IClassFixture<DbTestFixture>
         // Arrange
         using var scope = _fixture.Factory.Services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<PortfolioDbContext>();
+
+        // Clean up any existing profiles first to avoid UQ_ActiveResumeProfile conflicts
+        context.ResumeProfiles.RemoveRange(context.ResumeProfiles);
+        await context.SaveChangesAsync();
 
         var p1 = new ResumeProfile { Id = Guid.NewGuid(), Name = "Profile 1", IsActive = true, Title = "Dev 1", Intro = "A" };
         var p2 = new ResumeProfile { Id = Guid.NewGuid(), Name = "Profile 2", IsActive = false, Title = "Dev 2", Intro = "B" };
@@ -62,6 +62,10 @@ public class ResumeIntegrationTests : IClassFixture<DbTestFixture>
         using var scope = _fixture.Factory.Services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<PortfolioDbContext>();
 
+        // Clean up any existing profiles first to avoid UQ_ActiveResumeProfile conflicts
+        context.ResumeProfiles.RemoveRange(context.ResumeProfiles);
+        await context.SaveChangesAsync();
+
         var p1 = new ResumeProfile { Id = Guid.NewGuid(), Name = "Profile 1", IsActive = true, Title = "Dev 1", Intro = "A" };
         var p2 = new ResumeProfile { Id = Guid.NewGuid(), Name = "Profile 2", IsActive = true, Title = "Dev 2", Intro = "B" };
         
@@ -76,5 +80,46 @@ public class ResumeIntegrationTests : IClassFixture<DbTestFixture>
         // Detach to avoid EF tracking errors in cleanup/other tests
         context.Entry(p1).State = EntityState.Detached;
         context.Entry(p2).State = EntityState.Detached;
+    }
+
+    [Fact]
+    public async Task PrepareDownloadAsync_ReturnsOk_WithDownloadUrl()
+    {
+        // Arrange
+        using var scope = _fixture.Factory.Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<PortfolioDbContext>();
+
+        // Clean up any existing profiles first to avoid UQ_ActiveResumeProfile conflicts
+        context.ResumeProfiles.RemoveRange(context.ResumeProfiles);
+        await context.SaveChangesAsync();
+
+        var activeProfile = new ResumeProfile 
+        { 
+            Id = Guid.NewGuid(), 
+            Name = "John PDF Tester", 
+            IsActive = true, 
+            Title = "Senior PDF Architect", 
+            Intro = "Hello from integration testing PDF output generation." 
+        };
+        context.ResumeProfiles.Add(activeProfile);
+        await context.SaveChangesAsync();
+
+        // Act
+        var response = await _client.PostAsync("/api/resume/active/download", null);
+        
+        // Assert
+        response.StatusCode.ShouldBe(System.Net.HttpStatusCode.OK);
+        var content = await response.Content.ReadAsStringAsync();
+        content.ShouldContain("downloadUrl");
+
+        // Clean up
+        using var cleanupScope = _fixture.Factory.Services.CreateScope();
+        var cleanupContext = cleanupScope.ServiceProvider.GetRequiredService<PortfolioDbContext>();
+        var toRemove = await cleanupContext.ResumeProfiles.FindAsync(activeProfile.Id);
+        if (toRemove != null)
+        {
+            cleanupContext.ResumeProfiles.Remove(toRemove);
+            await cleanupContext.SaveChangesAsync();
+        }
     }
 }

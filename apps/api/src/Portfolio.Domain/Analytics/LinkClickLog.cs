@@ -1,4 +1,3 @@
-using System;
 using Portfolio.Domain.Resume;
 
 namespace Portfolio.Domain.Analytics;

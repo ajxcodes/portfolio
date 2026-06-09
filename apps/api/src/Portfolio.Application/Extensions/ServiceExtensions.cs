@@ -12,6 +12,7 @@ public static class ServiceExtensions
         return services
             .AddScoped<IPostService, PostService>()
             .AddScoped<IResumeService, ResumeService>()
-            .AddScoped<IAnalyticsService, AnalyticsService>();
+            .AddScoped<IAnalyticsService, AnalyticsService>()
+            .AddSingleton<IResumePdfGenerator, ResumePdfGenerator>();
     }
 }

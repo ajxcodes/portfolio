@@ -4,38 +4,43 @@
 
 @layer base {
   :root {
-    /* Light Theme (Tokyo Night Light) */
-    --background: 220 10% 86%;
-    --foreground: 227 12% 38%;
-    --primary: 217 45% 37%;
-    --card: 240 8% 92%;
-    --card-foreground: 227 12% 38%;
-    --primary-foreground: 240 8% 98%;
+    /* Light Theme (Clean Light Terminal / Code Editor) */
+    --background: 210 20% 96%;        /* Slate-Gray (#f1f5f9) */
+    --foreground: 220 30% 15%;        /* Deep Slate (#0f172a) */
+    --primary: 190 90% 35%;           /* Console Cyan/Teal (#0891b2) */
+    --card: 0 0% 100%;                /* Pure White */
+    --card-foreground: 220 30% 15%;
+    --primary-foreground: 190 90% 98%;
 
     /* Skill button colors */
-    --skill-btn-bg: 205 78% 24%; /* sky-900 */
-    --skill-btn-text: 204 90% 94%; /* sky-100 */
-    --skill-btn-border: 204 84% 28%; /* sky-800 */
+    --skill-btn-bg: 190 30% 95%;      /* Pale blue-green */
+    --skill-btn-text: 190 90% 25%;    /* Deep cyan */
+    --skill-btn-border: 190 40% 85%;  /* Border */
   }
 
   .dark {
-    /* Dark Theme (Tokyo Night) */
-    --background: 231 15% 18%;
-    --foreground: 224 28% 79%;
-    --primary: 224 88% 75%;
-    --card: 230 23% 19%;
-    --card-foreground: 224 28% 79%;
-    --primary-foreground: 231 15% 18%;
+    /* Dark Theme (Obsidian Matrix Terminal) */
+    --background: 160 20% 5%;         /* Jet Obsidian Green-Black (#050807) */
+    --foreground: 150 15% 82%;        /* Soft Terminal Text-Gray (#cbd5e1 equivalent) */
+    --primary: 142 100% 50%;          /* Vibrant Matrix Neon Green (#00ff66) */
+    --card: 160 15% 8%;               /* Deep Glass Card (#0a0f0d) */
+    --card-foreground: 150 15% 82%;
+    --primary-foreground: 160 20% 5%;
 
     /* Skill button colors */
-    --skill-btn-bg: 204 90% 94%; /* sky-100 */
-    --skill-btn-text: 205 78% 24%; /* sky-900 */
-    --skill-btn-border: 202 95% 86%; /* sky-200 */
+    --skill-btn-bg: 142 80% 6%;       /* Deep dark green shadow */
+    --skill-btn-text: 142 100% 50%;   /* Neon green text */
+    --skill-btn-border: 142 60% 18%;  /* Green glowing border */
   }
 
   body {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
+    /* Add a subtle blueprint dot-grid background */
+    background-image: radial-gradient(hsl(var(--primary) / 0.03) 1px, transparent 0);
+    background-size: 24px 24px;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
 }
 
@@ -46,47 +51,80 @@
 
   .skill-btn {
     cursor: pointer;
-    border-radius: 9999px !important;
+    border-radius: 6px !important; /* Sharp terminal-like styling */
     border-width: 1px !important;
     padding-left: 0.75rem !important;
     padding-right: 0.75rem !important;
-    padding-top: 0.25rem !important; /* py-1 */
+    padding-top: 0.25rem !important;
     padding-bottom: 0.25rem !important;
-    font-size: 0.875rem !important; /* text-sm */
-    line-height: 1.25rem !important; /* leading-5 */
-    font-weight: 500 !important; /* font-medium */
-    transition-property: color, background-color, border-color !important;
+    font-size: 0.825rem !important; /* Slightly smaller text for dev style */
+    line-height: 1.25rem !important;
+    font-weight: 500 !important;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
+    transition-property: all !important;
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1) !important;
-    transition-duration: 150ms !important;
+    transition-duration: 200ms !important;
     background-color: hsl(var(--skill-btn-bg)) !important;
     color: hsl(var(--skill-btn-text)) !important;
     border-color: hsl(var(--skill-btn-border)) !important;
   }
+
   .skill-btn:hover {
-    /* A more subtle hover for unselected buttons */
-    background-color: hsl(var(--primary) / 0.1) !important;
+    background-color: hsl(var(--primary) / 0.15) !important;
     border-color: hsl(var(--primary)) !important;
-    color: hsl(var(--primary) / 0.8) !important;
+    color: hsl(var(--primary)) !important;
+    box-shadow: 0 0 8px hsl(var(--primary) / 0.15);
   }
 
   .skill-btn.selected {
-    background-color: hsl(var(--primary) / 0.8) !important;
+    background-color: hsl(var(--primary)) !important;
     color: hsl(var(--primary-foreground)) !important;
     border-color: hsl(var(--primary)) !important;
+    box-shadow: 0 0 10px hsl(var(--primary) / 0.3);
   }
 
   .matched-skill-tag {
     display: inline-flex;
     align-items: center;
-    border-radius: 9999px;
-    padding-left: 0.75rem; /* px-3 */
-    padding-right: 0.75rem;
-    padding-top: 0.25rem; /* py-1 */
-    padding-bottom: 0.25rem;
-    font-size: 0.75rem;
+    border-radius: 4px;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    padding-top: 0.125rem;
+    padding-bottom: 0.125rem;
+    font-size: 0.7rem;
     line-height: 1rem;
     font-weight: 600;
-    background-color: hsl(var(--primary));
-    color: hsl(var(--primary-foreground));
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    background-color: hsl(var(--primary) / 0.1);
+    border: 1px solid hsl(var(--primary) / 0.3);
+    color: hsl(var(--primary));
   }
+
+  /* Custom terminal card style */
+  .terminal-card {
+    background-color: hsl(var(--card));
+    border: 1px solid hsl(var(--primary) / 0.08);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .terminal-card:hover {
+    border-color: hsl(var(--primary) / 0.25);
+    box-shadow: 0 0 20px hsl(var(--primary) / 0.06);
+    transform: translateY(-2px);
+  }
+}
+
+/* Custom scrollbar to match terminal theme */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: hsl(var(--background));
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--primary) / 0.15);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary) / 0.35);
 }

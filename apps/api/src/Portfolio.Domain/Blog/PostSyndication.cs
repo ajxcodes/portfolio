@@ -1,5 +1,3 @@
-using System;
-
 namespace Portfolio.Domain.Blog;
 
 public class PostSyndication

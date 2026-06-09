@@ -1,6 +1,5 @@
 using Portfolio.Application.Blog.Repositories;
 using Portfolio.Application.Blog.Responses;
-using Portfolio.Domain.Blog;
 
 namespace Portfolio.Application.Blog.Services;
 

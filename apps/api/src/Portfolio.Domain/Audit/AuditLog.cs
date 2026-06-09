@@ -1,5 +1,3 @@
-using System;
-
 namespace Portfolio.Domain.Audit;
 
 public class AuditLog

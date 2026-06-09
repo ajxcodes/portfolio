@@ -461,6 +461,9 @@ namespace Portfolio.Infrastructure.Migrations
                         .HasColumnType("integer")
                         .HasDefaultValue(0);
 
+                    b.Property<string>("IconName")
+                        .HasColumnType("text");
+
                     b.HasKey("Id");
 
                     b.ToTable("SkillCategories");

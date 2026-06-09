@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using Portfolio.Domain.Resume;
 
 namespace Portfolio.Application.Resume.Repositories;
@@ -16,7 +13,10 @@ public interface IResumeRepository
     
     Task<List<SkillCategory>> ListSkillsAsync();
     Task AddSkillCategoryAsync(SkillCategory category);
+    Task UpdateSkillCategoryAsync(SkillCategory category);
+    Task DeleteSkillCategoryAsync(Guid id);
     Task AddSkillAsync(Skill skill);
+    Task UpdateSkillAsync(Skill skill);
     Task DeleteSkillAsync(Guid id);
 
     Task AddWorkExperienceAsync(WorkExperience experience);

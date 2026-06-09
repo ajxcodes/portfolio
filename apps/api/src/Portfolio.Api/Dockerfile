@@ -30,9 +30,13 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
 COPY --from=build /app/publish .
 
-# 💡 NEW SECTION TO FIX PERMISSIONS
 # Temporarily switch to root to create the directory and set ownership
 USER root
+# Install font rendering libraries required by SkiaSharp
+RUN apt-get update && apt-get install -y \
+    libfontconfig1 \
+    libfreetype6 \
+    && rm -rf /var/lib/apt/lists/*
 # Ensure the directory exists and is owned by the 'app' user
 RUN mkdir -p /home/app/.aspnet/https/ && chown -R app:app /home/app/.aspnet
 

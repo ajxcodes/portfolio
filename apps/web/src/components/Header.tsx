@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
+import clsx from "clsx";
 import { ThemeSwitcher } from "./ThemeSwitcher";
 import { Avatar } from "./Avatar";
 import { ContactLinks } from "./ContactLinks";
@@ -12,9 +13,20 @@ interface HeaderProps {
   name: string;
   contact: ContactInfo;
   downloadUrl?: string;
+  photoUrlLight?: string;
+  photoUrlDark?: string;
 }
 
-export const Header = ({ name, contact, downloadUrl }: HeaderProps) => {
+const getGithubUsername = (githubUrl?: string): string | null => {
+  if (!githubUrl) return null;
+  const cleaned = githubUrl
+    .replace(/^(https?:\/\/)?(www\.)?github\.com\//i, "")
+    .trim()
+    .replace(/\/$/, "");
+  return cleaned || null;
+};
+
+export const Header = ({ name, contact, downloadUrl, photoUrlLight, photoUrlDark }: HeaderProps) => {
   const pathname = usePathname();
   // Initialize state based on the path to prevent flashes of content.
   const [isPageTitleVisible, setIsPageTitleVisible] = useState(pathname === '/resume');
@@ -71,15 +83,42 @@ export const Header = ({ name, contact, downloadUrl }: HeaderProps) => {
             aria-hidden={isPageTitleVisible}
             tabIndex={isPageTitleVisible ? -1 : 0} // Prevent tabbing when hidden
           >
-            <Avatar size={40} altText={name} />
-            <span className="hidden sm:block text-xl font-bold">{name}</span>
+            <Avatar size={40} altText={name} photoUrlLight={photoUrlLight} photoUrlDark={photoUrlDark} />
+            <span className="hidden sm:flex items-center gap-1 text-lg font-bold font-mono tracking-tight text-primary">
+              {getGithubUsername(contact.github) || name.toLowerCase().replace(/\s+/g, '')}
+            </span>
           </Link>
         </div>
 
         {/* Right side: Navigation links */}
-        <div className="flex items-center gap-4">
-          <Link href="/" className="hover:text-primary transition-colors">Home</Link>
-          <Link href="/resume" className="hover:text-primary transition-colors">Resume</Link>
+        <div className="flex items-center gap-6">
+          <Link 
+            href="/" 
+            className={clsx(
+              "transition-colors font-mono text-sm", 
+              pathname === "/" ? "text-primary font-bold" : "text-foreground/80 hover:text-primary"
+            )}
+          >
+            home
+          </Link>
+          <Link 
+            href="/resume" 
+            className={clsx(
+              "transition-colors font-mono text-sm", 
+              pathname === "/resume" ? "text-primary font-bold" : "text-foreground/80 hover:text-primary"
+            )}
+          >
+            resume
+          </Link>
+          <Link 
+            href="/blog" 
+            className={clsx(
+              "transition-colors font-mono text-sm", 
+              pathname.startsWith("/blog") ? "text-primary font-bold" : "text-foreground/80 hover:text-primary"
+            )}
+          >
+            blog
+          </Link>
           {/* Contact links for larger screens, dynamically shown based on scroll position. */}
           {showHeaderContactLinks && (
             <div className="hidden sm:flex items-center gap-4">
