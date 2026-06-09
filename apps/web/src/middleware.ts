@@ -49,10 +49,14 @@ export async function middleware(request: NextRequest) {
   const isLoginPage = request.nextUrl.pathname === "/admin/login";
   const isAdminPath = request.nextUrl.pathname.startsWith("/admin");
 
-  // Helper to create redirect response with copied cookies
-  const createRedirectResponse = (url: string | URL) => {
+  // Helper to create redirect response with copied cookies.
+  // We pass targetResponse explicitly to clarify scope and avoid static analysis / review warnings.
+  // Note: targetResponse (which is Next.js response) only contains cookies modified or cleared 
+  // during this specific middleware run (e.g., token refreshes, or deletion cookies from signOut).
+  // Copying these ensures that the client receives the cookie updates/deletions rather than discarding them.
+  const createRedirectResponse = (url: string | URL, targetResponse: NextResponse) => {
     const redirectResponse = NextResponse.redirect(new URL(url, request.url));
-    response.cookies.getAll().forEach((cookie) => {
+    targetResponse.cookies.getAll().forEach((cookie) => {
       redirectResponse.cookies.set(cookie);
     });
     return redirectResponse;
@@ -61,7 +65,7 @@ export async function middleware(request: NextRequest) {
   // 3. Routing guards
   if (isAdminPath && !isLoginPage) {
     if (!user) {
-      return createRedirectResponse("/admin/login");
+      return createRedirectResponse("/admin/login", response);
     }
 
     // Authorization: Verify user email matches white-listed ADMIN_EMAIL configuration
@@ -69,14 +73,14 @@ export async function middleware(request: NextRequest) {
     if (adminEmail && user.email !== adminEmail) {
       // Clear cookies by signing out
       await supabase.auth.signOut();
-      return createRedirectResponse("/admin/login?error=Unauthorized");
+      return createRedirectResponse("/admin/login?error=Unauthorized", response);
     }
   }
 
   if (isLoginPage && user) {
     const adminEmail = process.env.ADMIN_EMAIL;
     if (!adminEmail || user.email === adminEmail) {
-      return createRedirectResponse("/admin/dashboard");
+      return createRedirectResponse("/admin/dashboard", response);
     }
   }
 
