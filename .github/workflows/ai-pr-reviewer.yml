@@ -199,6 +199,11 @@ jobs:
                   continue;
                 }
                 
+                // If 429 Quota Exceeded, throw specific error to break out and inform PR
+                if (response.status === 429) {
+                  throw new Error(`QUOTA_EXCEEDED: ${errText}`);
+                }
+                
                 // If it's a different error or we're out of models, throw
                 throw new Error(`Gemini API error: ${response.status} - ${errText}`);
               }
@@ -316,4 +321,19 @@ jobs:
             }
           } catch (error) {
             console.error("Error generating or posting review:", error);
+            
+            // Post a comment to the PR if the API quota was exceeded
+            if (error.message && (error.message.includes('QUOTA_EXCEEDED') || error.message.includes('429'))) {
+              try {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                  body: "⚠️ **AI PR Review Skipped**: The Gemini API quota has been exceeded or rate-limited. The automated code review could not be completed at this time."
+                });
+                console.log("Posted quota exceeded warning to PR.");
+              } catch (e) {
+                console.error("Failed to post quota warning comment:", e);
+              }
+            }
           }
