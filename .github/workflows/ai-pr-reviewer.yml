@@ -54,8 +54,9 @@ jobs:
             return;
           }
 
-          // Truncate if diff is exceptionally large (e.g. > 150KB) to prevent token limits
-          const maxCharLimit = 150000;
+          // Truncate if diff is exceptionally large (e.g. > 3MB) to prevent token limits
+          // Gemini 2.5 Flash has a context window of 1M+ tokens, so 3 million characters (~750k tokens) is safe.
+          const maxCharLimit = 3000000;
           if (diffText.length > maxCharLimit) {
             diffText = diffText.substring(0, maxCharLimit) + "\n\n...[Diff truncated due to size limit]...";
           }
@@ -164,24 +165,50 @@ jobs:
           `;
 
           try {
-            const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + apiKey;
-            const response = await fetch(url, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                contents: [{
-                  parts: [{ text: prompt }]
-                }],
-                generationConfig: {
-                  temperature: 0.1,
-                  responseMimeType: "application/json"
-                }
-              })
-            });
+            let response;
+            const models = ['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-2.0-flash'];
+            let success = false;
 
-            if (!response.ok) {
-              const errText = await response.text();
-              throw new Error(`Gemini API error: ${response.status} - ${errText}`);
+            for (let i = 0; i < models.length; i++) {
+              const model = models[i];
+              console.log(`Attempting to generate review using model: ${model}`);
+              const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+              
+              response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  contents: [{
+                    parts: [{ text: prompt }]
+                  }],
+                  generationConfig: {
+                    temperature: 0.1,
+                    responseMimeType: "application/json"
+                  }
+                })
+              });
+
+              if (!response.ok) {
+                const errText = await response.text();
+                console.warn(`API error with ${model}: ${response.status} - ${errText}`);
+                
+                // If 503 and we have more models to try, fallback to the next one
+                if (response.status === 503 && i < models.length - 1) {
+                  console.log(`Got 503. Waiting 3 seconds and falling back to next model...`);
+                  await new Promise(r => setTimeout(r, 3000));
+                  continue;
+                }
+                
+                // If it's a different error or we're out of models, throw
+                throw new Error(`Gemini API error: ${response.status} - ${errText}`);
+              }
+
+              success = true;
+              break; // Success! Break out of the loop
+            }
+
+            if (!success) {
+               throw new Error("All model requests failed.");
             }
 
             const data = await response.json();
