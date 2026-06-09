@@ -40,6 +40,9 @@ public class DbTestFixture : IAsyncLifetime
         Environment.SetEnvironmentVariable("S3_SECRET_KEY", "minioadminpassword");
         Environment.SetEnvironmentVariable("S3_BUCKET_NAME", "test-portfolio-media");
         Environment.SetEnvironmentVariable("S3_PUBLIC_URL", "");
+        
+        // Set a dummy 32-byte encryption key for AesEncryptionConverter
+        Environment.SetEnvironmentVariable("ENCRYPTION_KEY", "test-encryption-key-32-chars-long");
 
         Factory = new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
         {

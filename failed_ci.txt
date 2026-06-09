@@ -1,0 +1,259 @@
+Frontend E2E Tests (Playwright)	Run Playwright Tests	﻿2026-06-09T16:37:25.0275804Z ##[group]Run pnpm run test:e2e
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:37:25.0276404Z [36;1mpnpm run test:e2e[0m
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:37:25.0317498Z shell: /usr/bin/bash -e {0}
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:37:25.0317944Z env:
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:37:25.0318669Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:37:25.0319221Z ##[endgroup]
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:37:25.4059327Z 
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:37:25.4060336Z > web@0.1.0 test:e2e /home/runner/work/portfolio/portfolio/apps/web
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:37:25.4061109Z > playwright test
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:37:25.4061346Z 
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:37:32.6721149Z 
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:37:32.6721967Z Running 5 tests using 1 worker
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:37:32.6722344Z 
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:37:35.5563156Z   ✓  1 [chromium] › e2e/analytics.spec.ts:4:7 › Traffic Attribution Analytics › should extract ref parameter and post page view analytics (986ms)
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:37:36.2352973Z   ✓  2 [chromium] › e2e/analytics.spec.ts:22:7 › Traffic Attribution Analytics › should post click analytics on external link clicks with correct referrer (652ms)
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:37:36.2467216Z [WebServer] [36m[browser][39m Failed to log page view telemetry: [31mTypeError: Failed to fetch[39m
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:37:36.2468866Z [WebServer] [31m    at useTrafficTracker.useEffect (src/hooks/useTrafficTracker.ts:30:7)[39m
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:37:36.2469950Z [WebServer]   28 |       lastTrackedPath.current = pathname;
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:37:36.2470533Z [WebServer]   29 |
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:37:36.2471188Z [WebServer] > 30 |       fetch(`${API_BASE_URL}/api/analytics/views`, {
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:37:36.2471818Z [WebServer]      |       ^
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:37:36.2472353Z [WebServer]   31 |         method: "POST",
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:37:36.2473126Z [WebServer]   32 |         headers: { "Content-Type": "application/json" },
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:37:36.2474353Z [WebServer]   33 |         body: JSON.stringify({ [2m(src/hooks/useTrafficTracker.ts:37:31)[22m
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:37:36.6986177Z   ✓  3 [chromium] › e2e/home.spec.ts:4:7 › Home Page › should load home page and render heading (448ms)
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:37:37.2478040Z [WebServer] [36m[browser][39m Failed to log page view telemetry: [31mTypeError: Failed to fetch[39m
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:37:37.2496932Z [WebServer] [31m    at useTrafficTracker.useEffect (src/hooks/useTrafficTracker.ts:30:7)[39m
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:37:37.2519037Z [WebServer]   28 |       lastTrackedPath.current = pathname;
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:37:37.2519912Z [WebServer]   29 |
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:37:37.2520733Z [WebServer] > 30 |       fetch(`${API_BASE_URL}/api/analytics/views`, {
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:37:37.2521524Z [WebServer]      |       ^
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:37:37.2548785Z [WebServer]   31 |         method: "POST",
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:37:37.2549823Z [WebServer]   32 |         headers: { "Content-Type": "application/json" },
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:37:37.2551419Z [WebServer]   33 |         body: JSON.stringify({ [2m(src/hooks/useTrafficTracker.ts:37:31)[22m
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:37:42.1700428Z   ✘  4 [chromium] › e2e/resume.spec.ts:44:7 › Interactive Resume Page › should toggle collapsible sections on click (5.4s)
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:37:43.7094688Z [WebServer] [36m[browser][39m Failed to log page view telemetry: [31mTypeError: Failed to fetch[39m
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:37:43.7096569Z [WebServer] [31m    at useTrafficTracker.useEffect (src/hooks/useTrafficTracker.ts:30:7)[39m
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:37:43.7097941Z [WebServer]   28 |       lastTrackedPath.current = pathname;
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:37:43.7098461Z [WebServer]   29 |
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:37:43.7098908Z [WebServer] > 30 |       fetch(`${API_BASE_URL}/api/analytics/views`, {
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:37:43.7099315Z [WebServer]      |       ^
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:37:43.7099665Z [WebServer]   31 |         method: "POST",
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:37:43.7100139Z [WebServer]   32 |         headers: { "Content-Type": "application/json" },
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:37:43.7100899Z [WebServer]   33 |         body: JSON.stringify({ [2m(src/hooks/useTrafficTracker.ts:37:31)[22m
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:37:48.9938925Z   ✘  5 [chromium] › e2e/resume.spec.ts:44:7 › Interactive Resume Page › should toggle collapsible sections on click (retry #1) (6.0s)
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:37:50.2835697Z [WebServer] [36m[browser][39m Failed to log page view telemetry: [31mTypeError: Failed to fetch[39m
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:37:50.2839570Z [WebServer] [31m    at useTrafficTracker.useEffect (src/hooks/useTrafficTracker.ts:30:7)[39m
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:37:50.2841131Z [WebServer]   28 |       lastTrackedPath.current = pathname;
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:37:50.2841965Z [WebServer]   29 |
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:37:50.2842932Z [WebServer] > 30 |       fetch(`${API_BASE_URL}/api/analytics/views`, {
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:37:50.2843951Z [WebServer]      |       ^
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:37:50.2844727Z [WebServer]   31 |         method: "POST",
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:37:50.2845860Z [WebServer]   32 |         headers: { "Content-Type": "application/json" },
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:37:50.2847319Z [WebServer]   33 |         body: JSON.stringify({ [2m(src/hooks/useTrafficTracker.ts:37:31)[22m
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:37:55.2307960Z   ✘  6 [chromium] › e2e/resume.spec.ts:44:7 › Interactive Resume Page › should toggle collapsible sections on click (retry #2) (5.6s)
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:37:56.5124287Z [WebServer] [36m[browser][39m Failed to log page view telemetry: [31mTypeError: Failed to fetch[39m
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:37:56.5146681Z [WebServer] [31m    at useTrafficTracker.useEffect (src/hooks/useTrafficTracker.ts:30:7)[39m
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:37:56.5154057Z [WebServer]   28 |       lastTrackedPath.current = pathname;
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:37:56.5154900Z [WebServer]   29 |
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:37:56.5155950Z [WebServer] > 30 |       fetch(`${API_BASE_URL}/api/analytics/views`, {
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:37:56.5156718Z [WebServer]      |       ^
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:37:56.5157343Z [WebServer]   31 |         method: "POST",
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:37:56.5158198Z [WebServer]   32 |         headers: { "Content-Type": "application/json" },
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:37:56.5159546Z [WebServer]   33 |         body: JSON.stringify({ [2m(src/hooks/useTrafficTracker.ts:37:31)[22m
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:01.4430444Z   ✘  7 [chromium] › e2e/resume.spec.ts:62:7 › Interactive Resume Page › should select skills and highlight corresponding experience items (5.5s)
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:02.9661140Z [WebServer] [36m[browser][39m Failed to log page view telemetry: [31mTypeError: Failed to fetch[39m
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:02.9662633Z [WebServer] [31m    at useTrafficTracker.useEffect (src/hooks/useTrafficTracker.ts:30:7)[39m
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:02.9663579Z [WebServer]   28 |       lastTrackedPath.current = pathname;
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:02.9664143Z [WebServer]   29 |
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:02.9664746Z [WebServer] > 30 |       fetch(`${API_BASE_URL}/api/analytics/views`, {
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:02.9665355Z [WebServer]      |       ^
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:02.9666133Z [WebServer]   31 |         method: "POST",
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:02.9666874Z [WebServer]   32 |         headers: { "Content-Type": "application/json" },
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:02.9668052Z [WebServer]   33 |         body: JSON.stringify({ [2m(src/hooks/useTrafficTracker.ts:37:31)[22m
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:08.1881480Z   ✘  8 [chromium] › e2e/resume.spec.ts:62:7 › Interactive Resume Page › should select skills and highlight corresponding experience items (retry #1) (5.9s)
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:09.4724729Z [WebServer] [36m[browser][39m Failed to log page view telemetry: [31mTypeError: Failed to fetch[39m
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:09.4733594Z [WebServer] [31m    at useTrafficTracker.useEffect (src/hooks/useTrafficTracker.ts:30:7)[39m
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:09.4735979Z [WebServer]   28 |       lastTrackedPath.current = pathname;
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:09.4737030Z [WebServer]   29 |
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:09.4737898Z [WebServer] > 30 |       fetch(`${API_BASE_URL}/api/analytics/views`, {
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:09.4738737Z [WebServer]      |       ^
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:09.4741588Z [WebServer]   31 |         method: "POST",
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:09.4742660Z [WebServer]   32 |         headers: { "Content-Type": "application/json" },
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:09.4744159Z [WebServer]   33 |         body: JSON.stringify({ [2m(src/hooks/useTrafficTracker.ts:37:31)[22m
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4104457Z   ✘  9 [chromium] › e2e/resume.spec.ts:62:7 › Interactive Resume Page › should select skills and highlight corresponding experience items (retry #2) (5.5s)
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4635382Z 
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4641628Z 
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4655047Z   1) [chromium] › e2e/resume.spec.ts:44:7 › Interactive Resume Page › should toggle collapsible sections on click 
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4656064Z 
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4656784Z     Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4657342Z 
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4657624Z     Locator: locator('div[role="button"]').first()
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4658186Z     Expected: visible
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4658581Z     Timeout: 5000ms
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4659041Z     Error: element(s) not found
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4659314Z 
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4659481Z     Call log:
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4660093Z     [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4660880Z     [2m  - waiting for locator('div[role="button"]').first()[22m
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4661295Z 
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4661305Z 
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4661445Z       47 |     
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4662026Z       48 |     // Check that at least one section exists (e.g., Skills or Experience)
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4662851Z     > 49 |     await expect(sections.first()).toBeVisible();
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4663455Z          |                                    ^
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4663941Z       50 |     
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4664416Z       51 |     const firstSection = sections.first();
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4665340Z       52 |     const isInitiallyExpanded = await firstSection.getAttribute("aria-expanded") === "true";
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4666626Z         at /home/runner/work/portfolio/portfolio/apps/web/e2e/resume.spec.ts:49:36
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4667175Z 
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4667912Z     Error Context: test-results/resume-Interactive-Resume--4648b-llapsible-sections-on-click-chromium/error-context.md
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4668413Z 
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4669005Z     Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4669465Z 
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4669858Z     Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4670243Z 
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4670443Z     Locator: locator('div[role="button"]').first()
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4670802Z     Expected: visible
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4671093Z     Timeout: 5000ms
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4671400Z     Error: element(s) not found
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4671582Z 
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4671695Z     Call log:
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4672080Z     [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4672607Z     [2m  - waiting for locator('div[role="button"]').first()[22m
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4672875Z 
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4672882Z 
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4672997Z       47 |     
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4673402Z       48 |     // Check that at least one section exists (e.g., Skills or Experience)
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4673939Z     > 49 |     await expect(sections.first()).toBeVisible();
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4674328Z          |                                    ^
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4674794Z       50 |     
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4675244Z       51 |     const firstSection = sections.first();
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4676333Z       52 |     const isInitiallyExpanded = await firstSection.getAttribute("aria-expanded") === "true";
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4677629Z         at /home/runner/work/portfolio/portfolio/apps/web/e2e/resume.spec.ts:49:36
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4678129Z 
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4679044Z     Error Context: test-results/resume-Interactive-Resume--4648b-llapsible-sections-on-click-chromium-retry1/error-context.md
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4679911Z 
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4680601Z     attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4681938Z     test-results/resume-Interactive-Resume--4648b-llapsible-sections-on-click-chromium-retry1/trace.zip
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4682885Z     Usage:
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4683067Z 
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4684071Z         pnpm exec playwright show-trace test-results/resume-Interactive-Resume--4648b-llapsible-sections-on-click-chromium-retry1/trace.zip
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4685327Z 
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4686202Z     ────────────────────────────────────────────────────────────────────────────────────────────────
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4686753Z 
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4687390Z     Retry #2 ───────────────────────────────────────────────────────────────────────────────────────
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4687886Z 
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4688528Z     Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4689101Z 
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4689351Z     Locator: locator('div[role="button"]').first()
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4689918Z     Expected: visible
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4690342Z     Timeout: 5000ms
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4690806Z     Error: element(s) not found
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4691110Z 
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4691277Z     Call log:
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4691929Z     [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4692944Z     [2m  - waiting for locator('div[role="button"]').first()[22m
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4693365Z 
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4693398Z 
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4693559Z       47 |     
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4694177Z       48 |     // Check that at least one section exists (e.g., Skills or Experience)
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4694992Z     > 49 |     await expect(sections.first()).toBeVisible();
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4696198Z          |                                    ^
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4696623Z       50 |     
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4697073Z       51 |     const firstSection = sections.first();
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4698004Z       52 |     const isInitiallyExpanded = await firstSection.getAttribute("aria-expanded") === "true";
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4699227Z         at /home/runner/work/portfolio/portfolio/apps/web/e2e/resume.spec.ts:49:36
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4699843Z 
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4700611Z     Error Context: test-results/resume-Interactive-Resume--4648b-llapsible-sections-on-click-chromium-retry2/error-context.md
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4701175Z 
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4701867Z   2) [chromium] › e2e/resume.spec.ts:62:7 › Interactive Resume Page › should select skills and highlight corresponding experience items 
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4702389Z 
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4702763Z     Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4703445Z 
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4703613Z     Locator: locator('.skill-btn').first()
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4703945Z     Expected: visible
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4704218Z     Timeout: 5000ms
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4704508Z     Error: element(s) not found
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4704706Z 
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4704817Z     Call log:
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4705206Z     [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4705891Z     [2m  - waiting for locator('.skill-btn').first()[22m
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4706149Z 
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4706156Z 
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4706270Z       65 |     
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4706582Z       66 |     // Wait until skill buttons are rendered
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4707012Z     > 67 |     await expect(skillButtons.first()).toBeVisible();
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4707449Z          |                                        ^
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4707761Z       68 |     
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4708075Z       69 |     const firstSkillBtn = skillButtons.first();
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4708537Z       70 |     const skillText = await firstSkillBtn.innerText();
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4709088Z         at /home/runner/work/portfolio/portfolio/apps/web/e2e/resume.spec.ts:67:40
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4709426Z 
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4709909Z     Error Context: test-results/resume-Interactive-Resume--1d4f2-responding-experience-items-chromium/error-context.md
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4710436Z 
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4710835Z     Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4711144Z 
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4711536Z     Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4711892Z 
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4712045Z     Locator: locator('.skill-btn').first()
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4712573Z     Expected: visible
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4712846Z     Timeout: 5000ms
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4713134Z     Error: element(s) not found
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4713328Z 
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4713455Z     Call log:
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4713840Z     [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4714335Z     [2m  - waiting for locator('.skill-btn').first()[22m
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4714586Z 
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4714592Z 
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4714704Z       65 |     
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4715017Z       66 |     // Wait until skill buttons are rendered
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4715441Z     > 67 |     await expect(skillButtons.first()).toBeVisible();
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4716075Z          |                                        ^
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4716405Z       68 |     
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4716732Z       69 |     const firstSkillBtn = skillButtons.first();
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4717216Z       70 |     const skillText = await firstSkillBtn.innerText();
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4717804Z         at /home/runner/work/portfolio/portfolio/apps/web/e2e/resume.spec.ts:67:40
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4718137Z 
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4718673Z     Error Context: test-results/resume-Interactive-Resume--1d4f2-responding-experience-items-chromium-retry1/error-context.md
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4719239Z 
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4719667Z     attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4720471Z     test-results/resume-Interactive-Resume--1d4f2-responding-experience-items-chromium-retry1/trace.zip
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4721037Z     Usage:
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4721179Z 
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4721727Z         pnpm exec playwright show-trace test-results/resume-Interactive-Resume--1d4f2-responding-experience-items-chromium-retry1/trace.zip
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4722307Z 
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4722711Z     ────────────────────────────────────────────────────────────────────────────────────────────────
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4723013Z 
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4723397Z     Retry #2 ───────────────────────────────────────────────────────────────────────────────────────
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4723706Z 
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4724086Z     Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4724589Z 
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4724752Z     Locator: locator('.skill-btn').first()
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4725078Z     Expected: visible
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4725358Z     Timeout: 5000ms
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4725814Z     Error: element(s) not found
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4726009Z 
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4726108Z     Call log:
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4726488Z     [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4726986Z     [2m  - waiting for locator('.skill-btn').first()[22m
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4727225Z 
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4727231Z 
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4727344Z       65 |     
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4727655Z       66 |     // Wait until skill buttons are rendered
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4728138Z     > 67 |     await expect(skillButtons.first()).toBeVisible();
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4728705Z          |                                        ^
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4729023Z       68 |     
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4729361Z       69 |     const firstSkillBtn = skillButtons.first();
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4729818Z       70 |     const skillText = await firstSkillBtn.innerText();
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4730375Z         at /home/runner/work/portfolio/portfolio/apps/web/e2e/resume.spec.ts:67:40
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4730718Z 
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4731240Z     Error Context: test-results/resume-Interactive-Resume--1d4f2-responding-experience-items-chromium-retry2/error-context.md
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4731776Z 
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4731890Z   2 failed
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4732518Z     [chromium] › e2e/resume.spec.ts:44:7 › Interactive Resume Page › should toggle collapsible sections on click 
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4733518Z     [chromium] › e2e/resume.spec.ts:62:7 › Interactive Resume Page › should select skills and highlight corresponding experience items 
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4734141Z   3 passed (48.4s)
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.4824037Z  ELIFECYCLE  Command failed with exit code 1.
+Frontend E2E Tests (Playwright)	Run Playwright Tests	2026-06-09T16:38:14.5041456Z ##[error]Process completed with exit code 1.

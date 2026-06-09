@@ -105,8 +105,21 @@ const defaultData: PortfolioData = {
         "Championed a culture of quality by implementing comprehensive testing strategies and assuming formal code ownership of core APIs."
       ],
     },
-    skills: [],
-    experience: [],
+    skills: [
+      {
+        category: "Languages & Frameworks",
+        items: ["Test Skill"]
+      }
+    ],
+    experience: [
+      {
+        company: "Fallback Company",
+        role: "Software Engineer",
+        period: "2020 - Present",
+        results: ["Built fallback data"],
+        skills: ["Test Skill"]
+      }
+    ],
     previousExperience: [],
     projects: [],
     education: [],

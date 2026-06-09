@@ -49,11 +49,7 @@ public class ResumeRepository(PortfolioDbContext context) : IResumeRepository
 
     public Task UpdateProfileAsync(ResumeProfile profile)
     {
-        var entry = context.Entry(profile);
-        if (entry.State == EntityState.Detached)
-        {
-            context.ResumeProfiles.Update(profile);
-        }
+        context.ResumeProfiles.Update(profile);
         return Task.CompletedTask;
     }
 
@@ -86,11 +82,7 @@ public class ResumeRepository(PortfolioDbContext context) : IResumeRepository
 
     public Task UpdateSkillCategoryAsync(SkillCategory category)
     {
-        var entry = context.Entry(category);
-        if (entry.State == EntityState.Detached)
-        {
-            context.SkillCategories.Update(category);
-        }
+        context.SkillCategories.Update(category);
         return Task.CompletedTask;
     }
 
@@ -105,11 +97,7 @@ public class ResumeRepository(PortfolioDbContext context) : IResumeRepository
 
     public Task UpdateSkillAsync(Skill skill)
     {
-        var entry = context.Entry(skill);
-        if (entry.State == EntityState.Detached)
-        {
-            context.Skills.Update(skill);
-        }
+        context.Skills.Update(skill);
         return Task.CompletedTask;
     }
 

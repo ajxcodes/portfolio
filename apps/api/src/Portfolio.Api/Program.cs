@@ -25,6 +25,12 @@ builder.Configuration.AddEnvironmentVariables();
 var bypassAuth = builder.Environment.IsDevelopment() || 
                  string.Equals(Environment.GetEnvironmentVariable("LOCAL_DEV_BYPASS_AUTH"), "true", StringComparison.OrdinalIgnoreCase);
 
+var adminEmail = Environment.GetEnvironmentVariable("ADMIN_EMAIL");
+if (!bypassAuth && string.IsNullOrEmpty(adminEmail))
+{
+    throw new ArgumentException("ADMIN_EMAIL environment variable is missing or empty. This is required for authorization.");
+}
+
 if (bypassAuth)
 {
     builder.Services.AddAuthentication("MockScheme")
@@ -58,7 +64,6 @@ builder.Services.AddAuthorization(options =>
         {
             if (bypassAuth) return true;
             
-            var adminEmail = Environment.GetEnvironmentVariable("ADMIN_EMAIL");
             if (string.IsNullOrEmpty(adminEmail)) return false;
             
             var emailClaim = context.User.FindFirst("email")?.Value ?? context.User.FindFirst(ClaimTypes.Email)?.Value;
