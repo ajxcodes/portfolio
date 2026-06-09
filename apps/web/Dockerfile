@@ -5,10 +5,11 @@ WORKDIR /app
 RUN npm install -g pnpm
 
 # ---- Dependencies ----
-# Install dependencies based on lockfile
+# Install dependencies
 FROM base AS deps
-COPY package.json pnpm-lock.yaml ./
-RUN pnpm fetch
+COPY package.json pnpm-lock.yaml* ./
+RUN pnpm install --no-frozen-lockfile
+RUN npx update-browserslist-db@latest
 
 # ---- Build ----
 # Build the application

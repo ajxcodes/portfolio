@@ -1,11 +1,10 @@
-import { promises as fs } from 'fs';
-import path from 'path';
-
 // It's good practice to have these types in a central place if they are used across the app.
 export interface PersonalInfo {
   name: string;
   title: string;
   intro: string;
+  photoUrlLight?: string;
+  photoUrlDark?: string;
 }
 
 export interface ContactInfo {
@@ -19,6 +18,7 @@ export interface ContactInfo {
 
 export interface SkillGroup {
   category: string;
+  iconName?: string;
   items: string[];
 }
 
@@ -64,13 +64,15 @@ export interface ResumeData {
   projects?: Project[];
   education: Education[];
   downloadUrl: string;
+  photoUrlLight?: string;
+  photoUrlDark?: string;
 }
 
 export interface BlogPost {
   slug: string;
   title: string;
   summary: string;
-  content?: string; // Add content field for the full blog post
+  content?: string;
 }
 
 export interface PortfolioData {
@@ -79,53 +81,190 @@ export interface PortfolioData {
   blogPosts: BlogPost[];
 }
 
-// Single, efficient data fetching function
-export async function getPortfolioData(): Promise<PortfolioData> {
-  // 1. Read the base portfolio data from the local JSON file.
-  const file = await fs.readFile(path.join(process.cwd(), 'public', 'data', 'portfolio-data.json'), 'utf8');
-  const portfolioData: PortfolioData = JSON.parse(file);
+// In-memory local default data used as a fallback if the API database is offline
+const defaultData: PortfolioData = {
+  personalInfo: {
+    name: "Alvin Jorrel Pascual",
+    title: ".NET Developer & DevOps Specialist",
+    intro: "A .NET developer with over a decade's worth of experience and with strong DevOps skills as well. Passionate about building scalable applications and streamlining development pipelines.",
+  },
+  resume: {
+    contact: {
+      email: "me@ajx.codes",
+      phone: "",
+      website: "",
+      linkedin: "linkedin.com/in/alvinjorrel",
+      calendar: "https://calendar.app.google/waCKdLPyQZeYYUEx8",
+      github: "github.com/ajxcodes",
+    },
+    summary: {
+      lead: "A senior software engineer and technical leader with over a decade of experience in the .NET ecosystem.",
+      highlights: [
+        "Architected and led major backend modernizations, including microservice consolidation and identity provider migrations to enhance performance and reduce maintenance.",
+        "Pioneered the integration of AI-powered tools (GitHub Copilot), cutting feature development cycles from weeks to days and elevating code quality.",
+        "Championed a culture of quality by implementing comprehensive testing strategies and assuming formal code ownership of core APIs."
+      ],
+    },
+    skills: [
+      {
+        category: "Languages & Frameworks",
+        items: ["Test Skill"]
+      }
+    ],
+    experience: [
+      {
+        company: "Fallback Company",
+        role: "Software Engineer",
+        period: "2020 - Present",
+        results: ["Built fallback data"],
+        skills: ["Test Skill"]
+      }
+    ],
+    previousExperience: [],
+    projects: [],
+    education: [],
+    downloadUrl: "",
+  },
+  blogPosts: [],
+};
 
-  // 2. Fetch the latest blog posts dynamically from the API.
+// Single, efficient data fetching function querying the API
+export async function getPortfolioData(): Promise<PortfolioData> {
+  // Start with a clone of the default data
+  const portfolioData: PortfolioData = JSON.parse(JSON.stringify(defaultData));
+
+  const apiUrl = process.env.API_BASE_URL || 'http://localhost:5808';
+
+  // 1. Fetch active resume profile
   try {
-    const apiUrl = process.env.API_BASE_URL || 'http://localhost:5808';
-    const res = await fetch(`${apiUrl}/api/blog/posts`, {
-      // 'no-store' ensures the data is fetched on every request.
+    const res = await fetch(`${apiUrl}/api/resume/active`, {
       cache: 'no-store',
     });
 
     if (res.ok) {
-      const dynamicBlogPosts: BlogPost[] = await res.json();
-      // 3. Replace the static blog posts with the dynamic ones.
-      portfolioData.blogPosts = dynamicBlogPosts;
+      const active = await res.json();
+      
+      portfolioData.personalInfo = {
+        name: active.name || portfolioData.personalInfo.name,
+        title: active.title || portfolioData.personalInfo.title,
+        intro: active.intro || portfolioData.personalInfo.intro,
+        photoUrlLight: active.photoUrlLight,
+        photoUrlDark: active.photoUrlDark,
+      };
+
+      portfolioData.resume.photoUrlLight = active.photoUrlLight;
+      portfolioData.resume.photoUrlDark = active.photoUrlDark;
+
+      if (active.links && active.links.length > 0) {
+        const contactLinks: Record<string, string> = {};
+        active.links.forEach((l: any) => {
+          const key = l.linkType?.keyIdentifier || l.linkType?.name?.toLowerCase();
+          if (key) {
+            contactLinks[key] = l.url;
+          }
+        });
+        portfolioData.resume.contact = {
+          ...portfolioData.resume.contact,
+          ...contactLinks,
+        };
+      }
+
+      portfolioData.resume.downloadUrl = `${apiUrl}/api/resume/active/download`;
+
+      const workExperiences = active.workExperiences || [];
+      const sortedExps = [...workExperiences].sort((a: any, b: any) => a.displayOrder - b.displayOrder);
+
+      portfolioData.resume.experience = sortedExps
+        .filter((we: any) => !we.isPrevious)
+        .map((we: any) => ({
+          company: we.company,
+          role: we.role,
+          period: we.period,
+          results: we.highlights 
+            ? [...we.highlights].sort((a: any, b: any) => a.displayOrder - b.displayOrder).map((h: any) => h.resultText)
+            : [],
+          skills: we.workExperienceSkills 
+            ? we.workExperienceSkills.map((wes: any) => wes.skill?.skillName).filter(Boolean)
+            : [],
+        }));
+
+      portfolioData.resume.previousExperience = sortedExps
+        .filter((we: any) => we.isPrevious)
+        .map((we: any) => ({
+          role: we.role,
+          company: we.company,
+          location: we.location || "",
+          period: we.period,
+        }));
     }
-  } catch (error) {
-    console.error("Failed to fetch dynamic blog posts, falling back to static data:", error);
-    // If the API call fails, it will gracefully fall back to using the static blog posts from the JSON file.
+  } catch {
+    // Graceful fallback
   }
 
-  // 4. Return the combined data.
+  // 2. Fetch skill categories
+  try {
+    const skillsRes = await fetch(`${apiUrl}/api/resume/skills`, {
+      cache: 'no-store',
+    });
+
+    if (skillsRes.ok) {
+      const dbCategories = await skillsRes.json();
+      portfolioData.resume.skills = dbCategories ? dbCategories.map((c: any) => ({
+        category: c.categoryName,
+        iconName: c.iconName,
+        items: c.skills 
+          ? [...c.skills].sort((a: any, b: any) => a.displayOrder - b.displayOrder).map((s: any) => s.skillName)
+          : [],
+      })) : [];
+    }
+  } catch {
+    // Graceful fallback
+  }
+
+  // 3. Fetch blog posts
+  try {
+    const postsRes = await fetch(`${apiUrl}/api/blog/posts`, {
+      cache: 'no-store',
+    });
+
+    if (postsRes.ok) {
+      const dbPosts = await postsRes.json();
+      portfolioData.blogPosts = dbPosts ? dbPosts.map((p: any) => ({
+        slug: p.slug,
+        title: p.title,
+        summary: p.summary || '',
+        content: p.content,
+      })) : [];
+    }
+  } catch {
+    // Graceful fallback
+  }
+
   return portfolioData;
 }
 
-// New function to get a single blog post by its slug
+// Function to get a single blog post by its slug from the API
 export async function getBlogPostBySlug(slug: string): Promise<BlogPost | undefined> {
   try {
     const apiUrl = process.env.API_BASE_URL || 'http://localhost:5808';
-    const res = await fetch(`${apiUrl}/api/blog/posts/${slug}`, { cache: 'no-store' });
+    const res = await fetch(`${apiUrl}/api/blog/posts`, {
+      cache: 'no-store',
+    });
     if (res.ok) {
-      return await res.json();
+      const posts = await res.json();
+      const post = posts.find((p: any) => p.slug === slug);
+      if (post) {
+        return {
+          slug: post.slug,
+          title: post.title,
+          summary: post.summary || '',
+          content: post.content,
+        };
+      }
     }
-  } catch (error) {
-    console.error(`Failed to fetch blog post with slug "${slug}" from API:`, error);
-  }
-
-  // Fallback to static data stored in public/data/portfolio-data.json
-  try {
-    const file = await fs.readFile(path.join(process.cwd(), 'public', 'data', 'portfolio-data.json'), 'utf8');
-    const portfolioData: PortfolioData = JSON.parse(file);
-    return portfolioData.blogPosts.find((p) => p.slug === slug);
+    return undefined;
   } catch (err) {
-    console.error('Failed to read static blog posts fallback', err);
+    console.error('Failed to fetch blog post by slug from API', err);
     return undefined;
   }
 }

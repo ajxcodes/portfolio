@@ -12,5 +12,10 @@ public class PostsController(IPostService service) : ControllerBase
     public async Task<IEnumerable<PostResponse>> ListAsync() => await service.ListAsync();
 
     [HttpGet("{id}")]
-    public async Task<PostResponse> GetAsync(Guid id) => await service.GetAsync(id);
+    public async Task<ActionResult<PostResponse>> GetAsync(Guid id)
+    {
+        var response = await service.GetAsync(id);
+        if (response == null) return NotFound();
+        return Ok(response);
+    }
 }

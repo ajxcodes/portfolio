@@ -4,13 +4,18 @@ using Microsoft.Extensions.DependencyInjection;
 using Portfolio.Infrastructure.Database.Contexts;
 using Portfolio.Infrastructure.Database.Extensions;
 
+using Portfolio.Application.Storage.Services;
+using Portfolio.Infrastructure.Storage.Services;
+
 namespace Portfolio.Infrastructure;
 
+[System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
 public static class ServiceExtensions
 {
     public static IServiceCollection ConfigureInfrastructure(this IServiceCollection services,
         IConfiguration configuration)
     {
+        services.AddScoped<IStorageService, S3StorageService>();
         return services.ConfigureDatabase();
     }
 

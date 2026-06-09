@@ -1,11 +1,11 @@
-﻿# Stage 1: Build the application
+# Stage 1: Build the application
 # Using a specific version is better than :9.0 for reproducibility
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
-# Copy project files and restore dependencies first to leverage Docker layer caching
-# Source paths are relative to the build context (likely the repository root)
-# Destination paths are relative to WORKDIR /src
+# Copy central package management files and project files to leverage Docker layer caching
+COPY Directory.Packages.props .
+COPY global.json .
 COPY src/Portfolio.Api/*.csproj Portfolio.Api/
 COPY src/Portfolio.Domain/*.csproj Portfolio.Domain/
 COPY src/Portfolio.Application/*.csproj Portfolio.Application/
@@ -30,9 +30,13 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
 COPY --from=build /app/publish .
 
-# 💡 NEW SECTION TO FIX PERMISSIONS
 # Temporarily switch to root to create the directory and set ownership
 USER root
+# Install font rendering libraries required by SkiaSharp
+RUN apt-get update && apt-get install -y \
+    libfontconfig1 \
+    libfreetype6 \
+    && rm -rf /var/lib/apt/lists/*
 # Ensure the directory exists and is owned by the 'app' user
 RUN mkdir -p /home/app/.aspnet/https/ && chown -R app:app /home/app/.aspnet
 

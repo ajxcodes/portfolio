@@ -35,25 +35,42 @@ DB_PASSWORD=password
 This project is built with the following technologies:
 
 **Frontend (apps/web):**
-* **Framework:** Next.js (with React)
+* **Framework:** Next.js 16 (App Router with React 19)
 * **Language:** TypeScript
-* **Styling:** Tailwind CSS
+* **Styling & Icons:** Tailwind CSS v4, Lucide React
 * **Animations:** Framer Motion
+* **Authentication:** Supabase Auth & SSR client
+* **Testing:** Jest, React Testing Library, and Playwright (E2E)
 
 **Backend (apps/api):**
-* **Framework:** .NET 9
+* **Framework:** .NET 10 Web API
 * **Language:** C#
-* **Database:** PostgreSQL
-* **API:** RESTful API with Swagger/OpenAPI documentation
+* **Database:** PostgreSQL with EF Core
+* **PDF Compilation:** QuestPDF (ATS-compliant layouts)
+* **Cloud Storage:** S3-compatible object storage via AWS SDK
+* **API Documentation:** OpenAPI / Swagger
 
 **DevOps:**
 * **Containerization:** Docker, Docker Compose
-* **CI/CD & Hosting:** Configured for deployment on Render.
+* **CI/CD:** GitHub Actions running lint, backend tests, and frontend Unit/E2E suites.
+* **Hosting:** Configured for automated continuous deployment to Render.
 
 ### About This Project
 
-This project serves as a practical demonstration of my skills and experience as a software developer. It's a living document that I update with my latest projects and professional experience.
+This project serves as a practical demonstration of my skills and experience as a software developer. It is a fully dynamic, full-stack application that handles content management via a live database instead of local static files. 
 
-The frontend is a server-side rendered (SSR) application built with Next.js, allowing for dynamic, up-to-date content on every request. The interactive resume allows users to filter my work experience by skills, providing a more engaging and informative experience than a traditional PDF resume.
+Key features include:
+1. **Interactive Bash Terminal CLI**: A retro-themed interactive CLI shell on the homepage supporting commands like `ls`, `cat [dir]`, `open blog/[slug]`, and `clear`.
+2. **Dynamic PDF Resumes**: An integrated PDF compiler using QuestPDF that generates a professional, ATS-friendly PDF download in real-time.
+3. **Supabase-Authenticated Admin Panel**: A secure management portal (`/admin`) to update experience logs, link profiles, view traffic analytics, upload media files directly to cloud storage, and view application audit trails.
 
-The backend is a .NET API that serves all portfolio and blog data from a PostgreSQL database. This demonstrates my ability to build and containerize a full-stack application.
+All resume data, images, and posts are managed dynamically through our REST API rather than checked-in JSON or markdown files.
+
+### Render Continuous Deployment Configuration
+
+To ensure zero-downtime deployments and that only fully tested builds reach production, configure your Render service settings as follows:
+1. In your **Render Dashboard**, select your web service and go to **Settings**.
+2. Set **Auto Deploy** to **No**.
+3. Use the deployment webhook URL provided by Render in your GitHub Actions secrets as `RENDER_DEPLOY_HOOK_API` and `RENDER_DEPLOY_HOOK_WEB`.
+4. In your GitHub Repository, set up a branch protection rule on `main` that requires all status checks (`Backend Test Suite (C# / .NET 10)`, `Frontend Build & Lint (Next.js)`, `Frontend Unit Tests (Jest / RTL)`, and `Frontend E2E Tests (Playwright)`) to pass before merging.
+5. The `deploy-render` job in our CI/CD pipeline will automatically trigger the Render deployment webhook via `curl` once all tests pass on commits pushed to `main`.

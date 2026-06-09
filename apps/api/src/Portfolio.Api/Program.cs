@@ -2,6 +2,12 @@
 
 using DotNetEnv;
 using DotNetEnv.Configuration;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.IdentityModel.Tokens;
+using Portfolio.Api.Authentication;
+using System.Security.Claims;
 using Portfolio.Application.Extensions;
 using Portfolio.Infrastructure;
 
@@ -15,7 +21,63 @@ if (builder.Environment.IsDevelopment())
 }
 
 builder.Configuration.AddEnvironmentVariables();
-builder.Services.AddControllers();
+
+var bypassAuth = builder.Environment.IsDevelopment() || 
+                 string.Equals(Environment.GetEnvironmentVariable("LOCAL_DEV_BYPASS_AUTH"), "true", StringComparison.OrdinalIgnoreCase);
+
+var adminEmail = Environment.GetEnvironmentVariable("ADMIN_EMAIL");
+if (!bypassAuth && string.IsNullOrEmpty(adminEmail))
+{
+    throw new ArgumentException("ADMIN_EMAIL environment variable is missing or empty. This is required for authorization.");
+}
+
+if (bypassAuth)
+{
+    builder.Services.AddAuthentication("MockScheme")
+        .AddScheme<AuthenticationSchemeOptions, MockAuthHandler>("MockScheme", null);
+}
+else
+{
+    var supabaseUrl = builder.Configuration["SUPABASE_URL"] ?? throw new ArgumentException("SUPABASE_URL is missing");
+    builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+        .AddJwtBearer(options =>
+        {
+            options.Authority = $"{supabaseUrl}/auth/v1";
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidIssuer = $"{supabaseUrl}/auth/v1",
+                ValidateAudience = true,
+                ValidAudience = "authenticated",
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                ClockSkew = TimeSpan.Zero
+            };
+        });
+}
+
+builder.Services.AddAuthorization(options =>
+{
+    options.DefaultPolicy = new AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .RequireAssertion(context =>
+        {
+            if (bypassAuth) return true;
+            
+            if (string.IsNullOrEmpty(adminEmail)) return false;
+            
+            var emailClaim = context.User.FindFirst("email")?.Value ?? context.User.FindFirst(ClaimTypes.Email)?.Value;
+            return string.Equals(emailClaim, adminEmail, StringComparison.OrdinalIgnoreCase);
+        })
+        .Build();
+});
+
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+    });
 const string myAllowSpecificOrigins = "_myAllowSpecificOrigins";
 builder.Services
     .ConfigureApplication()
@@ -40,6 +102,11 @@ app.UseSwagger()
     .UseHttpsRedirection()
     .UseCors(myAllowSpecificOrigins);
 
+app.UseAuthentication();
+app.UseAuthorization();
+
 app.MapControllers();
 await app.Services.RunMigrations();
 app.Run();
+[System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
+public partial class Program { }

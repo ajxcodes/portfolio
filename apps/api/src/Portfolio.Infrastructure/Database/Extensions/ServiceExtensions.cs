@@ -1,11 +1,15 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Portfolio.Application.Blog.Repositories;
+using Portfolio.Application.Resume.Repositories;
+using Portfolio.Application.Analytics.Repositories;
+using Portfolio.Application.Audit.Repositories;
 using Portfolio.Infrastructure.Database.Contexts;
 using Portfolio.Infrastructure.Database.Repositories;
 
 namespace Portfolio.Infrastructure.Database.Extensions;
 
+[System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
 public static class ServiceExtensions
 {
     const string DbHost = "DB_HOST";
@@ -15,18 +19,21 @@ public static class ServiceExtensions
     const string IdeDebugging = "IDE_DEBUGGING";
     const string Localhost = "localhost";
     private static readonly string ConnectionString = "Host={0};Database={1};Username={2};Password={3}";
-    extension(IServiceCollection services)
+    public static IServiceCollection ConfigureDatabase(this IServiceCollection services)
     {
-        public IServiceCollection
-            ConfigureDatabase() =>
-            services.AddDbContext<PortfolioDbContext>(options =>
-                    options.UseNpgsql(GetConnectionString()))
-                .ConfigureRepositories();
+        services.AddDbContext<PortfolioDbContext>(options =>
+                options.UseNpgsql(GetConnectionString()))
+            .ConfigureRepositories();
+        return services;
+    }
 
-        private IServiceCollection ConfigureRepositories()
-        {
-            return services.AddScoped<IPostRepository, PostRepository>();
-        }
+    private static IServiceCollection ConfigureRepositories(this IServiceCollection services)
+    {
+        services.AddScoped<IPostRepository, PostRepository>();
+        services.AddScoped<IResumeRepository, ResumeRepository>();
+        services.AddScoped<IAnalyticsRepository, AnalyticsRepository>();
+        services.AddScoped<IAuditRepository, AuditRepository>();
+        return services;
     }
 
     private static string GetConnectionString()

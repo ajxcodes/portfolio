@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/providers";
 import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
 import { getPortfolioData } from "@/lib/data";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -25,8 +26,15 @@ export default async function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <ThemeProvider>
-          <Header contact={data.resume.contact} name={data.personalInfo.name} downloadUrl={data.resume.downloadUrl} />
-          <main className="container mx-auto px-4 py-8">{children}</main>
+          <Header 
+            contact={data.resume.contact} 
+            name={data.personalInfo.name} 
+            downloadUrl={data.resume.downloadUrl} 
+            photoUrlLight={data.resume.photoUrlLight}
+            photoUrlDark={data.resume.photoUrlDark}
+          />
+          <main className="container mx-auto px-4 py-8 pb-24">{children}</main>
+          <Footer />
         </ThemeProvider>
       </body>
     </html>

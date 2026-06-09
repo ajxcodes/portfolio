@@ -1,13 +1,12 @@
 using Portfolio.Application.Blog.Repositories;
 using Portfolio.Application.Blog.Responses;
-using Portfolio.Domain.Blog;
 
 namespace Portfolio.Application.Blog.Services;
 
 public interface IPostService
 {
     Task<IEnumerable<PostResponse>> ListAsync();
-    Task<PostResponse> GetAsync(Guid id);
+    Task<PostResponse?> GetAsync(Guid id);
 }
 
 public class PostService(IPostRepository repository) : IPostService
@@ -18,9 +17,9 @@ public class PostService(IPostRepository repository) : IPostService
         return posts.Select(PostResponse.FromDomain);
     }
 
-    public async Task<PostResponse> GetAsync(Guid id)
+    public async Task<PostResponse?> GetAsync(Guid id)
     {
         var post = await repository.GetAsync(id);
-        return PostResponse.FromDomain(post);
+        return post == null ? null : PostResponse.FromDomain(post);
     }
 }

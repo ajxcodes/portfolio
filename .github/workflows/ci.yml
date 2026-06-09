@@ -34,8 +34,20 @@ jobs:
     - name: Build Solution
       run: dotnet build apps/api/Portfolio.sln --no-restore -c Release
 
-    - name: Run Backend Tests
-      run: dotnet test apps/api/Portfolio.sln --no-build -c Release --verbosity normal
+    - name: Run Backend Tests with Coverage
+      run: |
+        dotnet test apps/api/Portfolio.sln --no-build -c Release --verbosity normal \
+          /p:CollectCoverage=true \
+          /p:CoverletOutputFormat=cobertura \
+          /p:Threshold=50 \
+          /p:ThresholdType=line \
+          /p:ThresholdStat=Total
+
+    - name: Upload Backend Coverage Report
+      uses: actions/upload-artifact@v4
+      with:
+        name: backend-coverage
+        path: apps/api/src/Portfolio.Tests/coverage.cobertura.xml
 
   frontend-build:
     name: Frontend Build & Lint (Next.js)
@@ -66,3 +78,120 @@ jobs:
 
     - name: Build Frontend Application
       run: pnpm run build
+
+  frontend-tests:
+    name: Frontend Unit Tests (Jest / RTL)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Install pnpm
+      uses: pnpm/action-setup@v3
+      with:
+        version: 9
+        run_install: false
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+        cache: 'pnpm'
+        cache-dependency-path: apps/web/pnpm-lock.yaml
+
+    - name: Install Dependencies
+      run: pnpm install --frozen-lockfile
+
+    - name: Run Frontend Tests with Coverage
+      run: pnpm run test --coverage --watchAll=false
+
+    - name: Upload Frontend Coverage Report
+      uses: actions/upload-artifact@v4
+      with:
+        name: frontend-coverage
+        path: apps/web/coverage/
+
+  playwright-e2e:
+    name: Frontend E2E Tests (Playwright)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Install pnpm
+      uses: pnpm/action-setup@v3
+      with:
+        version: 9
+        run_install: false
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+        cache: 'pnpm'
+        cache-dependency-path: apps/web/pnpm-lock.yaml
+
+    - name: Install Dependencies
+      run: pnpm install --frozen-lockfile
+
+    - name: Install Playwright Browsers
+      run: npx playwright install --with-deps
+
+    - name: Run Playwright Tests
+      run: pnpm run test:e2e
+
+    - name: Upload Playwright Report
+      uses: actions/upload-artifact@v4
+      if: failure()
+      with:
+        name: playwright-report
+        path: apps/web/playwright-report/
+        retries-on-error: true
+
+  deploy-render:
+    name: Trigger Render Deploy & Track Status
+    needs: [backend-tests, frontend-build, frontend-tests, playwright-e2e]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+    - name: Trigger Web API Render Deploy
+      run: |
+        if [ -n "${{ secrets.RENDER_DEPLOY_HOOK_API }}" ]; then
+          curl -f -X POST "${{ secrets.RENDER_DEPLOY_HOOK_API }}"
+        else
+          echo "RENDER_DEPLOY_HOOK_API secret is not set, skipping API trigger."
+        fi
+
+    - name: Trigger Frontend Web Render Deploy
+      run: |
+        if [ -n "${{ secrets.RENDER_DEPLOY_HOOK_WEB }}" ]; then
+          curl -f -X POST "${{ secrets.RENDER_DEPLOY_HOOK_WEB }}"
+        else
+          echo "RENDER_DEPLOY_HOOK_WEB secret is not set, skipping Web trigger."
+        fi
+
+    - name: Register GitHub Environment Deployment
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        # Create deployment and capture ID
+        DEPLOYMENT_ID=$(gh api repos/${{ github.repository }}/deployments \
+          -f ref=main \
+          -f environment=production \
+          -f description="Automatic deployment after successful CI checks" \
+          --jq '.id')
+        
+        # Create successful deployment status link
+        gh api repos/${{ github.repository }}/deployments/$DEPLOYMENT_ID/statuses \
+          -f state=success \
+          -f description="CI validation passed. Render build triggered." \
+          -f log_url="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
