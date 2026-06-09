@@ -108,5 +108,5 @@ app.UseAuthorization();
 app.MapControllers();
 await app.Services.RunMigrations();
 app.Run();
-
+[System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
 public partial class Program { }

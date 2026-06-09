@@ -9,6 +9,7 @@ using Portfolio.Infrastructure.Storage.Services;
 
 namespace Portfolio.Infrastructure;
 
+[System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
 public static class ServiceExtensions
 {
     public static IServiceCollection ConfigureInfrastructure(this IServiceCollection services,

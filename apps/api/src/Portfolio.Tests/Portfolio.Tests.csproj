@@ -6,6 +6,7 @@
         <Nullable>enable</Nullable>
         <IsPackable>false</IsPackable>
         <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+        <Exclude>[Portfolio.Tests]*,[Portfolio.Faker]*,[Portfolio.Infrastructure]Portfolio.Infrastructure.Migrations.*</Exclude>
     </PropertyGroup>
 
     <ItemGroup>

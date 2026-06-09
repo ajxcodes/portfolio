@@ -9,6 +9,7 @@ using Portfolio.Infrastructure.Database.Repositories;
 
 namespace Portfolio.Infrastructure.Database.Extensions;
 
+[System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
 public static class ServiceExtensions
 {
     const string DbHost = "DB_HOST";
