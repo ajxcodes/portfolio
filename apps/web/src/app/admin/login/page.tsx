@@ -100,20 +100,6 @@ function LoginContent() {
             </svg>
             Continue with GitHub
           </button>
-
-          <button
-            onClick={() => handleOAuth("google")}
-            disabled={loading}
-            className="w-full flex items-center justify-center gap-3 py-3 px-4 bg-card border border-primary/20 hover:bg-primary/5 text-foreground font-bold rounded-md transition-all duration-300 disabled:opacity-50 text-sm"
-          >
-            <svg className="w-5 h-5" viewBox="0 0 24 24">
-              <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v3.92h6.58c-.28 1.48-1.11 2.73-2.37 3.58v2.98h3.84c2.24-2.06 3.53-5.1 3.53-8.41z"/>
-              <path fill="#34A853" d="M12 24c3.24 0 5.97-1.08 7.96-2.91l-3.84-2.98c-1.07.72-2.44 1.15-4.12 1.15-3.17 0-5.85-2.14-6.81-5.02H1.31v3.08A11.996 11.996 0 0 0 12 24z"/>
-              <path fill="#FBBC05" d="M5.19 14.24a7.18 7.18 0 0 1 0-4.48V6.68H1.31a11.99 11.99 0 0 0 0 10.64l3.88-3.08z"/>
-              <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.43-3.43C17.96 1.19 15.24 0 12 0 7.31 0 3.25 2.69 1.31 6.68l3.88 3.08c.96-2.88 3.64-5.01 6.81-5.01z"/>
-            </svg>
-            Continue with Google
-          </button>
         </div>
 
         <div className="relative my-8">
