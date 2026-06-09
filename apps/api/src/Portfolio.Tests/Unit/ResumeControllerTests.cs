@@ -84,9 +84,16 @@ public class ResumeControllerTests
             PhotoUrlLight = "http://light.png",
             PhotoUrlDark = "http://dark.png"
         };
-        
-        _serviceMock.CreateProfileAsync(Arg.Any<ResumeProfile>())
-            .Returns(x => x.Arg<ResumeProfile>());
+        var returnedProfile = new ResumeProfile
+        {
+            Id = Guid.NewGuid(),
+            Name = "Bob",
+            Title = "Designer",
+            Intro = "Creative guy",
+            IsActive = false
+        };
+
+        _serviceMock.CreateProfileWithDetailsAsync(request).Returns(returnedProfile);
 
         // Act
         var result = await _controller.CreateAsync(request);
@@ -98,6 +105,6 @@ public class ResumeControllerTests
         profile.Title.ShouldBe("Designer");
         profile.IsActive.ShouldBeFalse();
 
-        await _serviceMock.Received(1).CreateProfileAsync(Arg.Any<ResumeProfile>());
+        await _serviceMock.Received(1).CreateProfileWithDetailsAsync(request);
     }
 }

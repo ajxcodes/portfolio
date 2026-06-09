@@ -13,7 +13,7 @@ public class AnalyticsController(IAnalyticsService service) : ControllerBase
     [AllowAnonymous]
     public async Task<IActionResult> LogPageViewAsync([FromBody] PageViewRequest request)
     {
-        var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
+        var ipAddress = GetClientIpAddress();
         var userAgent = request.UserAgent ?? Request.Headers.UserAgent.ToString();
 
         var log = new PageViewLog
@@ -40,7 +40,7 @@ public class AnalyticsController(IAnalyticsService service) : ControllerBase
             return BadRequest("LinkId is required");
         }
 
-        var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
+        var ipAddress = GetClientIpAddress();
         var userAgent = request.UserAgent ?? Request.Headers.UserAgent.ToString();
 
         var log = new LinkClickLog
@@ -65,6 +65,23 @@ public class AnalyticsController(IAnalyticsService service) : ControllerBase
     {
         var summaryDto = await service.GetSummaryAsync(limit);
         return Ok(summaryDto);
+    }
+
+    private string? GetClientIpAddress()
+    {
+        if (Request.Headers.TryGetValue("X-Forwarded-For", out var forwardedFor))
+        {
+            var ip = forwardedFor.FirstOrDefault()?.Split(',').FirstOrDefault()?.Trim();
+            if (!string.IsNullOrEmpty(ip)) return ip;
+        }
+
+        if (Request.Headers.TryGetValue("X-Real-IP", out var realIp))
+        {
+            var ip = realIp.FirstOrDefault()?.Trim();
+            if (!string.IsNullOrEmpty(ip)) return ip;
+        }
+
+        return HttpContext.Connection.RemoteIpAddress?.ToString();
     }
 }
 

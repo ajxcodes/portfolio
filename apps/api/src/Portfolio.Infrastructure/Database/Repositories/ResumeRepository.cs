@@ -136,6 +136,43 @@ public class ResumeRepository(PortfolioDbContext context) : IResumeRepository
         }
     }
 
+    public Task<ResumeProfileLinkType?> GetLinkTypeByKeyAsync(string key)
+    {
+        return context.ResumeProfileLinkTypes.FirstOrDefaultAsync(lt => lt.KeyIdentifier == key);
+    }
+
+    public async Task AddProfileLinkTypeAsync(ResumeProfileLinkType linkType)
+    {
+        await context.ResumeProfileLinkTypes.AddAsync(linkType);
+    }
+
+    public async Task AddProfileLinkAsync(ResumeProfileLink profileLink)
+    {
+        await context.ResumeProfileLinks.AddAsync(profileLink);
+    }
+
+    public async Task AddExperienceHighlightAsync(ExperienceHighlight highlight)
+    {
+        await context.ExperienceHighlights.AddAsync(highlight);
+    }
+
+    public async Task AddWorkExperienceSkillAsync(WorkExperienceSkill experienceSkill)
+    {
+        await context.WorkExperienceSkills.AddAsync(experienceSkill);
+    }
+
+    public async Task RemoveLinksByProfileIdAsync(Guid profileId)
+    {
+        var links = await context.ResumeProfileLinks.Where(l => l.ProfileId == profileId).ToListAsync();
+        context.ResumeProfileLinks.RemoveRange(links);
+    }
+
+    public async Task RemoveWorkExperiencesByProfileIdAsync(Guid profileId)
+    {
+        var exps = await context.WorkExperiences.Where(e => e.ProfileId == profileId).ToListAsync();
+        context.WorkExperiences.RemoveRange(exps);
+    }
+
     public Task SaveChangesAsync()
     {
         return context.SaveChangesAsync();

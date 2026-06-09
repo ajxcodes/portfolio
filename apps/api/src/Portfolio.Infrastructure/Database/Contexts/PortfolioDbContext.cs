@@ -82,18 +82,30 @@ public class PortfolioDbContext(DbContextOptions options, IHttpContextAccessor? 
                 _ => "UNKNOWN"
             };
 
+            bool IsSensitiveProperty(Microsoft.EntityFrameworkCore.ChangeTracking.PropertyEntry prop)
+            {
+                var name = prop.Metadata.Name;
+                if (name.Contains("ApiKey", StringComparison.OrdinalIgnoreCase) || 
+                    name.Contains("Secret", StringComparison.OrdinalIgnoreCase) || 
+                    name.Contains("Password", StringComparison.OrdinalIgnoreCase))
+                    return true;
+                
+                var converter = prop.Metadata.GetValueConverter();
+                return converter != null && converter.GetType().Name.Contains("Encryption");
+            }
+
             if (entry.State == EntityState.Added)
             {
                 foreach (var prop in entry.Properties)
                 {
-                    changes[prop.Metadata.Name] = prop.CurrentValue;
+                    changes[prop.Metadata.Name] = IsSensitiveProperty(prop) ? "***REDACTED***" : prop.CurrentValue;
                 }
             }
             else if (entry.State == EntityState.Deleted)
             {
                 foreach (var prop in entry.Properties)
                 {
-                    changes[prop.Metadata.Name] = prop.OriginalValue;
+                    changes[prop.Metadata.Name] = IsSensitiveProperty(prop) ? "***REDACTED***" : prop.OriginalValue;
                 }
             }
             else if (entry.State == EntityState.Modified)
@@ -102,10 +114,11 @@ public class PortfolioDbContext(DbContextOptions options, IHttpContextAccessor? 
                 {
                     if (prop.IsModified)
                     {
+                        var isSensitive = IsSensitiveProperty(prop);
                         changes[prop.Metadata.Name] = new
                         {
-                            Original = prop.OriginalValue,
-                            Current = prop.CurrentValue
+                            Original = isSensitive ? "***REDACTED***" : prop.OriginalValue,
+                            Current = isSensitive ? "***REDACTED***" : prop.CurrentValue
                         };
                     }
                 }

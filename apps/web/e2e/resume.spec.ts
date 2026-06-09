@@ -2,6 +2,41 @@ import { test, expect } from "@playwright/test";
 
 test.describe("Interactive Resume Page", () => {
   test.beforeEach(async ({ page }) => {
+    // Mock the backend API response for the active resume
+    await page.route('**/api/resume/active', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          id: "123e4567-e89b-12d3-a456-426614174000",
+          name: "Test User",
+          title: "Full Stack Developer",
+          intro: "Hello world",
+          photoUrlLight: null,
+          photoUrlDark: null,
+          isActive: true,
+          links: [],
+          skills: [
+            {
+              category: "Languages & Frameworks",
+              items: ["TypeScript", "React", "C#", ".NET"]
+            }
+          ],
+          experience: [
+            {
+              company: "Test Company",
+              role: "Developer",
+              period: "2020 - Present",
+              location: "Remote",
+              isPrevious: false,
+              skills: ["TypeScript", "React"],
+              highlights: ["Built awesome features"]
+            }
+          ]
+        })
+      });
+    });
+
     // Load local development page
     await page.goto("/");
   });

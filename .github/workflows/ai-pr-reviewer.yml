@@ -131,6 +131,7 @@ jobs:
           - Today's date is June 4, 2026.
           - .NET 10.0 (net10.0) is released, active, and is the target framework for the C# backend. Do NOT flag .NET 10 as invalid, preview, or unavailable.
           - Next.js 15 and React 19 are the active versions in the web project.
+          - You MUST carefully review both the C# backend code and the React/Next.js frontend code in the diff. Ensure you provide inline comments for any logic, security, accessibility, or performance issues found in the frontend ('apps/web/**') files.
           
           You must respond with a SINGLE JSON object with the following structure:
           {

@@ -67,9 +67,11 @@ public class AesEncryptionConverter : ValueConverter<string, string>
 
     private static byte[] GetKeyBytes(string key)
     {
-        var keyBytes = new byte[32];
         var actualBytes = Encoding.UTF8.GetBytes(key);
-        Array.Copy(actualBytes, keyBytes, Math.Min(actualBytes.Length, 32));
-        return keyBytes;
+        if (actualBytes.Length != 32)
+        {
+            throw new InvalidOperationException($"ENCRYPTION_KEY must be exactly 32 bytes (256 bits) long. Current length is {actualBytes.Length} bytes.");
+        }
+        return actualBytes;
     }
 }

@@ -76,7 +76,7 @@ public class UploadControllerTests
         var memoryStream = new MemoryStream(new byte[100]);
         fileMock.OpenReadStream().Returns(memoryStream);
 
-        _storageServiceMock.UploadFileAsync(Arg.Any<Stream>(), "avatar.png", "image/png")
+        _storageServiceMock.UploadFileAsync(Arg.Any<Stream>(), Arg.Any<string>(), "image/png")
             .Returns("http://localhost:9000/portfolio-media/mock-object-key.png");
 
         // Act
@@ -91,6 +91,6 @@ public class UploadControllerTests
         var urlValue = urlProperty.GetValue(okResult.Value) as string;
         urlValue.ShouldBe("http://localhost:9000/portfolio-media/mock-object-key.png");
 
-        await _storageServiceMock.Received(1).UploadFileAsync(Arg.Any<Stream>(), "avatar.png", "image/png");
+        await _storageServiceMock.Received(1).UploadFileAsync(Arg.Any<Stream>(), Arg.Any<string>(), "image/png");
     }
 }

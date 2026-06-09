@@ -79,16 +79,16 @@ public class PostServiceTests
     }
 
     [Fact]
-    public async Task GetAsync_ThrowsInvalidOperationException_WhenPostDoesNotExist()
+    public async Task GetAsync_ReturnsNull_WhenPostDoesNotExist()
     {
         // Arrange
         var postId = Guid.NewGuid();
         _repositoryMock.GetAsync(postId).Returns((Post?)null);
 
-        // Act & Assert
-        await Should.ThrowAsync<InvalidOperationException>(async () =>
-        {
-            await _service.GetAsync(postId);
-        });
+        // Act
+        var result = await _service.GetAsync(postId);
+
+        // Assert
+        result.ShouldBeNull();
     }
 }

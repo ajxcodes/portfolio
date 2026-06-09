@@ -43,7 +43,9 @@ else
                 ValidIssuer = $"{supabaseUrl}/auth/v1",
                 ValidateAudience = true,
                 ValidAudience = "authenticated",
-                ValidateLifetime = true
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                ClockSkew = TimeSpan.Zero
             };
         });
 }
@@ -66,11 +68,7 @@ builder.Services.AddAuthorization(options =>
 });
 
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddControllers()
-    .AddJsonOptions(options =>
-    {
-        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
-    });
+builder.Services.AddControllers();
 const string myAllowSpecificOrigins = "_myAllowSpecificOrigins";
 builder.Services
     .ConfigureApplication()

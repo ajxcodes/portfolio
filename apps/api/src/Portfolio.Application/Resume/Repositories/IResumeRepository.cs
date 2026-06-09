@@ -22,5 +22,13 @@ public interface IResumeRepository
     Task AddWorkExperienceAsync(WorkExperience experience);
     Task DeleteWorkExperienceAsync(Guid id);
 
+    Task<ResumeProfileLinkType?> GetLinkTypeByKeyAsync(string key);
+    Task AddProfileLinkTypeAsync(ResumeProfileLinkType linkType);
+    Task AddProfileLinkAsync(ResumeProfileLink profileLink);
+    Task AddExperienceHighlightAsync(ExperienceHighlight highlight);
+    Task AddWorkExperienceSkillAsync(WorkExperienceSkill experienceSkill);
+    Task RemoveLinksByProfileIdAsync(Guid profileId);
+    Task RemoveWorkExperiencesByProfileIdAsync(Guid profileId);
+
     Task SaveChangesAsync();
 }

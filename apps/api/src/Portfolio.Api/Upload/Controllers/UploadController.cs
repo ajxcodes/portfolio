@@ -35,7 +35,8 @@ public class UploadController(IStorageService storageService) : ControllerBase
         try
         {
             using var stream = file.OpenReadStream();
-            var publicUrl = await storageService.UploadFileAsync(stream, file.FileName, file.ContentType);
+            var uniqueFileName = $"{Guid.NewGuid():N}{extension}";
+            var publicUrl = await storageService.UploadFileAsync(stream, uniqueFileName, file.ContentType);
             return Ok(new { Url = publicUrl });
         }
         catch (Exception ex)
