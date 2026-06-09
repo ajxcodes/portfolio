@@ -22,7 +22,7 @@ interface Profile {
   updatedAt: string;
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5808";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || process.env.API_BASE_URL || "http://localhost:5808";
 
 export default function DashboardPage() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
