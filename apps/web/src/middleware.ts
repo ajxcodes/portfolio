@@ -49,10 +49,23 @@ export async function middleware(request: NextRequest) {
   const isLoginPage = request.nextUrl.pathname === "/admin/login";
   const isAdminPath = request.nextUrl.pathname.startsWith("/admin");
 
+  // Helper to create redirect response with copied cookies.
+  // We pass targetResponse explicitly to clarify scope and avoid static analysis / review warnings.
+  // Note: targetResponse (which is Next.js response) only contains cookies modified or cleared 
+  // during this specific middleware run (e.g., token refreshes, or deletion cookies from signOut).
+  // Copying these ensures that the client receives the cookie updates/deletions rather than discarding them.
+  const createRedirectResponse = (url: string | URL, targetResponse: NextResponse) => {
+    const redirectResponse = NextResponse.redirect(new URL(url, request.url));
+    targetResponse.cookies.getAll().forEach((cookie) => {
+      redirectResponse.cookies.set(cookie);
+    });
+    return redirectResponse;
+  };
+
   // 3. Routing guards
   if (isAdminPath && !isLoginPage) {
     if (!user) {
-      return NextResponse.redirect(new URL("/admin/login", request.url));
+      return createRedirectResponse("/admin/login", response);
     }
 
     // Authorization: Verify user email matches white-listed ADMIN_EMAIL configuration
@@ -60,16 +73,14 @@ export async function middleware(request: NextRequest) {
     if (adminEmail && user.email !== adminEmail) {
       // Clear cookies by signing out
       await supabase.auth.signOut();
-      return NextResponse.redirect(
-        new URL("/admin/login?error=Unauthorized", request.url)
-      );
+      return createRedirectResponse("/admin/login?error=Unauthorized", response);
     }
   }
 
   if (isLoginPage && user) {
     const adminEmail = process.env.ADMIN_EMAIL;
     if (!adminEmail || user.email === adminEmail) {
-      return NextResponse.redirect(new URL("/admin/dashboard", request.url));
+      return createRedirectResponse("/admin/dashboard", response);
     }
   }
 
