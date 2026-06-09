@@ -39,7 +39,7 @@ jobs:
         dotnet test apps/api/Portfolio.sln --no-build -c Release --verbosity normal \
           /p:CollectCoverage=true \
           /p:CoverletOutputFormat=cobertura \
-          /p:Exclude="[Portfolio.Tests]*,[Portfolio.Faker]*" \
+          /p:Exclude="[Portfolio.Tests]*%2c[Portfolio.Faker]*" \
           /p:Threshold=50 \
           /p:ThresholdType=line
 
