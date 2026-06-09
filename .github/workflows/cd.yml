@@ -1,0 +1,91 @@
+name: Portfolio Continuous Deployment
+
+on:
+  workflow_run:
+    workflows: ["Portfolio CI/CD Pipeline"]
+    types:
+      - completed
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Trigger Deployments
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    
+    steps:
+    - name: Trigger Web API Render Deploy
+      run: |
+        if [ -n "${{ secrets.RENDER_DEPLOY_HOOK_API }}" ]; then
+          echo "Triggering Render API deployment..."
+          curl -f -X POST "${{ secrets.RENDER_DEPLOY_HOOK_API }}"
+        else
+          echo "RENDER_DEPLOY_HOOK_API secret is not set, skipping API trigger."
+        fi
+
+    - name: Trigger Frontend Vercel Deploy
+      run: |
+        echo "Vercel deployments are handled natively via the Vercel GitHub integration."
+        echo "Merging to main automatically triggers a production deployment in Vercel."
+
+    - name: Register GitHub Deployment Status
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        echo "Registering deployment status in GitHub..."
+        # Create deployment and capture ID (bypassing required status checks to avoid 409 Conflict)
+        DEPLOYMENT_ID=$(gh api repos/${{ github.repository }}/deployments \
+          -f ref=main \
+          -f description="Automatic deployment after successful CI checks" \
+          -f required_contexts='[]' \
+          --jq '.id')
+        
+        # Create successful deployment status link
+        gh api repos/${{ github.repository }}/deployments/$DEPLOYMENT_ID/statuses \
+          -f state=success \
+          -f description="CI validation passed. Deployments triggered." \
+          -f log_url="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+    - name: Verify Deployments are Live
+      run: |
+        echo "Waiting 60 seconds for initial deployment sync..."
+        sleep 60
+        
+        if [ -n "${{ secrets.PROD_API_URL }}" ]; then
+          echo "Checking API health at ${{ secrets.PROD_API_URL }}..."
+          for i in {1..30}; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${{ secrets.PROD_API_URL }}/api/resume/active")
+            if [ "$STATUS" -eq 200 ] || [ "$STATUS" -eq 404 ]; then
+              echo "API is responsive and live!"
+              break
+            fi
+            if [ $i -eq 30 ]; then
+              echo "API verification timed out!"
+              exit 1
+            fi
+            echo "Waiting 10s... (Status: $STATUS)"
+            sleep 10
+          done
+        else
+          echo "PROD_API_URL secret not set. Skipping API verification."
+        fi
+        
+        if [ -n "${{ secrets.PROD_WEB_URL }}" ]; then
+          echo "Checking Frontend health at ${{ secrets.PROD_WEB_URL }}..."
+          for i in {1..30}; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${{ secrets.PROD_WEB_URL }}")
+            if [ "$STATUS" -eq 200 ]; then
+              echo "Frontend is responsive and live!"
+              break
+            fi
+            if [ $i -eq 30 ]; then
+              echo "Frontend verification timed out!"
+              exit 1
+            fi
+            echo "Waiting 10s... (Status: $STATUS)"
+            sleep 10
+          done
+        else
+          echo "PROD_WEB_URL secret not set. Skipping Frontend verification."
+        fi
