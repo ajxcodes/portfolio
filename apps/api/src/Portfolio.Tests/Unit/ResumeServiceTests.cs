@@ -68,4 +68,130 @@ public class ResumeServiceTests
             await _service.ActivateProfileAsync(targetId);
         });
     }
+
+    [Fact]
+    public async Task ListProfilesAsync_ReturnsProfiles()
+    {
+        var profiles = new List<ResumeProfile> { new() { Id = Guid.NewGuid() } };
+        _repositoryMock.ListProfilesAsync().Returns(profiles);
+
+        var result = await _service.ListProfilesAsync();
+
+        result.ShouldBe(profiles);
+        await _repositoryMock.Received(1).ListProfilesAsync();
+    }
+
+    [Fact]
+    public async Task CreateProfileAsync_AddsAndSaves()
+    {
+        var profile = new ResumeProfile { Id = Guid.NewGuid() };
+
+        var result = await _service.CreateProfileAsync(profile);
+
+        result.ShouldBe(profile);
+        await _repositoryMock.Received(1).AddProfileAsync(profile);
+        await _repositoryMock.Received(1).SaveChangesAsync();
+    }
+
+    [Fact]
+    public async Task UpdateProfileAsync_UpdatesAndSaves()
+    {
+        var profile = new ResumeProfile { Id = Guid.NewGuid() };
+
+        await _service.UpdateProfileAsync(profile);
+
+        await _repositoryMock.Received(1).UpdateProfileAsync(profile);
+        await _repositoryMock.Received(1).SaveChangesAsync();
+    }
+
+    [Fact]
+    public async Task DeleteProfileAsync_DeletesAndSaves()
+    {
+        var id = Guid.NewGuid();
+
+        await _service.DeleteProfileAsync(id);
+
+        await _repositoryMock.Received(1).DeleteProfileAsync(id);
+        await _repositoryMock.Received(1).SaveChangesAsync();
+    }
+
+    [Fact]
+    public async Task ListSkillsAsync_ReturnsSkills()
+    {
+        var skills = new List<SkillCategory> { new() { Id = Guid.NewGuid(), CategoryName = "Category" } };
+        _repositoryMock.ListSkillsAsync().Returns(skills);
+
+        var result = await _service.ListSkillsAsync();
+
+        result.ShouldBe(skills);
+        await _repositoryMock.Received(1).ListSkillsAsync();
+    }
+
+    [Fact]
+    public async Task CreateSkillCategoryAsync_AddsAndSaves()
+    {
+        var category = new SkillCategory { Id = Guid.NewGuid(), CategoryName = "Cat" };
+
+        var result = await _service.CreateSkillCategoryAsync(category);
+
+        result.ShouldBe(category);
+        await _repositoryMock.Received(1).AddSkillCategoryAsync(category);
+        await _repositoryMock.Received(1).SaveChangesAsync();
+    }
+
+    [Fact]
+    public async Task UpdateSkillCategoryAsync_UpdatesAndSaves()
+    {
+        var category = new SkillCategory { Id = Guid.NewGuid(), CategoryName = "Cat" };
+
+        await _service.UpdateSkillCategoryAsync(category);
+
+        await _repositoryMock.Received(1).UpdateSkillCategoryAsync(category);
+        await _repositoryMock.Received(1).SaveChangesAsync();
+    }
+
+    [Fact]
+    public async Task DeleteSkillCategoryAsync_DeletesAndSaves()
+    {
+        var id = Guid.NewGuid();
+
+        await _service.DeleteSkillCategoryAsync(id);
+
+        await _repositoryMock.Received(1).DeleteSkillCategoryAsync(id);
+        await _repositoryMock.Received(1).SaveChangesAsync();
+    }
+
+    [Fact]
+    public async Task CreateSkillAsync_AddsAndSaves()
+    {
+        var skill = new Skill { Id = Guid.NewGuid(), SkillName = "Skill" };
+
+        var result = await _service.CreateSkillAsync(skill);
+
+        result.ShouldBe(skill);
+        await _repositoryMock.Received(1).AddSkillAsync(skill);
+        await _repositoryMock.Received(1).SaveChangesAsync();
+    }
+
+    [Fact]
+    public async Task UpdateSkillAsync_UpdatesAndSaves()
+    {
+        var skill = new Skill { Id = Guid.NewGuid(), SkillName = "Skill" };
+
+        await _service.UpdateSkillAsync(skill);
+
+        await _repositoryMock.Received(1).UpdateSkillAsync(skill);
+        await _repositoryMock.Received(1).SaveChangesAsync();
+    }
+
+    [Fact]
+    public async Task DeleteSkillAsync_DeletesAndSaves()
+    {
+        var id = Guid.NewGuid();
+
+        await _service.DeleteSkillAsync(id);
+
+        await _repositoryMock.Received(1).DeleteSkillAsync(id);
+        await _repositoryMock.Received(1).SaveChangesAsync();
+    }
 }
