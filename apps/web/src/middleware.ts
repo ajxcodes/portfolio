@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   // Redirect root /admin path to /admin/dashboard
   if (request.nextUrl.pathname === "/admin") {
     return NextResponse.redirect(new URL("/admin/dashboard", request.url));
@@ -33,6 +33,9 @@ export async function proxy(request: NextRequest) {
         setAll(cookiesToSet: { name: string; value: string; options?: any }[]) {
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
+          );
+          cookiesToSet.forEach(({ name, value, options }) =>
+            response.cookies.set({ name, value, ...options })
           );
         },
       },
