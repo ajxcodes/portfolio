@@ -76,7 +76,7 @@ test.describe("Interactive Resume Page", () => {
     await expect(firstSkillBtn).toHaveClass(/selected/);
 
     // Assert that the Clear button appears
-    const clearButton = page.getByRole("button", { name: /Clear/i });
+    const clearButton = page.locator('button:has-text("Clear")');
     await expect(clearButton).toBeVisible();
 
     // Click clear button and verify selection is cleared
