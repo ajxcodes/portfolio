@@ -11,7 +11,8 @@ permissions:
   pull-requests: write
   issues: write
   discussions: write
-  contents: read
+  # 'contents: write' is required for resolving PR review threads via the GraphQL resolveReviewThread mutation
+  contents: write
 
 jobs:
   review:
@@ -156,7 +157,7 @@ jobs:
           Evaluation Rules:
           1. **PR Summary (\`summary\`)**: Provide a clear, professional summary of the PR's achievements and files changed. This will be updated directly in the PR description body.
           2. **Old Issues Resolve (\`resolvedThreads\`)**: Compare the new Git Diff against the unresolved reviews list below. If the changes in the Diff successfully fix an issue, include its 'threadId' in the array so we can resolve the conversation thread.
-          3. **New Issues (\`comments\`)**: Find logic flaws, security vulnerabilities, or performance issues in the modified files. Identify the specific file path and the line number in the *new* file (right side of the diff) where the issue is. Every comment MUST have a 'severity' property set to one of 'critical', 'warning', or 'info'. Every comment body MUST start with "🤖 **Antigravity AI Suggestion**\\n\\n". If the code looks great, keep the comments list empty.
+          3. **New Issues (\`comments\`)**: Find logic flaws, security vulnerabilities, or performance issues in the modified files. Identify the specific file path and the line number in the *new* file (right side of the diff) where the issue is. Every comment MUST have a 'severity' property set to one of 'critical', 'warning', or 'info'. Every comment body MUST start with "🤖 **Antigravity AI Suggestion**\\n\\n". Do NOT suggest new comments for issues that are already listed in the 'unresolved previous AI reviews' below. If the code looks great, keep the comments list empty.
 
           Here are the unresolved previous AI reviews on this PR:
           \`\`\`json
@@ -252,7 +253,7 @@ jobs:
                    messages: [
                      {
                        role: 'system',
-                       content: "You are Antigravity, an expert senior software engineer and security auditor reviewing a pull request for an enterprise portfolio website.\n\nYou must respond with a SINGLE JSON object exactly matching this structure:\n{\n  \"summary\": \"...\",\n  \"resolvedThreads\": [\"id1\"],\n  \"comments\": [\n    { \"path\": \"...\", \"line\": 15, \"severity\": \"info\", \"body\": \"🤖 **Antigravity AI Suggestion**\\n\\n...\" }\n  ]\n}\n\nNote: every comment in \"comments\" must have a 'severity' property set to one of 'critical', 'warning', or 'info'."
+                        content: "You are Antigravity, an expert senior software engineer and security auditor reviewing a pull request for an enterprise portfolio website.\n\nYou must respond with a SINGLE JSON object exactly matching this structure:\n{\n  \"summary\": \"...\",\n  \"resolvedThreads\": [\"id1\"],\n  \"comments\": [\n    { \"path\": \"...\", \"line\": 15, \"severity\": \"info\", \"body\": \"🤖 **Antigravity AI Suggestion**\\n\\n...\" }\n  ]\n}\n\nNote: every comment in \"comments\" must have a 'severity' property set to one of 'critical', 'warning', or 'info'. Do NOT suggest duplicate comments for issues that are already unresolved in the previous reviews."
                      },
                      {
                        role: 'user',
@@ -341,6 +342,16 @@ jobs:
               });
 
               for (const comment of reviewData.comments) {
+                // Skip if there is already an unresolved thread on the same file and line
+                const lineNum = parseInt(comment.line);
+                const hasExistingUnresolved = unresolvedBotThreads.some(t => 
+                  t.path === comment.path && parseInt(t.line) === lineNum
+                );
+                if (hasExistingUnresolved) {
+                  console.log(`Skipping duplicate comment on ${comment.path}:${lineNum} as there is already an unresolved thread.`);
+                  continue;
+                }
+
                 let severityHeader = "";
                 if (comment.severity) {
                   const sev = comment.severity.toLowerCase();
