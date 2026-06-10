@@ -76,4 +76,20 @@ public class AnalyticsServiceTests
         summary.RecentPageViews.Count.ShouldBe(1);
         summary.RecentLinkClicks.Count.ShouldBe(1);
     }
+
+    [Fact]
+    public async Task LogLinkClickAsync_DoesNotSaveRecord_WhenLinkDoesNotExist()
+    {
+        // Arrange
+        var linkId = Guid.NewGuid();
+        var log = new LinkClickLog { Id = Guid.NewGuid(), LinkId = linkId };
+        _resumeRepositoryMock.LinkExistsAsync(linkId).Returns(false);
+
+        // Act
+        await _service.LogLinkClickAsync(log);
+
+        // Assert
+        await _repositoryMock.DidNotReceive().LogLinkClickAsync(log);
+        await _repositoryMock.DidNotReceive().SaveChangesAsync();
+    }
 }

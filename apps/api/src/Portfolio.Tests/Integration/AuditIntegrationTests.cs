@@ -47,7 +47,7 @@ public class AuditIntegrationTests : IClassFixture<DbTestFixture>
             .FirstOrDefault();
 
         insertAudit.ShouldNotBeNull();
-        insertAudit.Changes.ShouldContain("Original Title");
+        insertAudit.Changes!.ShouldContain("Original Title");
         insertAudit.Actor.ShouldNotBeNull();
 
         // 2. Test Update Auditing
@@ -60,8 +60,8 @@ public class AuditIntegrationTests : IClassFixture<DbTestFixture>
             .FirstOrDefault();
 
         updateAudit.ShouldNotBeNull();
-        updateAudit.Changes.ShouldContain("Original Title");
-        updateAudit.Changes.ShouldContain("Updated Title");
+        updateAudit.Changes!.ShouldContain("Original Title");
+        updateAudit.Changes!.ShouldContain("Updated Title");
 
         // 3. Test Delete Auditing
         context.Posts.Remove(post);
@@ -73,6 +73,6 @@ public class AuditIntegrationTests : IClassFixture<DbTestFixture>
             .FirstOrDefault();
 
         deleteAudit.ShouldNotBeNull();
-        deleteAudit.Changes.ShouldContain("Updated Title");
+        deleteAudit.Changes!.ShouldContain("Updated Title");
     }
 }

@@ -6,7 +6,8 @@
         <Nullable>enable</Nullable>
         <IsPackable>false</IsPackable>
         <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-        <Exclude>[Portfolio.Tests]*,[Portfolio.Faker]*,[Portfolio.Infrastructure]Portfolio.Infrastructure.Migrations.*</Exclude>
+        <Exclude>[Portfolio.Tests]*,[Portfolio.Faker]*,[Portfolio.Infrastructure]Portfolio.Infrastructure.Migrations.*,[Portfolio.Api]Program*,[Portfolio.Api]Microsoft.AspNetCore.OpenApi.Generated.*,[Portfolio.Api]System.Runtime.CompilerServices.*</Exclude>
+        <ExcludeByFile>**/Program.cs</ExcludeByFile>
     </PropertyGroup>
 
     <ItemGroup>

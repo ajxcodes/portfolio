@@ -104,7 +104,7 @@ public class ResumePdfGeneratorTests
             Id = Guid.NewGuid(),
             Name = "John Doe Minimal",
             Title = "Freelancer",
-            Intro = null, // Empty Intro
+            Intro = null!, // Empty Intro
             IsActive = true,
             Links = new List<ResumeProfileLink>(),
             WorkExperiences = new List<WorkExperience>()

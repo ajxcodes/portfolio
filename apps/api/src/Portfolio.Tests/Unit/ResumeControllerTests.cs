@@ -260,7 +260,9 @@ public class ResumeControllerTests
         var result = await _controller.PrepareDownloadAsync();
 
         var okResult = result.ShouldBeOfType<OkObjectResult>();
+        okResult.Value.ShouldNotBeNull();
         var downloadUrlProp = okResult.Value.GetType().GetProperty("DownloadUrl");
+        downloadUrlProp.ShouldNotBeNull();
         downloadUrlProp.GetValue(okResult.Value).ShouldBe("http://uploaded-url.pdf");
     }
 }
