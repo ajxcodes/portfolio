@@ -238,10 +238,20 @@ export function useResumeForm() {
     setExperiences(next);
   };
 
-  const updateExperience = (index: number, field: keyof ExperienceItem, value: any) => {
-    const next = [...experiences];
-    next[index] = { ...next[index], [field]: value };
-    setExperiences(next);
+  const updateExperience = (
+    index: number,
+    fieldOrUpdates: keyof ExperienceItem | Partial<ExperienceItem>,
+    value?: any
+  ) => {
+    setExperiences((prev) => {
+      const next = [...prev];
+      if (typeof fieldOrUpdates === "object" && fieldOrUpdates !== null) {
+        next[index] = { ...next[index], ...fieldOrUpdates };
+      } else {
+        next[index] = { ...next[index], [fieldOrUpdates as keyof ExperienceItem]: value };
+      }
+      return next;
+    });
   };
 
   const addHighlight = (expIndex: number) => {
