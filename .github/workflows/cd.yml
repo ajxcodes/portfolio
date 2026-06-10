@@ -38,7 +38,7 @@ jobs:
         DEPLOYMENT_ID=$(gh api repos/${{ github.repository }}/deployments \
           -f ref=main \
           -f description="Automatic deployment after successful CI checks" \
-          -f required_contexts='[]' \
+          -F required_contexts='[]' \
           --jq '.id')
         
         # Create successful deployment status link

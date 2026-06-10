@@ -238,11 +238,30 @@ export function useResumeForm() {
     setExperiences(next);
   };
 
-  const updateExperience = (index: number, field: keyof ExperienceItem, value: any) => {
-    const next = [...experiences];
-    next[index] = { ...next[index], [field]: value };
-    setExperiences(next);
-  };
+  function updateExperience<K extends keyof ExperienceItem>(
+    index: number,
+    field: K,
+    value: ExperienceItem[K]
+  ): void;
+  function updateExperience(
+    index: number,
+    updates: Partial<ExperienceItem>
+  ): void;
+  function updateExperience<K extends keyof ExperienceItem>(
+    index: number,
+    fieldOrUpdates: K | Partial<ExperienceItem>,
+    value?: ExperienceItem[K]
+  ) {
+    setExperiences((prev) => {
+      const next = [...prev];
+      if (typeof fieldOrUpdates === "object" && fieldOrUpdates !== null) {
+        next[index] = { ...next[index], ...fieldOrUpdates };
+      } else {
+        next[index] = { ...next[index], [fieldOrUpdates]: value } as ExperienceItem;
+      }
+      return next;
+    });
+  }
 
   const addHighlight = (expIndex: number) => {
     const next = [...experiences];

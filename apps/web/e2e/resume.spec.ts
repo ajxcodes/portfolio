@@ -61,7 +61,7 @@ test.describe("Interactive Resume Page", () => {
 
   test("should select skills and highlight corresponding experience items", async ({ page }) => {
     // Locate all skill buttons
-    const skillButtons = page.locator(".skill-btn");
+    const skillButtons = page.locator("button.skill-btn");
     
     // Wait until skill buttons are rendered
     await expect(skillButtons.first()).toBeVisible();

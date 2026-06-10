@@ -23,7 +23,7 @@ import {
   X
 } from "lucide-react";
 
-import { useResumeForm } from "@/hooks/useResumeForm";
+import { useResumeForm, ExperienceItem } from "@/hooks/useResumeForm";
 import { CategorySelect } from "@/components/admin/CategorySelect";
 import { ExistingSkillSelect } from "@/components/admin/ExistingSkillSelect";
 import { MONTHS, YEARS, formatPeriod, calculateDuration } from "@/lib/resumePeriodUtils";
@@ -528,8 +528,7 @@ function ResumeFormContent() {
                               onChange={(e) => {
                                 const m = e.target.value;
                                 const nextPeriod = formatPeriod(m, exp.startYear || "", !!exp.isCurrent, exp.endMonth || "", exp.endYear || "");
-                                updateExperience(index, "startMonth", m);
-                                updateExperience(index, "period", nextPeriod);
+                                updateExperience(index, { startMonth: m, period: nextPeriod });
                               }}
                               className="flex-1 px-2.5 py-1.5 bg-background border border-primary/20 rounded-md text-xs focus:outline-none"
                             >
@@ -541,8 +540,7 @@ function ResumeFormContent() {
                               onChange={(e) => {
                                 const y = e.target.value;
                                 const nextPeriod = formatPeriod(exp.startMonth || "", y, !!exp.isCurrent, exp.endMonth || "", exp.endYear || "");
-                                updateExperience(index, "startYear", y);
-                                updateExperience(index, "period", nextPeriod);
+                                updateExperience(index, { startYear: y, period: nextPeriod });
                               }}
                               required
                               className="flex-1 px-2.5 py-1.5 bg-background border border-primary/20 rounded-md text-xs focus:outline-none"
@@ -563,8 +561,7 @@ function ResumeFormContent() {
                               onChange={(e) => {
                                 const m = e.target.value;
                                 const nextPeriod = formatPeriod(exp.startMonth || "", exp.startYear || "", !!exp.isCurrent, m, exp.endYear || "");
-                                updateExperience(index, "endMonth", m);
-                                updateExperience(index, "period", nextPeriod);
+                                updateExperience(index, { endMonth: m, period: nextPeriod });
                               }}
                               className="flex-1 px-2.5 py-1.5 bg-background border border-primary/20 rounded-md text-xs disabled:opacity-50 focus:outline-none"
                             >
@@ -578,8 +575,7 @@ function ResumeFormContent() {
                               onChange={(e) => {
                                 const y = e.target.value;
                                 const nextPeriod = formatPeriod(exp.startMonth || "", exp.startYear || "", !!exp.isCurrent, exp.endMonth || "", y);
-                                updateExperience(index, "endYear", y);
-                                updateExperience(index, "period", nextPeriod);
+                                updateExperience(index, { endYear: y, period: nextPeriod });
                               }}
                               className="flex-1 px-2.5 py-1.5 bg-background border border-primary/20 rounded-md text-xs disabled:opacity-50 focus:outline-none"
                             >
@@ -598,12 +594,15 @@ function ResumeFormContent() {
                             onChange={(e) => {
                               const curr = e.target.checked;
                               const nextPeriod = formatPeriod(exp.startMonth || "", exp.startYear || "", curr, exp.endMonth || "", exp.endYear || "");
-                              updateExperience(index, "isCurrent", curr);
-                              updateExperience(index, "period", nextPeriod);
+                              const updates: Partial<ExperienceItem> = {
+                                isCurrent: curr,
+                                period: nextPeriod
+                              };
                               if (curr) {
-                                updateExperience(index, "endMonth", "");
-                                updateExperience(index, "endYear", "");
+                                updates.endMonth = "";
+                                updates.endYear = "";
                               }
+                              updateExperience(index, updates);
                             }}
                             className="w-4 h-4 text-primary focus:ring-primary bg-background border border-primary/10 rounded cursor-pointer"
                           />
