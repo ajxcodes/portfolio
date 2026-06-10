@@ -14,6 +14,7 @@ export interface ContactInfo {
   linkedin: string;
   calendar: string;
   github: string;
+  linkIds?: Record<string, string>;
 }
 
 export interface SkillGroup {
@@ -157,15 +158,18 @@ export async function getPortfolioData(): Promise<PortfolioData> {
 
       if (active.links && active.links.length > 0) {
         const contactLinks: Record<string, string> = {};
+        const linkIds: Record<string, string> = {};
         active.links.forEach((l: any) => {
           const key = l.linkType?.keyIdentifier || l.linkType?.name?.toLowerCase();
           if (key) {
             contactLinks[key] = l.url;
+            linkIds[key] = l.id;
           }
         });
         portfolioData.resume.contact = {
           ...portfolioData.resume.contact,
           ...contactLinks,
+          linkIds,
         };
       }
 

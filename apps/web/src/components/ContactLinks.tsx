@@ -32,18 +32,21 @@ export const ContactLinks = ({ contact, showText = true, downloadUrl }: ContactL
       Icon: MailIcon,
       text: contact.email.replace('mailto:', ''),
       label: `Email ${contact.email}`,
+      linkId: contact.linkIds?.["email"] || contact.linkIds?.["Email"]
     }] : []),
     ...(contact.linkedin ? [{
       href: contact.linkedin.startsWith('http') ? contact.linkedin : `https://${contact.linkedin}`,
       Icon: LinkedInIcon,
       text: contact.linkedin.replace(/https?:\/\/(www\.)?linkedin\.com\/in\//, '').replace(/\/$/, ''),
       label: 'LinkedIn Profile',
+      linkId: contact.linkIds?.["linkedin"] || contact.linkIds?.["LinkedIn"]
     }] : []),
     ...(contact.github ? [{
       href: contact.github.startsWith('http') ? contact.github : `https://${contact.github}`,
       Icon: GitHubIcon,
       text: contact.github.replace(/https?:\/\/(www\.)?github\.com\//, '').replace(/\/$/, ''),
       label: 'GitHub Profile',
+      linkId: contact.linkIds?.["github"] || contact.linkIds?.["GitHub"]
     }] : []),
     // The calendar link is now driven by data and will only appear if provided.
     ...(contact.calendar ? [{
@@ -51,6 +54,7 @@ export const ContactLinks = ({ contact, showText = true, downloadUrl }: ContactL
       Icon: CalendarIcon,
       text: "Let's Chat",
       label: 'Schedule a meeting',
+      linkId: contact.linkIds?.["calendar"] || contact.linkIds?.["Calendar"]
     }] : []),
     ...(downloadUrl ? [{
       href: downloadUrl,
@@ -61,14 +65,15 @@ export const ContactLinks = ({ contact, showText = true, downloadUrl }: ContactL
       onClick: (e: React.MouseEvent) => {
         e.preventDefault();
         setIsModalOpen(true);
-      }
+      },
+      linkId: contact.linkIds?.["resume"] || contact.linkIds?.["Resume"]
     }] : []),
   ];
 
   return (
     <>
       <div className="flex justify-center items-center gap-x-6 gap-y-2 flex-wrap text-lg">
-        {contactItems.map(({ href, Icon, text, label, download, onClick }) => {
+        {contactItems.map(({ href, Icon, text, label, download, onClick, linkId }) => {
           const isExternal = href.startsWith('http');
           return (
             <a
@@ -80,6 +85,7 @@ export const ContactLinks = ({ contact, showText = true, downloadUrl }: ContactL
               className="flex items-center gap-2 hover:text-primary transition-colors cursor-pointer"
               download={download}
               onClick={onClick}
+              data-link-id={linkId}
             >
               <Icon className="h-5 w-5" />
               {showText && <span>{text}</span>}

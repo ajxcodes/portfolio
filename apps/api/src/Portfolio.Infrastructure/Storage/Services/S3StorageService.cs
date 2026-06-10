@@ -8,22 +8,33 @@ public class S3StorageService : IStorageService
 {
     private readonly string _bucketName;
     private readonly string _endpoint;
-    private readonly AmazonS3Client _s3Client;
+    private readonly IAmazonS3 _s3Client;
 
-    public S3StorageService()
+    public S3StorageService() : this(null)
+    {
+    }
+
+    public S3StorageService(IAmazonS3? s3Client = null)
     {
         _endpoint = Environment.GetEnvironmentVariable("S3_ENDPOINT") ?? "http://localhost:9000";
         var accessKey = Environment.GetEnvironmentVariable("S3_ACCESS_KEY") ?? "minioadmin";
         var secretKey = Environment.GetEnvironmentVariable("S3_SECRET_KEY") ?? "minioadminpassword";
         _bucketName = Environment.GetEnvironmentVariable("S3_BUCKET_NAME") ?? "portfolio-media";
 
-        var config = new AmazonS3Config
+        if (s3Client != null)
         {
-            ServiceURL = _endpoint,
-            ForcePathStyle = true
-        };
+            _s3Client = s3Client;
+        }
+        else
+        {
+            var config = new AmazonS3Config
+            {
+                ServiceURL = _endpoint,
+                ForcePathStyle = true
+            };
 
-        _s3Client = new AmazonS3Client(accessKey, secretKey, config);
+            _s3Client = new AmazonS3Client(accessKey, secretKey, config);
+        }
     }
 
     public async Task<string> UploadFileAsync(Stream fileStream, string fileName, string contentType, string? customKey = null)

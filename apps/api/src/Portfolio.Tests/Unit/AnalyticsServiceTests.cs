@@ -1,6 +1,7 @@
 using NSubstitute;
 using Portfolio.Application.Analytics.Repositories;
 using Portfolio.Application.Analytics.Services;
+using Portfolio.Application.Resume.Repositories;
 using Portfolio.Domain.Analytics;
 using Shouldly;
 using Xunit;
@@ -10,11 +11,12 @@ namespace Portfolio.Tests.Unit;
 public class AnalyticsServiceTests
 {
     private readonly IAnalyticsRepository _repositoryMock = Substitute.For<IAnalyticsRepository>();
+    private readonly IResumeRepository _resumeRepositoryMock = Substitute.For<IResumeRepository>();
     private readonly AnalyticsService _service;
 
     public AnalyticsServiceTests()
     {
-        _service = new AnalyticsService(_repositoryMock);
+        _service = new AnalyticsService(_repositoryMock, _resumeRepositoryMock);
     }
 
     [Fact]
@@ -35,7 +37,9 @@ public class AnalyticsServiceTests
     public async Task LogLinkClickAsync_SavesRecord()
     {
         // Arrange
-        var log = new LinkClickLog { Id = Guid.NewGuid(), LinkId = Guid.NewGuid() };
+        var linkId = Guid.NewGuid();
+        var log = new LinkClickLog { Id = Guid.NewGuid(), LinkId = linkId };
+        _resumeRepositoryMock.LinkExistsAsync(linkId).Returns(true);
 
         // Act
         await _service.LogLinkClickAsync(log);
@@ -71,5 +75,21 @@ public class AnalyticsServiceTests
         summary.UniqueLinkClicks.ShouldBe(8);
         summary.RecentPageViews.Count.ShouldBe(1);
         summary.RecentLinkClicks.Count.ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task LogLinkClickAsync_DoesNotSaveRecord_WhenLinkDoesNotExist()
+    {
+        // Arrange
+        var linkId = Guid.NewGuid();
+        var log = new LinkClickLog { Id = Guid.NewGuid(), LinkId = linkId };
+        _resumeRepositoryMock.LinkExistsAsync(linkId).Returns(false);
+
+        // Act
+        await _service.LogLinkClickAsync(log);
+
+        // Assert
+        await _repositoryMock.DidNotReceive().LogLinkClickAsync(log);
+        await _repositoryMock.DidNotReceive().SaveChangesAsync();
     }
 }

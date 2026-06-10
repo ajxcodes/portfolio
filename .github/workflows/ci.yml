@@ -1,4 +1,4 @@
-name: Portfolio CI/CD Pipeline
+name: Portfolio Continuous Integration
 
 on:
   push:
@@ -37,14 +37,23 @@ jobs:
     - name: Run Backend Tests with Coverage
       run: |
         dotnet test apps/api/Portfolio.sln --no-build -c Release --verbosity normal \
+          --logger "trx;LogFileName=test-results.trx" \
           /p:CollectCoverage=true \
           /p:CoverletOutputFormat=cobertura \
-          /p:Threshold=50 \
+          /p:Threshold=80 \
           /p:ThresholdType=line \
           /p:ThresholdStat=Total
 
+    - name: Upload Backend Test Results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: backend-test-results
+        path: apps/api/src/Portfolio.Tests/TestResults/test-results.trx
+
     - name: Upload Backend Coverage Report
       uses: actions/upload-artifact@v4
+      if: always()
       with:
         name: backend-coverage
         path: apps/api/src/Portfolio.Tests/coverage.cobertura.xml
@@ -107,10 +116,18 @@ jobs:
       run: pnpm install --frozen-lockfile
 
     - name: Run Frontend Tests with Coverage
-      run: pnpm run test --coverage --watchAll=false
+      run: pnpm run test --coverage --watchAll=false --json --outputFile=jest-results.json
+
+    - name: Upload Frontend Test Results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: frontend-test-results
+        path: apps/web/jest-results.json
 
     - name: Upload Frontend Coverage Report
       uses: actions/upload-artifact@v4
+      if: always()
       with:
         name: frontend-coverage
         path: apps/web/coverage/
@@ -145,8 +162,64 @@ jobs:
     - name: Install Playwright Browsers
       run: npx playwright install --with-deps
 
+    - name: Start E2E Services (Postgres + GeoIP + API)
+      working-directory: ${{ github.workspace }}
+      run: docker compose -f docker-compose.e2e.yml up --build -d
+
+    - name: Wait for API to be ready
+      run: |
+        echo "Polling API on host port 5808..."
+        for i in $(seq 1 40); do
+          # Use -s only (no -f) so curl exits 0 on any HTTP response, not just 2xx.
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:5808/api/resume/active 2>/dev/null || true)
+          if [ "$HTTP_CODE" != "000" ] && [ -n "$HTTP_CODE" ]; then
+            echo "API is ready after $i attempts (HTTP $HTTP_CODE)."
+            exit 0
+          fi
+          echo "  attempt $i: not reachable yet (got $HTTP_CODE), waiting 5s..."
+          sleep 5
+        done
+        echo "API did not become ready in time. Dumping logs:"
+        docker compose -f ${{ github.workspace }}/docker-compose.e2e.yml logs api
+        exit 1
+
+    - name: Seed Database for E2E Tests
+      working-directory: ${{ github.workspace }}
+      run: node apps/web/e2e/seed.js
+      env:
+        NEXT_PUBLIC_API_BASE_URL: http://127.0.0.1:5808
+
+    - name: Verify Seeded Data
+      run: |
+        echo "=== Active Resume Profile ==="
+        curl -s http://127.0.0.1:5808/api/resume/active || true
+        echo ""
+        echo "=== Resume Skills ==="
+        curl -s http://127.0.0.1:5808/api/resume/skills || true
+        echo ""
+
     - name: Run Playwright Tests
+      env:
+        NEXT_PUBLIC_API_BASE_URL: http://127.0.0.1:5808
+        NEXT_PUBLIC_GEOIP_SERVICE_URL: http://127.0.0.1:8080/json/
       run: pnpm run test:e2e
+
+    - name: Dump Service Logs on Failure
+      if: failure()
+      working-directory: ${{ github.workspace }}
+      run: docker compose -f docker-compose.e2e.yml logs api
+
+    - name: Tear Down E2E Services
+      if: always()
+      working-directory: ${{ github.workspace }}
+      run: docker compose -f docker-compose.e2e.yml down --volumes
+
+    - name: Upload Playwright Test Results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: playwright-test-results
+        path: apps/web/playwright-results.json
 
     - name: Upload Playwright Report
       uses: actions/upload-artifact@v4
@@ -156,4 +229,57 @@ jobs:
         path: apps/web/playwright-report/
         retries-on-error: true
 
+  ci-summary:
+    name: CI Performance & Coverage Summary
+    runs-on: ubuntu-latest
+    needs: [backend-tests, frontend-build, frontend-tests, playwright-e2e]
+    if: always()
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Download Backend Test Results
+      uses: actions/download-artifact@v4
+      with:
+        name: backend-test-results
+        path: artifacts/backend-test-results
+      continue-on-error: true
+
+    - name: Download Backend Coverage Report
+      uses: actions/download-artifact@v4
+      with:
+        name: backend-coverage
+        path: artifacts/backend-coverage
+      continue-on-error: true
+
+    - name: Download Frontend Test Results
+      uses: actions/download-artifact@v4
+      with:
+        name: frontend-test-results
+        path: artifacts/frontend-test-results
+      continue-on-error: true
+
+    - name: Download Frontend Coverage Report
+      uses: actions/download-artifact@v4
+      with:
+        name: frontend-coverage
+        path: artifacts/frontend-coverage
+      continue-on-error: true
+
+    - name: Download Playwright Test Results
+      uses: actions/download-artifact@v4
+      with:
+        name: playwright-test-results
+        path: artifacts/playwright-test-results
+      continue-on-error: true
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+
+    - name: Generate Summary Report
+      run: node .github/scripts/generate-summary.js
+      env:
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 

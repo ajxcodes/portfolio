@@ -1,5 +1,7 @@
 import { test, expect } from "@playwright/test";
 
+const GUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 test.describe("Traffic Attribution Analytics", () => {
   test("should extract ref parameter and post page view analytics", async ({ page }) => {
     // Intercept POST request to the analytics views endpoint
@@ -9,11 +11,13 @@ test.describe("Traffic Attribution Analytics", () => {
       await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ success: true }) });
     });
 
+    const viewResponsePromise = page.waitForResponse("**/api/analytics/views");
+
     // Navigate to homepage with ref parameter
     await page.goto("/?ref=test_github_campaign");
 
-    // Wait short moment for useEffect to execute fetch view analytics
-    await page.waitForTimeout(500);
+    // Wait for the view analytics fetch to fire
+    await viewResponsePromise;
 
     expect(viewRequestPayload).not.toBeNull();
     expect(viewRequestPayload.ReferrerSource).toBe("test_github_campaign");
@@ -30,20 +34,29 @@ test.describe("Traffic Attribution Analytics", () => {
     // Navigate with ref
     await page.goto("/?ref=job_board");
 
-    // Find and click on GitHub social link (external)
-    const githubLink = page.locator('a[href*="github.com"]').first();
-    await expect(githubLink).toBeVisible();
+    // Find a GitHub link that ContactLinks has tagged with a real data-link-id
+    const githubLink = page.locator('a[href*="github.com"][data-link-id]').first();
+    await expect(githubLink).toBeVisible({ timeout: 5000 });
 
-    // Click link (we can intercept to prevent navigation away during E2E test)
+    // Read the DB link ID that was rendered; it comes from the active resume profile
+    const linkId = await githubLink.getAttribute("data-link-id");
+    expect(linkId).toMatch(GUID_REGEX);
+
+    // Intercept navigation away so the test page stays loaded
     await page.route("https://github.com/**", async (route) => {
       await route.abort();
     });
 
+    const clickResponsePromise = page.waitForResponse("**/api/analytics/clicks");
+
     await githubLink.click({ force: true }).catch(() => {});
 
-    // Check click payload
+    // Wait for the async click telemetry fetch to fire
+    await clickResponsePromise;
+
+    // Check click payload — LinkId must match the data-link-id attribute, not a hardcoded fallback
     expect(clickRequestPayload).not.toBeNull();
     expect(clickRequestPayload.ReferrerSource).toBe("job_board");
-    expect(clickRequestPayload.LinkId).toBe("e2b02e77-508b-4c08-8e6c-7e6df5b9ef18"); // GitHub fallback GUID
+    expect(clickRequestPayload.LinkId).toBe(linkId);
   });
 });

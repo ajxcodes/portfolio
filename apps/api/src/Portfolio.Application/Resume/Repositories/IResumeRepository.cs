@@ -25,6 +25,8 @@ public interface IResumeRepository
     Task<ResumeProfileLinkType?> GetLinkTypeByKeyAsync(string key);
     Task AddProfileLinkTypeAsync(ResumeProfileLinkType linkType);
     Task AddProfileLinkAsync(ResumeProfileLink profileLink);
+    Task<ResumeProfileLink?> GetLinkByIdAsync(Guid id);
+    Task<bool> LinkExistsAsync(Guid id);
     Task AddExperienceHighlightAsync(ExperienceHighlight highlight);
     Task AddWorkExperienceSkillAsync(WorkExperienceSkill experienceSkill);
     Task RemoveLinksByProfileIdAsync(Guid profileId);

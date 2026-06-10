@@ -139,6 +139,18 @@ public class ResumeRepository(PortfolioDbContext context) : IResumeRepository
         await context.ResumeProfileLinks.AddAsync(profileLink);
     }
 
+    public Task<ResumeProfileLink?> GetLinkByIdAsync(Guid id)
+    {
+        return context.ResumeProfileLinks
+            .Include(l => l.LinkType)
+            .FirstOrDefaultAsync(l => l.Id == id);
+    }
+
+    public Task<bool> LinkExistsAsync(Guid id)
+    {
+        return context.ResumeProfileLinks.AnyAsync(l => l.Id == id);
+    }
+
     public async Task AddExperienceHighlightAsync(ExperienceHighlight highlight)
     {
         await context.ExperienceHighlights.AddAsync(highlight);

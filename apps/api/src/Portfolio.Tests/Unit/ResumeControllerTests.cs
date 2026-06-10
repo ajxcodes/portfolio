@@ -1,7 +1,12 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using Portfolio.Api.Resume.Controllers;
 using Portfolio.Application.Resume.Services;
+using Portfolio.Application.Storage.Services;
 using Portfolio.Domain.Resume;
 using Shouldly;
 using Xunit;
@@ -11,11 +16,13 @@ namespace Portfolio.Tests.Unit;
 public class ResumeControllerTests
 {
     private readonly IResumeService _serviceMock = Substitute.For<IResumeService>();
+    private readonly IStorageService _storageServiceMock = Substitute.For<IStorageService>();
+    private readonly IResumePdfGenerator _pdfGeneratorMock = Substitute.For<IResumePdfGenerator>();
     private readonly ResumeController _controller;
 
     public ResumeControllerTests()
     {
-        _controller = new ResumeController(_serviceMock);
+        _controller = new ResumeController(_serviceMock, _storageServiceMock, _pdfGeneratorMock);
     }
 
     [Fact]
@@ -56,7 +63,7 @@ public class ResumeControllerTests
     }
 
     [Fact]
-    public async Task GetByIdAsync_ReturnsProfile_WhenExists()
+    public async Task GetById_ReturnsProfile_WhenExists()
     {
         // Arrange
         var profileId = Guid.NewGuid();
@@ -64,7 +71,7 @@ public class ResumeControllerTests
         _serviceMock.GetProfileByIdAsync(profileId).Returns(profile);
 
         // Act
-        var result = await _controller.GetByIdAsync(profileId);
+        var result = await _controller.GetById(profileId);
 
         // Assert
         var okResult = result.Result.ShouldBeOfType<OkObjectResult>();
@@ -201,5 +208,61 @@ public class ResumeControllerTests
 
         var okResult = result.Result.ShouldBeOfType<OkObjectResult>();
         okResult.Value.ShouldBe(skills);
+    }
+
+    [Fact]
+    public async Task PrepareDownloadAsync_Returns500_WhenServicesNotConfigured()
+    {
+        var controllerWithoutServices = new ResumeController(_serviceMock, null, null);
+        var result = await controllerWithoutServices.PrepareDownloadAsync();
+        var statusResult = result.ShouldBeOfType<ObjectResult>();
+        statusResult.StatusCode.ShouldBe(500);
+    }
+
+    [Fact]
+    public async Task PrepareDownloadAsync_Returns404_WhenNoActiveProfile()
+    {
+        _serviceMock.GetActiveProfileAsync().Returns((ResumeProfile?)null);
+        var result = await _controller.PrepareDownloadAsync();
+        result.ShouldBeOfType<NotFoundObjectResult>();
+    }
+
+    [Fact]
+    public async Task PrepareDownloadAsync_ReturnsOkWithUrl_WhenCacheHit()
+    {
+        var activeProfile = new ResumeProfile { Id = Guid.NewGuid(), UpdatedAt = DateTime.UtcNow };
+        _serviceMock.GetActiveProfileAsync().Returns(activeProfile);
+        _storageServiceMock.GetFileUrlIfExistsAsync(Arg.Any<string>()).Returns("http://cached-url.pdf");
+
+        var result = await _controller.PrepareDownloadAsync();
+
+        var okResult = result.ShouldBeOfType<OkObjectResult>();
+        okResult.Value.ShouldNotBeNull();
+        var downloadUrlProp = okResult.Value.GetType().GetProperty("DownloadUrl");
+        downloadUrlProp.ShouldNotBeNull();
+        downloadUrlProp.GetValue(okResult.Value).ShouldBe("http://cached-url.pdf");
+    }
+
+    [Fact]
+    public async Task PrepareDownloadAsync_GeneratesAndUploads_WhenCacheMiss()
+    {
+        var activeProfile = new ResumeProfile { Id = Guid.NewGuid(), UpdatedAt = DateTime.UtcNow };
+        var skillCategories = new List<SkillCategory>();
+        _serviceMock.GetActiveProfileAsync().Returns(activeProfile);
+        _serviceMock.ListSkillsAsync().Returns(skillCategories);
+        _storageServiceMock.GetFileUrlIfExistsAsync(Arg.Any<string>()).Returns((string?)null);
+        
+        var pdfBytes = new byte[] { 1, 2, 3 };
+        _pdfGeneratorMock.GeneratePdf(activeProfile, skillCategories).Returns(pdfBytes);
+        _storageServiceMock.UploadFileAsync(Arg.Any<Stream>(), "resume.pdf", "application/pdf", Arg.Any<string>())
+            .Returns("http://uploaded-url.pdf");
+
+        var result = await _controller.PrepareDownloadAsync();
+
+        var okResult = result.ShouldBeOfType<OkObjectResult>();
+        okResult.Value.ShouldNotBeNull();
+        var downloadUrlProp = okResult.Value.GetType().GetProperty("DownloadUrl");
+        downloadUrlProp.ShouldNotBeNull();
+        downloadUrlProp.GetValue(okResult.Value).ShouldBe("http://uploaded-url.pdf");
     }
 }
