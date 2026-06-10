@@ -14,8 +14,14 @@ function sanitizeString(val: any, maxLength: number): string | null {
 const guidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export async function POST(request: Request) {
+  let body;
   try {
-    const body = await request.json();
+    body = await request.json();
+  } catch (err) {
+    return NextResponse.json({ error: 'Invalid or empty JSON body' }, { status: 400 });
+  }
+
+  try {
     
     // Validate LinkId format (must be a valid UUID/GUID)
     if (!body.LinkId || typeof body.LinkId !== 'string' || !guidRegex.test(body.LinkId)) {

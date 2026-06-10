@@ -12,8 +12,14 @@ function sanitizeString(val: any, maxLength: number): string | null {
 }
 
 export async function POST(request: Request) {
+  let body;
   try {
-    const body = await request.json();
+    body = await request.json();
+  } catch (err) {
+    return NextResponse.json({ error: 'Invalid or empty JSON body' }, { status: 400 });
+  }
+
+  try {
     
     // Capture geolocation headers from Vercel in production
     const vercelCountry = request.headers.get('x-vercel-ip-country');
