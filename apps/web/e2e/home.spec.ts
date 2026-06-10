@@ -10,4 +10,20 @@ test.describe('Home Page', () => {
     await expect(pageTitle).toBeVisible();
     await expect(pageTitle).not.toBeEmpty();
   });
+
+  test('should cycle themes using the ThemeSwitcher button', async ({ page }) => {
+    await page.goto('/');
+
+    const themeButton = page.locator('button[aria-label^="Change theme from"]');
+    await expect(themeButton).toBeVisible();
+
+    const screenReaderText = themeButton.locator('span.sr-only');
+    
+    // Cycle theme from current to next
+    const initialThemeText = await screenReaderText.textContent();
+    await themeButton.click();
+
+    const nextThemeText = await screenReaderText.textContent();
+    expect(nextThemeText).not.toBe(initialThemeText);
+  });
 });

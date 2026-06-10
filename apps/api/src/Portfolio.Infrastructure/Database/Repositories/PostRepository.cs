@@ -14,6 +14,8 @@ public class PostRepository(PortfolioDbContext context) : IPostRepository
     public Task<List<Post>> ListAsync()
     {
         return context.Posts
+            .AsNoTracking()
+            .AsSplitQuery()
             .Include(p => p.PostTags)
                 .ThenInclude(pt => pt.Tag)
             .Include(p => p.PostSyndications)
@@ -25,6 +27,7 @@ public class PostRepository(PortfolioDbContext context) : IPostRepository
     public Task<Post?> GetAsync(Guid id)
     {
         return context.Posts
+            .AsSplitQuery()
             .Include(p => p.PostTags)
                 .ThenInclude(pt => pt.Tag)
             .Include(p => p.PostSyndications)
@@ -35,6 +38,8 @@ public class PostRepository(PortfolioDbContext context) : IPostRepository
     public Task<Post?> GetBySlugAsync(string slug)
     {
         return context.Posts
+            .AsNoTracking()
+            .AsSplitQuery()
             .Include(p => p.PostTags)
                 .ThenInclude(pt => pt.Tag)
             .Include(p => p.PostSyndications)

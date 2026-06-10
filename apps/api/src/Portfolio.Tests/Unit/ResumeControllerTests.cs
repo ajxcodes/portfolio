@@ -106,7 +106,7 @@ public class ResumeControllerTests
         var result = await _controller.CreateAsync(request);
 
         // Assert
-        var createdResult = result.Result.ShouldBeOfType<CreatedAtActionResult>();
+        var createdResult = result.Result.ShouldBeOfType<CreatedAtRouteResult>();
         var profile = createdResult.Value.ShouldBeOfType<ResumeProfile>();
         profile.Name.ShouldBe("Bob");
         profile.Title.ShouldBe("Designer");
