@@ -14,6 +14,8 @@ public class ResumeRepository(PortfolioDbContext context) : IResumeRepository
     public Task<ResumeProfile?> GetActiveProfileAsync()
     {
         return context.ResumeProfiles
+            .AsNoTracking()
+            .AsSplitQuery()
             .Include(p => p.Links)
                 .ThenInclude(l => l.LinkType)
             .Include(p => p.WorkExperiences.OrderBy(we => we.DisplayOrder))
@@ -32,6 +34,7 @@ public class ResumeRepository(PortfolioDbContext context) : IResumeRepository
     public Task<ResumeProfile?> GetProfileByIdAsync(Guid id)
     {
         return context.ResumeProfiles
+            .AsSplitQuery()
             .Include(p => p.Links)
                 .ThenInclude(l => l.LinkType)
             .Include(p => p.WorkExperiences.OrderBy(we => we.DisplayOrder))
@@ -65,6 +68,7 @@ public class ResumeRepository(PortfolioDbContext context) : IResumeRepository
     public Task<List<SkillCategory>> ListSkillsAsync()
     {
         return context.SkillCategories
+            .AsNoTracking()
             .Include(c => c.Skills.OrderBy(s => s.DisplayOrder))
             .OrderBy(c => c.DisplayOrder)
             .ToListAsync();
