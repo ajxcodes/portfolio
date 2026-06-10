@@ -1,4 +1,4 @@
-import { renderHook, act } from "@testing-library/react";
+import { renderHook, act, waitFor } from "@testing-library/react";
 import { useResumeForm } from "../useResumeForm";
 import * as adminService from "@/lib/adminService";
 import { supabase } from "@/lib/supabaseBrowser";
@@ -45,12 +45,8 @@ describe("useResumeForm Hook", () => {
   });
 
   const renderAndResolveHook = async () => {
-    let rendered: any;
-    await act(async () => {
-      rendered = renderHook(() => useResumeForm());
-      // Wait for any async microtasks to flush
-      await new Promise((resolve) => setTimeout(resolve, 0));
-    });
+    const rendered = renderHook(() => useResumeForm());
+    await waitFor(() => expect(rendered.result.current.fetchLoading).toBe(false));
     return rendered;
   };
 

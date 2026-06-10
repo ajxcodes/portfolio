@@ -11,7 +11,7 @@ permissions:
   pull-requests: write
   issues: write
   discussions: write
-  contents: write
+  contents: read
 
 jobs:
   review:
@@ -145,6 +145,7 @@ jobs:
               {
                 "path": "apps/api/src/Portfolio.Domain/Blog/Tag.cs",
                 "line": 15,
+                "severity": "info",
                 "body": "🤖 **Antigravity AI Suggestion**\\n\\nConsider making this property read-only..."
               }
             ]
@@ -153,7 +154,7 @@ jobs:
           Evaluation Rules:
           1. **PR Summary (\`summary\`)**: Provide a clear, professional summary of the PR's achievements and files changed. This will be updated directly in the PR description body.
           2. **Old Issues Resolve (\`resolvedThreads\`)**: Compare the new Git Diff against the unresolved reviews list below. If the changes in the Diff successfully fix an issue, include its 'threadId' in the array so we can resolve the conversation thread.
-          3. **New Issues (\`comments\`)**: Find logic flaws, security vulnerabilities, or performance issues in the modified files. Identify the specific file path and the line number in the *new* file (right side of the diff) where the issue is. Every comment body MUST start with "🤖 **Antigravity AI Suggestion**\\n\\n". If the code looks great, keep the comments list empty.
+          3. **New Issues (\`comments\`)**: Find logic flaws, security vulnerabilities, or performance issues in the modified files. Identify the specific file path and the line number in the *new* file (right side of the diff) where the issue is. Every comment MUST have a 'severity' property set to one of 'critical', 'warning', or 'info'. Every comment body MUST start with "🤖 **Antigravity AI Suggestion**\\n\\n". If the code looks great, keep the comments list empty.
 
           Here are the unresolved previous AI reviews on this PR:
           \`\`\`json
@@ -249,7 +250,7 @@ jobs:
                    messages: [
                      {
                        role: 'system',
-                       content: "You are Antigravity, an expert senior software engineer and security auditor reviewing a pull request for an enterprise portfolio website.\n\nYou must respond with a SINGLE JSON object exactly matching this structure:\n{\n  \"summary\": \"...\",\n  \"resolvedThreads\": [\"id1\"],\n  \"comments\": [\n    { \"path\": \"...\", \"line\": 15, \"body\": \"🤖 **Antigravity AI Suggestion**\\n\\n...\" }\n  ]\n}"
+                       content: "You are Antigravity, an expert senior software engineer and security auditor reviewing a pull request for an enterprise portfolio website.\n\nYou must respond with a SINGLE JSON object exactly matching this structure:\n{\n  \"summary\": \"...\",\n  \"resolvedThreads\": [\"id1\"],\n  \"comments\": [\n    { \"path\": \"...\", \"line\": 15, \"severity\": \"info\", \"body\": \"🤖 **Antigravity AI Suggestion**\\n\\n...\" }\n  ]\n}\n\nNote: every comment in \"comments\" must have a 'severity' property set to one of 'critical', 'warning', or 'info'."
                      },
                      {
                        role: 'user',
@@ -338,6 +339,18 @@ jobs:
               });
 
               for (const comment of reviewData.comments) {
+                let severityHeader = "";
+                if (comment.severity) {
+                  const sev = comment.severity.toLowerCase();
+                  if (sev === "critical") severityHeader = "🔴 **CRITICAL**: ";
+                  else if (sev === "warning") severityHeader = "⚠️ **WARNING**: ";
+                  else severityHeader = "ℹ️ **INFO**: ";
+                }
+                
+                const commentBody = `${comment.body}`.includes("🤖 **Antigravity AI Suggestion**\n\n")
+                  ? `${comment.body}`.replace("🤖 **Antigravity AI Suggestion**\n\n", `🤖 **Antigravity AI Suggestion**\n\n${severityHeader}`)
+                  : `🤖 **Antigravity AI Suggestion**\n\n${severityHeader}${comment.body}`;
+
                 try {
                   await github.rest.pulls.createReviewComment({
                     owner: context.repo.owner,
@@ -347,7 +360,7 @@ jobs:
                     path: comment.path,
                     line: parseInt(comment.line),
                     side: 'RIGHT',
-                    body: `${comment.body}\n\n*Powered by Google Gemini (${successfulModel})*`
+                    body: `${commentBody}\n\n*Powered by Google Gemini (${successfulModel})*`
                   });
                   console.log(`Created inline comment on ${comment.path}:${comment.line}`);
                 } catch (err) {
@@ -357,7 +370,7 @@ jobs:
                     owner: context.repo.owner,
                     repo: context.repo.repo,
                     issue_number: context.issue.number,
-                    body: `**Feedback on ${comment.path} (Line ${comment.line}):**\n\n${comment.body}\n\n*Powered by Google Gemini (${successfulModel})*`
+                    body: `**Feedback on ${comment.path} (Line ${comment.line}):**\n\n${commentBody}\n\n*Powered by Google Gemini (${successfulModel})*`
                   });
                 }
               }
