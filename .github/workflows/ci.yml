@@ -40,7 +40,7 @@ jobs:
           --logger "trx;LogFileName=test-results.trx" \
           /p:CollectCoverage=true \
           /p:CoverletOutputFormat=cobertura \
-          /p:Threshold=50 \
+          /p:Threshold=80 \
           /p:ThresholdType=line \
           /p:ThresholdStat=Total
 

@@ -77,6 +77,9 @@ export function useTrafficTracker() {
           geo = await fetchLocalGeoDetailsAsync();
         }
         
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+
         fetch("/api/analytics/views", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -86,7 +89,13 @@ export function useTrafficTracker() {
             Country: geo.Country,
             City: geo.City
           }),
-        }).catch(err => console.error("Failed to log page view telemetry:", err));
+          signal: controller.signal
+        })
+          .then(() => clearTimeout(timeoutId))
+          .catch(err => {
+            clearTimeout(timeoutId);
+            console.error("Failed to log page view telemetry:", err);
+          });
       };
 
       track();
@@ -119,6 +128,9 @@ export function useTrafficTracker() {
                 geo = await fetchLocalGeoDetailsAsync();
               }
 
+              const controller = new AbortController();
+              const timeoutId = setTimeout(() => controller.abort(), 5000);
+
               fetch("/api/analytics/clicks", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -129,7 +141,13 @@ export function useTrafficTracker() {
                   Country: geo.Country,
                   City: geo.City
                 }),
-              }).catch(err => console.error("Failed to log link click telemetry:", err));
+                signal: controller.signal
+              })
+                .then(() => clearTimeout(timeoutId))
+                .catch(err => {
+                  clearTimeout(timeoutId);
+                  console.error("Failed to log link click telemetry:", err);
+                });
             };
 
             trackClick();

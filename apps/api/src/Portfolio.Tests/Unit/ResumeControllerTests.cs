@@ -63,7 +63,7 @@ public class ResumeControllerTests
     }
 
     [Fact]
-    public async Task GetByIdAsync_ReturnsProfile_WhenExists()
+    public async Task GetById_ReturnsProfile_WhenExists()
     {
         // Arrange
         var profileId = Guid.NewGuid();
@@ -71,7 +71,7 @@ public class ResumeControllerTests
         _serviceMock.GetProfileByIdAsync(profileId).Returns(profile);
 
         // Act
-        var result = await _controller.GetByIdAsync(profileId);
+        var result = await _controller.GetById(profileId);
 
         // Assert
         var okResult = result.Result.ShouldBeOfType<OkObjectResult>();

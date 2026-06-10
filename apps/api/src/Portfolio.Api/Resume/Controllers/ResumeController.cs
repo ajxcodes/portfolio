@@ -81,7 +81,7 @@ public class ResumeController(
 
     [HttpGet("{id:guid}")]
     [Authorize]
-    public async Task<ActionResult<ResumeProfile>> GetByIdAsync(Guid id)
+    public async Task<ActionResult<ResumeProfile>> GetById(Guid id)
     {
         var profile = await service.GetProfileByIdAsync(id);
         if (profile == null)
@@ -115,7 +115,7 @@ public class ResumeController(
     public async Task<ActionResult<ResumeProfile>> CreateAsync([FromBody] CreateResumeRequest request)
     {
         var createdProfile = await service.CreateProfileWithDetailsAsync(request);
-        return CreatedAtAction("GetById", new { id = createdProfile.Id }, createdProfile);
+        return CreatedAtAction(nameof(GetById), new { id = createdProfile.Id }, createdProfile);
     }
 
     [HttpPut("{id}")]

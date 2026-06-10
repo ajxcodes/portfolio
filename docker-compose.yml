@@ -58,7 +58,7 @@ services:
       - minio_data:/data
 
   geoip:
-    image: ghcr.io/observabilitystack/geoip-api:latest
+    image: ghcr.io/observabilitystack/geoip-api:1.3.0
     container_name: geoip
     restart: always
     ports:

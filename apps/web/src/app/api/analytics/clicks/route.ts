@@ -38,17 +38,25 @@ export async function POST(request: Request) {
 
     const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || process.env.API_BASE_URL || "http://localhost:5808";
 
-    const response = await fetch(`${apiBaseUrl}/api/analytics/clicks`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        LinkId: body.LinkId,
-        ReferrerSource: referrerSource,
-        UserAgent: userAgent,
-        Country: country,
-        City: city
-      }),
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    let response;
+    try {
+      response = await fetch(`${apiBaseUrl}/api/analytics/clicks`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          LinkId: body.LinkId,
+          ReferrerSource: referrerSource,
+          UserAgent: userAgent,
+          Country: country,
+          City: city
+        }),
+        signal: controller.signal
+      });
+    } finally {
+      clearTimeout(timeoutId);
+    }
 
     if (!response.ok) {
       throw new Error(`C# API returned error status: ${response.status}`);
