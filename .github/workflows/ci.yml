@@ -171,9 +171,8 @@ jobs:
         echo "Polling API on host port 5808..."
         for i in $(seq 1 40); do
           # Use -s only (no -f) so curl exits 0 on any HTTP response, not just 2xx.
-          # A 404 (empty DB, no active profile) still means the API is up.
-          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:5808/api/resume/active 2>/dev/null || echo "000")
-          if [ "$HTTP_CODE" != "000" ]; then
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:5808/api/resume/active 2>/dev/null || true)
+          if [ "$HTTP_CODE" != "000" ] && [ -n "$HTTP_CODE" ]; then
             echo "API is ready after $i attempts (HTTP $HTTP_CODE)."
             exit 0
           fi
