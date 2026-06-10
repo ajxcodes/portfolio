@@ -163,22 +163,25 @@ jobs:
       run: npx playwright install --with-deps
 
     - name: Start E2E Services (Postgres + GeoIP + API)
-      working-directory: .
+      working-directory: ${{ github.workspace }}
       run: docker compose -f docker-compose.e2e.yml up --build -d
 
     - name: Wait for API to be ready
       run: |
         echo "Polling API on host port 5808..."
         for i in $(seq 1 40); do
-          if curl -sf http://localhost:5808/api/resume/active > /dev/null 2>&1; then
-            echo "API is ready after $i attempts."
+          # Use -s only (no -f) so curl exits 0 on any HTTP response, not just 2xx.
+          # A 404 (empty DB, no active profile) still means the API is up.
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5808/api/resume/active 2>/dev/null || echo "000")
+          if [ "$HTTP_CODE" != "000" ]; then
+            echo "API is ready after $i attempts (HTTP $HTTP_CODE)."
             exit 0
           fi
-          echo "  attempt $i: not ready yet, waiting 5s..."
+          echo "  attempt $i: not reachable yet (got $HTTP_CODE), waiting 5s..."
           sleep 5
         done
         echo "API did not become ready in time. Dumping logs:"
-        docker compose -f docker-compose.e2e.yml logs api
+        docker compose -f ${{ github.workspace }}/docker-compose.e2e.yml logs api
         exit 1
 
     - name: Run Playwright Tests
@@ -189,12 +192,12 @@ jobs:
 
     - name: Dump Service Logs on Failure
       if: failure()
-      working-directory: .
+      working-directory: ${{ github.workspace }}
       run: docker compose -f docker-compose.e2e.yml logs
 
     - name: Tear Down E2E Services
       if: always()
-      working-directory: .
+      working-directory: ${{ github.workspace }}
       run: docker compose -f docker-compose.e2e.yml down --volumes
 
     - name: Upload Playwright Test Results
