@@ -11,11 +11,13 @@ test.describe("Traffic Attribution Analytics", () => {
       await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ success: true }) });
     });
 
+    const viewRequestPromise = page.waitForRequest("**/api/analytics/views");
+
     // Navigate to homepage with ref parameter
     await page.goto("/?ref=test_github_campaign");
 
-    // Wait short moment for useEffect to execute fetch view analytics
-    await page.waitForTimeout(500);
+    // Wait for the view analytics fetch to fire
+    await viewRequestPromise;
 
     expect(viewRequestPayload).not.toBeNull();
     expect(viewRequestPayload.ReferrerSource).toBe("test_github_campaign");
@@ -45,10 +47,12 @@ test.describe("Traffic Attribution Analytics", () => {
       await route.abort();
     });
 
+    const clickRequestPromise = page.waitForRequest("**/api/analytics/clicks");
+
     await githubLink.click({ force: true }).catch(() => {});
 
     // Wait for the async click telemetry fetch to fire
-    await page.waitForTimeout(500);
+    await clickRequestPromise;
 
     // Check click payload — LinkId must match the data-link-id attribute, not a hardcoded fallback
     expect(clickRequestPayload).not.toBeNull();
