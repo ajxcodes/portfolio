@@ -51,6 +51,10 @@ export async function saveProfile(profileId: string | null, payload: any) {
     const errorText = await res.text();
     throw new Error(errorText || `Failed to save profile details (${res.status})`);
   }
+
+  if (res.status === 204) {
+    return null;
+  }
   return res.json();
 }
 
