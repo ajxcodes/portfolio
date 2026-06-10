@@ -47,6 +47,7 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const isLoginPage = request.nextUrl.pathname === "/admin/login";
+  const isAuthCallback = request.nextUrl.pathname === "/admin/auth/callback";
   const isAdminPath = request.nextUrl.pathname.startsWith("/admin");
 
   // Helper to create redirect response with copied cookies.
@@ -63,7 +64,7 @@ export async function middleware(request: NextRequest) {
   };
 
   // 3. Routing guards
-  if (isAdminPath && !isLoginPage) {
+  if (isAdminPath && !isLoginPage && !isAuthCallback) {
     if (!user) {
       return createRedirectResponse("/admin/login", response);
     }
