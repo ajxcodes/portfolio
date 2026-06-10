@@ -1,4 +1,5 @@
 using Portfolio.Application.Analytics.Repositories;
+using Portfolio.Application.Resume.Repositories;
 using Portfolio.Domain.Analytics;
 
 namespace Portfolio.Application.Analytics.Services;
@@ -10,7 +11,9 @@ public interface IAnalyticsService
     Task<AnalyticsSummaryDto> GetSummaryAsync(int limit);
 }
 
-public class AnalyticsService(IAnalyticsRepository repository) : IAnalyticsService
+public class AnalyticsService(
+    IAnalyticsRepository repository,
+    IResumeRepository resumeRepository) : IAnalyticsService
 {
     public async Task LogPageViewAsync(PageViewLog log)
     {
@@ -20,6 +23,14 @@ public class AnalyticsService(IAnalyticsRepository repository) : IAnalyticsServi
 
     public async Task LogLinkClickAsync(LinkClickLog log)
     {
+        // Safety guard: silently discard clicks for link IDs that don't exist in the DB.
+        // The frontend is responsible for sending the correct DB GUID via data-link-id.
+        var linkExists = await resumeRepository.LinkExistsAsync(log.LinkId);
+        if (!linkExists)
+        {
+            return;
+        }
+
         await repository.LogLinkClickAsync(log);
         await repository.SaveChangesAsync();
     }

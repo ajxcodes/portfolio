@@ -105,75 +105,50 @@ describe('useTrafficTracker Hook', () => {
     expect(global.fetch).toHaveBeenCalledTimes(2);
   });
 
-  it('tracks outbound link clicks with fallback and custom guids', () => {
+  it('tracks outbound link clicks only when data-link-id is present', () => {
     render(<TestTrackerComponent />);
     
     // Clear initial view tracking fetch calls
     (global.fetch as jest.Mock).mockClear();
 
-    // 1. GitHub Link Click
-    const githubLink = screen.getByTestId('github-link');
-    fireEvent.click(githubLink);
-    expect(global.fetch).toHaveBeenCalledWith(
-      expect.stringContaining('/api/analytics/clicks'),
-      expect.objectContaining({
-        body: expect.stringContaining('"LinkId":"e2b02e77-508b-4c08-8e6c-7e6df5b9ef18"')
-      })
-    );
+    // 1. GitHub link without data-link-id — should NOT fire click analytics
+    fireEvent.click(screen.getByTestId('github-link'));
+    expect(global.fetch).not.toHaveBeenCalled();
 
-    // 2. LinkedIn Link Click
+    // 2. LinkedIn link without data-link-id — should NOT fire click analytics
     fireEvent.click(screen.getByTestId('linkedin-link'));
-    expect(global.fetch).toHaveBeenLastCalledWith(
-      expect.stringContaining('/api/analytics/clicks'),
-      expect.objectContaining({
-        body: expect.stringContaining('"LinkId":"82a884e9-1144-42b7-8ce6-902279b9a67a"')
-      })
-    );
+    expect(global.fetch).not.toHaveBeenCalled();
 
-    // 3. Mail Link Click
+    // 3. Mail link without data-link-id — should NOT fire click analytics
     fireEvent.click(screen.getByTestId('mail-link'));
-    expect(global.fetch).toHaveBeenLastCalledWith(
-      expect.stringContaining('/api/analytics/clicks'),
-      expect.objectContaining({
-        body: expect.stringContaining('"LinkId":"c389bf44-6722-487a-92e1-456cb04ea78f"')
-      })
-    );
+    expect(global.fetch).not.toHaveBeenCalled();
 
-    // 4. Download Link Click
+    // 4. Download link without data-link-id — should NOT fire click analytics
     fireEvent.click(screen.getByTestId('download-link'));
-    expect(global.fetch).toHaveBeenLastCalledWith(
-      expect.stringContaining('/api/analytics/clicks'),
-      expect.objectContaining({
-        body: expect.stringContaining('"LinkId":"f2c3bf99-8809-411a-abcf-4d9bc2133499"')
-      })
-    );
+    expect(global.fetch).not.toHaveBeenCalled();
 
-    // 5. Custom GUID Link Click
+    // 5. External download link without data-link-id — should NOT fire click analytics
+    fireEvent.click(screen.getByTestId('external-download-link'));
+    expect(global.fetch).not.toHaveBeenCalled();
+
+    // 6. Link with a valid data-link-id — SHOULD fire click analytics with that GUID
     fireEvent.click(screen.getByTestId('custom-guid-link'));
-    expect(global.fetch).toHaveBeenLastCalledWith(
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+    expect(global.fetch).toHaveBeenCalledWith(
       expect.stringContaining('/api/analytics/clicks'),
       expect.objectContaining({
         body: expect.stringContaining('"LinkId":"12345678-1234-1234-1234-1234567890ab"')
       })
     );
 
-    // 5b. External Download Link Click
-    fireEvent.click(screen.getByTestId('external-download-link'));
-    expect(global.fetch).toHaveBeenLastCalledWith(
-      expect.stringContaining('/api/analytics/clicks'),
-      expect.objectContaining({
-        body: expect.stringContaining('"LinkId":"f2c3bf99-8809-411a-abcf-4d9bc2133499"')
-      })
-    );
-
-    // 6. Invalid GUID Link Click (should not invoke fetch)
-    const prevCallCount = (global.fetch as jest.Mock).mock.calls.length;
+    // 7. Link with an invalid (malformed) data-link-id — should NOT fire click analytics
+    (global.fetch as jest.Mock).mockClear();
     fireEvent.click(screen.getByTestId('invalid-guid-link'));
-    expect((global.fetch as jest.Mock).mock.calls.length).toBe(prevCallCount);
+    expect(global.fetch).not.toHaveBeenCalled();
 
-    // 7. Internal Link Click (should not track outbound analytics)
+    // 8. Internal link — should NOT track outbound analytics
     fireEvent.click(screen.getByTestId('internal-link'));
-    expect((global.fetch as jest.Mock).mock.calls.length).toBe(prevCallCount);
+    expect(global.fetch).not.toHaveBeenCalled();
   });
 
   it('unsubscribes and cleans up document event listener on unmount', () => {
@@ -192,8 +167,8 @@ describe('useTrafficTracker Hook', () => {
     render(<TestTrackerComponent />);
     
     // Trigger link click fetch telemetry rejection
-    const githubLink = screen.getByTestId('github-link');
-    fireEvent.click(githubLink);
+    const trackedLink = screen.getByTestId('custom-guid-link');
+    fireEvent.click(trackedLink);
 
     // Wait for microtasks/promises to execute
     await act(async () => {
