@@ -4,12 +4,12 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/providers";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { getPortfolioData } from "@/lib/data";
+import { getResumeData } from "@/lib/data";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export async function generateMetadata(): Promise<Metadata> {
-  const data = await getPortfolioData();
+  const data = await getResumeData();
   return {
     title: `${data.personalInfo.name} | Portfolio`,
     description: data.personalInfo.intro,
@@ -21,7 +21,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const data = await getPortfolioData();
+  const data = await getResumeData();
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
