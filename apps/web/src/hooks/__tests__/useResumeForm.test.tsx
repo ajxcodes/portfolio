@@ -111,6 +111,7 @@ describe("useResumeForm Hook", () => {
     expect(result.current.experiences.length).toBe(1);
     expect(result.current.experiences[0]).toEqual(expect.objectContaining({
       id: "exp-1",
+      clientId: "exp-1",
       company: "Acme Corp",
       role: "Developer",
       period: "Jan 2020 - Dec 2022",
@@ -132,12 +133,14 @@ describe("useResumeForm Hook", () => {
       result.current.addExperience();
     });
     expect(result.current.experiences.length).toBe(1);
+    expect(result.current.experiences[0].clientId).toBeDefined();
 
     // 2. Add second experience
     act(() => {
       result.current.addExperience();
     });
     expect(result.current.experiences.length).toBe(2);
+    expect(result.current.experiences[1].clientId).toBeDefined();
 
     act(() => {
       result.current.updateExperience(0, "company", "Company A");
