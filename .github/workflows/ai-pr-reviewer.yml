@@ -109,7 +109,9 @@ jobs:
               if (!thread.isResolved) {
                 // Check if the bot made any comment in this thread
                 const botComment = thread.comments.nodes.find(c => 
-                  c.body.includes("🤖 **Antigravity AI Suggestion**") || c.author?.login?.includes("github-actions")
+                  c.body.includes("Antigravity AI Suggestion") || 
+                  c.body.includes("Powered by Google Gemini") ||
+                  c.author?.login?.includes("github-actions")
                 );
                 if (botComment) {
                   unresolvedBotThreads.push({
