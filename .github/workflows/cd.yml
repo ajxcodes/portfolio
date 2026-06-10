@@ -2,7 +2,7 @@ name: Portfolio Continuous Deployment
 
 on:
   workflow_run:
-    workflows: ["Portfolio CI/CD Pipeline"]
+    workflows: ["Portfolio Continuous Integration"]
     types:
       - completed
     branches:
