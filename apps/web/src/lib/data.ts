@@ -82,6 +82,8 @@ export interface PortfolioData {
   blogPosts: BlogPost[];
 }
 
+import { cache } from 'react';
+
 // In-memory local default data used as a fallback if the API database is offline
 const defaultData: PortfolioData = {
   personalInfo: {
@@ -130,20 +132,20 @@ const defaultData: PortfolioData = {
 };
 
 // Single, efficient data fetching function querying the API
-export async function getPortfolioData(): Promise<PortfolioData> {
-  // Start with a clone of the default data
+// Fetch only active resume profile and skill categories (no blog posts)
+export const getResumeData = cache(async (): Promise<{ personalInfo: PersonalInfo; resume: ResumeData }> => {
   const portfolioData: PortfolioData = JSON.parse(JSON.stringify(defaultData));
-
   const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5808';
 
-  // 1. Fetch active resume profile
-  try {
-    const res = await fetch(`${apiUrl}/api/resume/active`, {
-      cache: 'no-store',
-    });
+  const [activeRes, skillsRes] = await Promise.all([
+    fetch(`${apiUrl}/api/resume/active`, { cache: 'no-store' }).catch(() => null),
+    fetch(`${apiUrl}/api/resume/skills`, { cache: 'no-store' }).catch(() => null)
+  ]);
 
-    if (res.ok) {
-      const active = await res.json();
+  // 1. Process active resume profile
+  if (activeRes && activeRes.ok) {
+    try {
+      const active = await activeRes.json();
       
       portfolioData.personalInfo = {
         name: active.name || portfolioData.personalInfo.name,
@@ -200,18 +202,14 @@ export async function getPortfolioData(): Promise<PortfolioData> {
           location: we.location || "",
           period: we.period,
         }));
+    } catch (e) {
+      console.error("Failed to parse active resume response:", e);
     }
-  } catch {
-    // Graceful fallback
   }
 
-  // 2. Fetch skill categories
-  try {
-    const skillsRes = await fetch(`${apiUrl}/api/resume/skills`, {
-      cache: 'no-store',
-    });
-
-    if (skillsRes.ok) {
+  // 2. Process skill categories
+  if (skillsRes && skillsRes.ok) {
+    try {
       const dbCategories = await skillsRes.json();
       portfolioData.resume.skills = dbCategories ? dbCategories.map((c: any) => ({
         category: c.categoryName,
@@ -220,12 +218,20 @@ export async function getPortfolioData(): Promise<PortfolioData> {
           ? [...c.skills].sort((a: any, b: any) => a.displayOrder - b.displayOrder).map((s: any) => s.skillName)
           : [],
       })) : [];
+    } catch (e) {
+      console.error("Failed to parse skills response:", e);
     }
-  } catch {
-    // Graceful fallback
   }
 
-  // 3. Fetch blog posts
+  return {
+    personalInfo: portfolioData.personalInfo,
+    resume: portfolioData.resume
+  };
+});
+
+// Fetch only blog posts
+export const getBlogPosts = cache(async (): Promise<BlogPost[]> => {
+  const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5808';
   try {
     const postsRes = await fetch(`${apiUrl}/api/blog/posts`, {
       cache: 'no-store',
@@ -233,18 +239,31 @@ export async function getPortfolioData(): Promise<PortfolioData> {
 
     if (postsRes.ok) {
       const dbPosts = await postsRes.json();
-      portfolioData.blogPosts = dbPosts ? dbPosts.map((p: any) => ({
+      return dbPosts ? dbPosts.map((p: any) => ({
         slug: p.slug,
         title: p.title,
         summary: p.summary || '',
         content: p.content,
       })) : [];
     }
-  } catch {
-    // Graceful fallback
+  } catch (e) {
+    console.error("Failed to fetch/parse blog posts response:", e);
   }
+  return [];
+});
 
-  return portfolioData;
+// Aggregated call for pages needing both (e.g. Home page)
+export async function getPortfolioData(): Promise<PortfolioData> {
+  const [resumeData, blogPosts] = await Promise.all([
+    getResumeData(),
+    getBlogPosts()
+  ]);
+
+  return {
+    personalInfo: resumeData.personalInfo,
+    resume: resumeData.resume,
+    blogPosts
+  };
 }
 
 // Function to get a single blog post by its slug from the API

@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { getPortfolioData } from '@/lib/data';
+import { getBlogPosts } from '@/lib/data';
 
 export const metadata: Metadata = {
   title: 'Blog | AJX Portfolio',
@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 };
 
 export default async function BlogPage() {
-  const { blogPosts } = await getPortfolioData();
+  const blogPosts = await getBlogPosts();
 
   return (
     <div className="max-w-4xl mx-auto mt-4 font-mono">

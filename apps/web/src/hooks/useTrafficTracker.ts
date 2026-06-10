@@ -89,7 +89,8 @@ export function useTrafficTracker() {
             Country: geo.Country,
             City: geo.City
           }),
-          signal: controller.signal
+          signal: controller.signal,
+          keepalive: true
         })
           .then(() => clearTimeout(timeoutId))
           .catch(err => {
@@ -141,7 +142,8 @@ export function useTrafficTracker() {
                   Country: geo.Country,
                   City: geo.City
                 }),
-                signal: controller.signal
+                signal: controller.signal,
+                keepalive: true
               })
                 .then(() => clearTimeout(timeoutId))
                 .catch(err => {

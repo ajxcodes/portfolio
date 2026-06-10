@@ -1,13 +1,13 @@
 import type { Metadata } from 'next';
 import { ResumeClientPage } from '@/components/ResumeClientPage';
-import { getPortfolioData } from '@/lib/data';
+import { getResumeData } from '@/lib/data';
 
 // This explicitly tells Next.js to render this page dynamically on every request.
 export const dynamic = 'force-dynamic';
 
 // Generate dynamic metadata for the page
 export async function generateMetadata(): Promise<Metadata> {
-  const { personalInfo } = await getPortfolioData();
+  const { personalInfo } = await getResumeData();
   return {
     title: `Resume | ${personalInfo.name}`,
     description: `The professional resume of ${personalInfo.name}, ${personalInfo.title}.`,
@@ -15,7 +15,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function ResumePage() {
-  const { resume, personalInfo } = await getPortfolioData();
+  const { resume, personalInfo } = await getResumeData();
   
   return <ResumeClientPage resume={resume} personalInfo={personalInfo} />;
 }
