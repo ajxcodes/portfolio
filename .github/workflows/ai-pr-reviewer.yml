@@ -428,18 +428,18 @@ jobs:
 
             const summaryCommentBody = `### 🤖 Antigravity AI Review Run Summary
 
-- **Confidence Level**: **${reviewData.confidenceLevel || 'N/A'}** - *${reviewData.confidenceExplanation || ''}*
+            - **Confidence Level**: **${reviewData.confidenceLevel || 'N/A'}** - *${reviewData.confidenceExplanation || ''}*
 
-#### 🔧 Comments Resolved (${resolvedCount})
-${resolvedDetails}
+            #### 🔧 Comments Resolved (${resolvedCount})
+            ${resolvedDetails}
 
-#### 📝 New Comments Added (${newCommentsCount})
-${newCommentsDetails}
+            #### 📝 New Comments Added (${newCommentsCount})
+            ${newCommentsDetails}
 
-#### ⏳ Outstanding Comments (${outstandingCount})
-${outstandingDetails}
+            #### ⏳ Outstanding Comments (${outstandingCount})
+            ${outstandingDetails}
 
-*Powered by Google Gemini (${successfulModel})*`;
+            *Powered by Google Gemini (${successfulModel})*`;
 
             await github.rest.issues.createComment({
               owner: context.repo.owner,
