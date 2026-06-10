@@ -131,11 +131,16 @@ async function main() {
     try {
       const data = JSON.parse(playwrightTestContent);
       if (data.stats) {
+        const expected = data.stats.expected || 0;
+        const unexpected = data.stats.unexpected || 0;
+        const flaky = data.stats.flaky || 0;
+        const skipped = data.stats.skipped || 0;
+
         playwrightTests = {
-          total: data.stats.tests || 0,
-          passed: data.stats.passes || 0,
-          failed: data.stats.failures || 0,
-          skipped: data.stats.skipped || 0
+          total: expected + unexpected + flaky + skipped,
+          passed: expected + flaky,
+          failed: unexpected,
+          skipped: skipped
         };
       }
     } catch (e) {

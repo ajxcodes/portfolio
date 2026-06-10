@@ -1,5 +1,16 @@
 import { NextResponse } from 'next/server';
 
+function sanitizeString(val: any, maxLength: number): string | null {
+  if (typeof val !== 'string') return null;
+  let sanitized = val.trim();
+  if (sanitized.length > maxLength) {
+    sanitized = sanitized.substring(0, maxLength);
+  }
+  // Basic HTML strip to prevent XSS/injection
+  sanitized = sanitized.replace(/<[^>]*>/g, '');
+  return sanitized || null;
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -9,8 +20,14 @@ export async function POST(request: Request) {
     const vercelCity = request.headers.get('x-vercel-ip-city');
 
     // Prioritize Vercel headers, fall back to body parameters passed during local dev
-    const country = vercelCountry || body.Country || null;
-    const city = vercelCity || body.City || null;
+    const rawCountry = vercelCountry || body.Country || null;
+    const rawCity = vercelCity || body.City || null;
+
+    // Sanitize inputs
+    const referrerSource = sanitizeString(body.ReferrerSource, 255) || "Direct";
+    const userAgent = sanitizeString(body.UserAgent, 512) || "unknown";
+    const country = sanitizeString(rawCountry, 100);
+    const city = sanitizeString(rawCity, 100);
 
     const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || process.env.API_BASE_URL || "http://localhost:5808";
 
@@ -18,8 +35,8 @@ export async function POST(request: Request) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        ReferrerSource: body.ReferrerSource,
-        UserAgent: body.UserAgent,
+        ReferrerSource: referrerSource,
+        UserAgent: userAgent,
         Country: country,
         City: city
       }),
