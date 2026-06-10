@@ -184,6 +184,11 @@ jobs:
         docker compose -f ${{ github.workspace }}/docker-compose.e2e.yml logs api
         exit 1
 
+    - name: Seed Database for E2E Tests
+      run: node apps/web/e2e/seed.js
+      env:
+        NEXT_PUBLIC_API_BASE_URL: http://localhost:5808
+
     - name: Run Playwright Tests
       env:
         NEXT_PUBLIC_API_BASE_URL: http://localhost:5808
