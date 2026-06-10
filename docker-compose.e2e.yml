@@ -1,0 +1,55 @@
+# Docker Compose for E2E test environment
+# Brings up Postgres, the GeoIP service, and the C# API.
+# The Next.js dev server is run directly by Playwright's webServer config.
+# MinIO is omitted — e2e tests don't exercise file upload flows.
+
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: portfolio
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: e2e_test_password
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d portfolio"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  geoip:
+    image: ghcr.io/observabilitystack/geoip-api:latest
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/json/8.8.8.8 || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: src/Portfolio.Api/Dockerfile
+    ports:
+      - "5808:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      DB_HOST: db
+      DB_NAME: portfolio
+      DB_USER: user
+      DB_PASSWORD: e2e_test_password
+      S3_ENDPOINT: http://localhost:9000
+      S3_ACCESS_KEY: minioadmin
+      S3_SECRET_KEY: minioadminpassword
+      S3_BUCKET_NAME: portfolio-media
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/api/resume/active || exit 1"]
+      interval: 5s
+      timeout: 10s
+      retries: 15
+      start_period: 30s

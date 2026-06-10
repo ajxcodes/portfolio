@@ -162,8 +162,44 @@ jobs:
     - name: Install Playwright Browsers
       run: npx playwright install --with-deps
 
+    - name: Start E2E Services (Postgres + GeoIP + API)
+      working-directory: .
+      run: docker compose -f docker-compose.e2e.yml up --build -d
+
+    - name: Wait for API to become healthy
+      working-directory: .
+      run: |
+        echo "Waiting for API container to be healthy..."
+        for i in $(seq 1 30); do
+          STATUS=$(docker inspect --format='{{.State.Health.Status}}' $(docker compose -f docker-compose.e2e.yml ps -q api) 2>/dev/null || echo "starting")
+          echo "  attempt $i: $STATUS"
+          if [ "$STATUS" = "healthy" ]; then
+            echo "API is healthy."
+            break
+          fi
+          sleep 5
+        done
+        if [ "$STATUS" != "healthy" ]; then
+          echo "API did not become healthy in time. Dumping logs:"
+          docker compose -f docker-compose.e2e.yml logs api
+          exit 1
+        fi
+
     - name: Run Playwright Tests
+      env:
+        NEXT_PUBLIC_API_BASE_URL: http://localhost:5808
+        NEXT_PUBLIC_GEOIP_SERVICE_URL: http://localhost:8080/json/
       run: pnpm run test:e2e
+
+    - name: Dump Service Logs on Failure
+      if: failure()
+      working-directory: .
+      run: docker compose -f docker-compose.e2e.yml logs
+
+    - name: Tear Down E2E Services
+      if: always()
+      working-directory: .
+      run: docker compose -f docker-compose.e2e.yml down --volumes
 
     - name: Upload Playwright Test Results
       uses: actions/upload-artifact@v4
