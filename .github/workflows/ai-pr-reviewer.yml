@@ -406,3 +406,55 @@ jobs:
               }
             }
           }
+
+  ci-summary:
+    name: CI Performance & Coverage Summary
+    runs-on: ubuntu-latest
+    needs: [review]
+    if: always()
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Find CI Workflow Run for this SHA
+      id: find-run
+      uses: actions/github-script@v7
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const sha = context.payload.pull_request.head.sha;
+          const { data: runs } = await github.rest.actions.listWorkflowRunsForRepo({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            head_sha: sha,
+            event: 'pull_request',
+            per_page: 20
+          });
+          const ciRun = runs.workflow_runs.find(r => r.name === 'Portfolio CI/CD Pipeline');
+          if (ciRun) {
+            core.setOutput('run_id', ciRun.id.toString());
+            console.log(`Found CI run: ${ciRun.id} (status: ${ciRun.status})`);
+          } else {
+            core.setOutput('run_id', '');
+            console.log('No CI pipeline run found for this SHA.');
+          }
+
+    - name: Download CI Artifacts
+      if: steps.find-run.outputs.run_id != ''
+      uses: actions/download-artifact@v4
+      with:
+        path: artifacts
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        run-id: ${{ steps.find-run.outputs.run_id }}
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+
+    - name: Generate Summary Report
+      run: node .github/scripts/generate-summary.js
+      env:
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+
+

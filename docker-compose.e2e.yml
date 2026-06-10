@@ -47,9 +47,5 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/api/resume/active || exit 1"]
-      interval: 5s
-      timeout: 10s
-      retries: 15
-      start_period: 30s
+    # No container-side healthcheck — the aspnet slim image has no curl/wget.
+    # Readiness is polled from the runner host in the CI "Wait for API" step.
