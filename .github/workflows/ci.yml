@@ -172,7 +172,7 @@ jobs:
         for i in $(seq 1 40); do
           # Use -s only (no -f) so curl exits 0 on any HTTP response, not just 2xx.
           # A 404 (empty DB, no active profile) still means the API is up.
-          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5808/api/resume/active 2>/dev/null || echo "000")
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:5808/api/resume/active 2>/dev/null || echo "000")
           if [ "$HTTP_CODE" != "000" ]; then
             echo "API is ready after $i attempts (HTTP $HTTP_CODE)."
             exit 0
@@ -188,12 +188,21 @@ jobs:
       working-directory: ${{ github.workspace }}
       run: node apps/web/e2e/seed.js
       env:
-        NEXT_PUBLIC_API_BASE_URL: http://localhost:5808
+        NEXT_PUBLIC_API_BASE_URL: http://127.0.0.1:5808
+
+    - name: Verify Seeded Data
+      run: |
+        echo "=== Active Resume Profile ==="
+        curl -s http://127.0.0.1:5808/api/resume/active || true
+        echo ""
+        echo "=== Resume Skills ==="
+        curl -s http://127.0.0.1:5808/api/resume/skills || true
+        echo ""
 
     - name: Run Playwright Tests
       env:
-        NEXT_PUBLIC_API_BASE_URL: http://localhost:5808
-        NEXT_PUBLIC_GEOIP_SERVICE_URL: http://localhost:8080/json/
+        NEXT_PUBLIC_API_BASE_URL: http://127.0.0.1:5808
+        NEXT_PUBLIC_GEOIP_SERVICE_URL: http://127.0.0.1:8080/json/
       run: pnpm run test:e2e
 
     - name: Dump Service Logs on Failure
