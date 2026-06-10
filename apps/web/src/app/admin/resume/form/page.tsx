@@ -474,26 +474,31 @@ function ResumeFormContent() {
                 const isCollapsed = !!collapsedJobs[exp.clientId || ""];
                 return (
                   <div 
-                    key={index}
+                    key={exp.clientId || index}
                     className={`p-5 border border-primary/20 bg-primary/5 rounded-md transition-all ${
                       isCollapsed ? "py-3 space-y-0" : "space-y-4"
                     }`}
                   >
                     {/* Header Bar */}
                     <div 
-                      onClick={() => {
-                        if (exp.clientId) {
-                          setCollapsedJobs(prev => ({
-                            ...prev,
-                            [exp.clientId!]: !prev[exp.clientId!]
-                          }));
-                        }
-                      }}
-                      className={`flex justify-between items-center cursor-pointer select-none hover:bg-primary/5 transition-all rounded p-1.5 -mx-1.5 ${
+                      className={`flex justify-between items-center rounded ${
                         !isCollapsed ? "border-b border-primary/10 pb-3 mb-2" : ""
                       }`}
                     >
-                      <div className="flex items-center gap-2 flex-1 min-w-0 mr-4">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (exp.clientId) {
+                            setCollapsedJobs(prev => ({
+                              ...prev,
+                              [exp.clientId!]: !prev[exp.clientId!]
+                            }));
+                          }
+                        }}
+                        aria-expanded={!isCollapsed}
+                        aria-controls={`exp-panel-${exp.clientId || index}`}
+                        className="flex items-center gap-2 flex-1 min-w-0 mr-4 text-left hover:bg-primary/5 transition-all rounded p-1.5 -ml-1.5 select-none focus:outline-none focus:ring-1 focus:ring-primary/40"
+                      >
                         {isCollapsed ? (
                           <ChevronDown className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                         ) : (
@@ -513,18 +518,15 @@ function ResumeFormContent() {
                             "New Job Details"
                           )}
                         </h3>
-                      </div>
+                      </button>
 
                       {/* Actions Bar */}
-                      <div 
-                        onClick={(e) => e.stopPropagation()}
-                        className="flex items-center gap-1 flex-shrink-0"
-                      >
+                      <div className="flex items-center gap-1 flex-shrink-0">
                         <button
                           type="button"
                           disabled={index === 0}
                           onClick={() => moveExperience(index, "up")}
-                          className="p-1.5 border border-primary/20 hover:bg-primary/10 rounded-md text-muted-foreground disabled:opacity-30"
+                          className="p-1.5 border border-primary/20 hover:bg-primary/10 rounded-md text-muted-foreground disabled:opacity-30 focus:outline-none focus:ring-1 focus:ring-primary/40"
                         >
                           <ArrowUp className="w-3.5 h-3.5" />
                         </button>
@@ -532,14 +534,14 @@ function ResumeFormContent() {
                           type="button"
                           disabled={index === experiences.length - 1}
                           onClick={() => moveExperience(index, "down")}
-                          className="p-1.5 border border-primary/20 hover:bg-primary/10 rounded-md text-muted-foreground disabled:opacity-30"
+                          className="p-1.5 border border-primary/20 hover:bg-primary/10 rounded-md text-muted-foreground disabled:opacity-30 focus:outline-none focus:ring-1 focus:ring-primary/40"
                         >
                           <ArrowDown className="w-3.5 h-3.5" />
                         </button>
                         <button
                           type="button"
                           onClick={() => removeExperience(index)}
-                          className="p-1.5 border border-destructive/20 hover:bg-destructive/10 rounded-md text-destructive ml-2"
+                          className="p-1.5 border border-destructive/20 hover:bg-destructive/10 rounded-md text-destructive ml-2 focus:outline-none focus:ring-1 focus:ring-destructive/40"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -547,7 +549,7 @@ function ResumeFormContent() {
                     </div>
 
                     {!isCollapsed && (
-                      <div className="space-y-4 pt-1">
+                      <div id={`exp-panel-${exp.clientId || index}`} className="space-y-4 pt-1">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div>
                             <label className="block text-[10px] font-bold uppercase tracking-wider mb-1">
@@ -558,7 +560,7 @@ function ResumeFormContent() {
                               value={exp.company}
                               onChange={(e) => updateExperience(index, "company", e.target.value)}
                               required
-                              className="w-full px-3 py-2 bg-background border border-primary/20 rounded-md text-xs focus:outline-none"
+                              className="w-full px-3 py-2 bg-background border border-primary/20 rounded-md text-xs focus:outline-none focus:ring-1 focus:ring-primary/40"
                               placeholder="Google"
                             />
                           </div>
@@ -572,7 +574,7 @@ function ResumeFormContent() {
                               value={exp.role}
                               onChange={(e) => updateExperience(index, "role", e.target.value)}
                               required
-                              className="w-full px-3 py-2 bg-background border border-primary/20 rounded-md text-xs focus:outline-none"
+                              className="w-full px-3 py-2 bg-background border border-primary/20 rounded-md text-xs focus:outline-none focus:ring-1 focus:ring-primary/40"
                               placeholder="Senior Software Engineer"
                             />
                           </div>
@@ -608,7 +610,7 @@ function ResumeFormContent() {
                                       const nextPeriod = formatPeriod(m, exp.startYear || "", !!exp.isCurrent, exp.endMonth || "", exp.endYear || "");
                                       updateExperience(index, { startMonth: m, period: nextPeriod });
                                     }}
-                                    className="flex-1 px-2.5 py-1.5 bg-background border border-primary/20 rounded-md text-xs focus:outline-none"
+                                    className="flex-1 px-2.5 py-1.5 bg-background border border-primary/20 rounded-md text-xs focus:outline-none focus:ring-1 focus:ring-primary/40"
                                   >
                                     <option value="">Month</option>
                                     {MONTHS.map(m => <option key={m} value={m}>{m}</option>)}
@@ -621,7 +623,7 @@ function ResumeFormContent() {
                                       updateExperience(index, { startYear: y, period: nextPeriod });
                                     }}
                                     required
-                                    className="flex-1 px-2.5 py-1.5 bg-background border border-primary/20 rounded-md text-xs focus:outline-none"
+                                    className="flex-1 px-2.5 py-1.5 bg-background border border-primary/20 rounded-md text-xs focus:outline-none focus:ring-1 focus:ring-primary/40"
                                   >
                                     <option value="">Year</option>
                                     {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
@@ -641,7 +643,7 @@ function ResumeFormContent() {
                                       const nextPeriod = formatPeriod(exp.startMonth || "", exp.startYear || "", !!exp.isCurrent, m, exp.endYear || "");
                                       updateExperience(index, { endMonth: m, period: nextPeriod });
                                     }}
-                                    className="flex-1 px-2.5 py-1.5 bg-background border border-primary/20 rounded-md text-xs disabled:opacity-50 focus:outline-none"
+                                    className="flex-1 px-2.5 py-1.5 bg-background border border-primary/20 rounded-md text-xs disabled:opacity-50 focus:outline-none focus:ring-1 focus:ring-primary/40"
                                   >
                                     <option value="">Month</option>
                                     {MONTHS.map(m => <option key={m} value={m}>{m}</option>)}
@@ -655,7 +657,7 @@ function ResumeFormContent() {
                                       const nextPeriod = formatPeriod(exp.startMonth || "", exp.startYear || "", !!exp.isCurrent, exp.endMonth || "", y);
                                       updateExperience(index, { endYear: y, period: nextPeriod });
                                     }}
-                                    className="flex-1 px-2.5 py-1.5 bg-background border border-primary/20 rounded-md text-xs disabled:opacity-50 focus:outline-none"
+                                    className="flex-1 px-2.5 py-1.5 bg-background border border-primary/20 rounded-md text-xs disabled:opacity-50 focus:outline-none focus:ring-1 focus:ring-primary/40"
                                   >
                                     <option value="">Year</option>
                                     {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
@@ -699,7 +701,7 @@ function ResumeFormContent() {
                               type="text"
                               value={exp.location}
                               onChange={(e) => updateExperience(index, "location", e.target.value)}
-                              className="w-full px-3 py-2 bg-background border border-primary/20 rounded-md text-xs focus:outline-none"
+                              className="w-full px-3 py-2 bg-background border border-primary/20 rounded-md text-xs focus:outline-none focus:ring-1 focus:ring-primary/40"
                               placeholder="Remote / New York, NY"
                             />
                           </div>
@@ -729,7 +731,7 @@ function ResumeFormContent() {
                               onClick={() => addHighlight(index)}
                               className="flex items-center gap-1 text-[10px] font-bold text-primary hover:opacity-80"
                             >
-                              <Plus className="w-3 h-3" />
+                              <Plus className="w-3.5 h-3.5" />
                               Add Bullet
                             </button>
                           </div>
@@ -746,13 +748,13 @@ function ResumeFormContent() {
                                     type="text"
                                     value={highlight}
                                     onChange={(e) => updateHighlight(index, hIndex, e.target.value)}
-                                    className="flex-1 px-3 py-2 bg-background border border-primary/20 rounded-md text-xs focus:outline-none"
+                                    className="flex-1 px-3 py-2 bg-background border border-primary/20 rounded-md text-xs focus:outline-none focus:ring-1 focus:ring-primary/40"
                                     placeholder="Describe a key achievement or responsibility..."
                                   />
                                   <button
                                     type="button"
                                     onClick={() => removeHighlight(index, hIndex)}
-                                    className="p-2 text-destructive hover:bg-destructive/10 rounded-md"
+                                    className="p-2 text-destructive hover:bg-destructive/10 rounded-md focus:outline-none focus:ring-1 focus:ring-destructive/40"
                                   >
                                     <Trash2 className="w-3.5 h-3.5" />
                                   </button>
@@ -780,7 +782,7 @@ function ResumeFormContent() {
                                        const nextSkills = (exp.skillIds || []).filter(sid => sid !== id);
                                        updateExperience(index, "skillIds", nextSkills);
                                      }}
-                                     className="hover:text-destructive transition-colors pl-1"
+                                     className="hover:text-destructive transition-colors pl-1 focus:outline-none focus:ring-1 focus:ring-destructive/40"
                                    >
                                      <X className="w-3 h-3" />
                                    </button>
@@ -809,7 +811,7 @@ function ResumeFormContent() {
                                 placeholder="Skill name..."
                                 value={newSkillNameMap[index] || ""}
                                 onChange={(e) => setNewSkillNameMap({ ...newSkillNameMap, [index]: e.target.value })}
-                                className="w-full px-2 py-2 bg-primary/5 border border-primary/20 rounded-l-md text-xs focus:outline-none min-w-[100px]"
+                                className="w-full px-2 py-2 bg-primary/5 border border-primary/20 rounded-l-md text-xs focus:outline-none focus:ring-1 focus:ring-primary/40 min-w-[100px]"
                               />
                               <CategorySelect
                                 value={newSkillCatMap[index] || ""}
@@ -820,7 +822,7 @@ function ResumeFormContent() {
                                 type="button"
                                 onClick={() => handleCreateSkillInline(index)}
                                 disabled={!newSkillNameMap[index]?.trim() || !newSkillCatMap[index]}
-                                className="px-3 py-2 bg-primary text-primary-foreground text-xs font-bold rounded-r-md disabled:opacity-50"
+                                className="px-3 py-2 bg-primary text-primary-foreground text-xs font-bold rounded-r-md disabled:opacity-50 focus:outline-none focus:ring-1 focus:ring-primary/40"
                               >
                                 Add
                               </button>
