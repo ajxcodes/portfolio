@@ -1,8 +1,33 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, request as playwrightRequest } from "@playwright/test";
 
 const GUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:5808";
 
 test.describe("Traffic Attribution Analytics", () => {
+  // Before the click-analytics test, ensure a profile with a GitHub link is active.
+  // The admin spec activates a profile with no contact links, which would break this test.
+  test.beforeEach(async ({}, testInfo) => {
+    if (testInfo.title !== "should post click analytics on external link clicks with correct referrer") {
+      return;
+    }
+    const apiContext = await playwrightRequest.newContext({ baseURL: API_BASE });
+    try {
+      // Fetch all profiles (requires auth bypass in dev/e2e)
+      const res = await apiContext.get("/api/resume");
+      if (!res.ok()) return;
+      const profiles: any[] = await res.json();
+      // Find a profile that has a GitHub link
+      const profileWithGithub = profiles.find((p: any) =>
+        Array.isArray(p.links) && p.links.some((l: any) => l.linkType?.keyIdentifier === "github")
+      );
+      if (profileWithGithub) {
+        await apiContext.post(`/api/resume/${profileWithGithub.id}/activate`);
+      }
+    } finally {
+      await apiContext.dispose();
+    }
+  });
+
   test("should extract ref parameter and post page view analytics", async ({ page }) => {
     // Intercept POST request to the analytics views endpoint
     let viewRequestPayload: any = null;
