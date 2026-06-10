@@ -115,7 +115,7 @@ public class ResumeController(
     public async Task<ActionResult<ResumeProfile>> CreateAsync([FromBody] CreateResumeRequest request)
     {
         var createdProfile = await service.CreateProfileWithDetailsAsync(request);
-        return CreatedAtAction(nameof(GetByIdAsync), new { id = createdProfile.Id }, createdProfile);
+        return CreatedAtAction("GetById", new { id = createdProfile.Id }, createdProfile);
     }
 
     [HttpPut("{id}")]
