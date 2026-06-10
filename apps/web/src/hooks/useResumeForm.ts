@@ -13,6 +13,7 @@ import {
 
 export interface ExperienceItem {
   id?: string;
+  clientId?: string;
   company: string;
   role: string;
   period: string;
@@ -93,6 +94,7 @@ export function useResumeForm() {
                 const parsed = parsePeriod(we.period || "");
                 return {
                   id: we.id,
+                  clientId: we.id || Math.random().toString(36).substring(2, 9),
                   company: we.company || "",
                   role: we.role || "",
                   period: we.period || "",
@@ -195,6 +197,7 @@ export function useResumeForm() {
     setExperiences([
       ...experiences,
       {
+        clientId: Math.random().toString(36).substring(2, 9),
         company: "",
         role: "",
         period: `${defaultStartMonth} ${defaultStartYear} - Present`,
