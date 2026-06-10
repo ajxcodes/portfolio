@@ -20,60 +20,83 @@ interface ContactLinksProps {
 export const ContactLinks = ({ contact, showText = true, downloadUrl }: ContactLinksProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // A defensive check prevents the component from crashing if the contact prop is missing.
+  // Defensive check
   if (!contact) {
     console.error("ContactLinks component was rendered without the required 'contact' prop.");
     return null;
   }
 
-  const contactItems = [
-    ...(contact.email ? [{
+  const items: Array<{
+    href: string;
+    Icon: React.ComponentType<{ className: string }>;
+    text: string;
+    label: string;
+    download?: boolean;
+    onClick?: (e: React.MouseEvent) => void;
+    linkId: string;
+  }> = [];
+
+  // Email
+  if (contact.email && (contact.linkIds?.email || contact.linkIds?.Email)) {
+    items.push({
       href: contact.email.includes('@') && !contact.email.startsWith('mailto:') ? `mailto:${contact.email}` : contact.email,
       Icon: MailIcon,
       text: contact.email.replace('mailto:', ''),
       label: `Email ${contact.email}`,
-      linkId: contact.linkIds?.["email"] || contact.linkIds?.["Email"]
-    }] : []),
-    ...(contact.linkedin ? [{
+      linkId: contact.linkIds?.email || contact.linkIds?.Email,
+    });
+  }
+
+  // LinkedIn
+  if (contact.linkedin && (contact.linkIds?.linkedin || contact.linkIds?.LinkedIn)) {
+    items.push({
       href: contact.linkedin.startsWith('http') ? contact.linkedin : `https://${contact.linkedin}`,
       Icon: LinkedInIcon,
       text: contact.linkedin.replace(/https?:\/\/(www\.)?linkedin\.com\/in\//, '').replace(/\/$/, ''),
       label: 'LinkedIn Profile',
-      linkId: contact.linkIds?.["linkedin"] || contact.linkIds?.["LinkedIn"]
-    }] : []),
-    ...(contact.github ? [{
+      linkId: contact.linkIds?.linkedin || contact.linkIds?.LinkedIn,
+    });
+  }
+
+  // GitHub
+  if (contact.github && (contact.linkIds?.github || contact.linkIds?.GitHub)) {
+    items.push({
       href: contact.github.startsWith('http') ? contact.github : `https://${contact.github}`,
       Icon: GitHubIcon,
       text: contact.github.replace(/https?:\/\/(www\.)?github\.com\//, '').replace(/\/$/, ''),
       label: 'GitHub Profile',
-      linkId: contact.linkIds?.["github"] || contact.linkIds?.["GitHub"]
-    }] : []),
-    // The calendar link is now driven by data and will only appear if provided.
-    ...(contact.calendar ? [{
+      linkId: contact.linkIds?.github || contact.linkIds?.GitHub,
+    });
+  }
+
+  // Calendar
+  if (contact.calendar && (contact.linkIds?.calendar || contact.linkIds?.Calendar)) {
+    items.push({
       href: contact.calendar,
       Icon: CalendarIcon,
       text: "Let's Chat",
       label: 'Schedule a meeting',
-      linkId: contact.linkIds?.["calendar"] || contact.linkIds?.["Calendar"]
-    }] : []),
-    ...(downloadUrl ? [{
+      linkId: contact.linkIds?.calendar || contact.linkIds?.Calendar,
+    });
+  }
+
+  // Resume download
+  if (downloadUrl && (contact.linkIds?.resume || contact.linkIds?.Resume)) {
+    items.push({
       href: downloadUrl,
       Icon: DownloadIcon,
       text: "Resume",
       label: 'Download Resume',
       download: true,
-      onClick: (e: React.MouseEvent) => {
-        e.preventDefault();
-        setIsModalOpen(true);
-      },
-      linkId: contact.linkIds?.["resume"] || contact.linkIds?.["Resume"]
-    }] : []),
-  ];
+      onClick: (e) => { e.preventDefault(); setIsModalOpen(true); },
+      linkId: contact.linkIds?.resume || contact.linkIds?.Resume,
+    });
+  }
 
   return (
     <>
       <div className="flex justify-center items-center gap-x-6 gap-y-2 flex-wrap text-lg">
-        {contactItems.map(({ href, Icon, text, label, download, onClick, linkId }) => {
+        {items.map(({ href, Icon, text, label, download, onClick, linkId }) => {
           const isExternal = href.startsWith('http');
           return (
             <a

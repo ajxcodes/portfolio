@@ -27,8 +27,11 @@ test.describe('Admin Control Panel', () => {
     // 1. Navigate to resume profile list
     await page.goto('/admin/resume');
 
-    // 2. Click "New Profile"
-    await page.locator('text=New Profile').click();
+    // 2. Click "New Profile" and wait for navigation
+    await Promise.all([
+      page.waitForURL('**/admin/resume/form*'),
+      page.locator('text=New Profile').click()
+    ]);
     await expect(page).toHaveURL(/\/admin\/resume\/form/);
 
     // 3. Fill in Personal Info
