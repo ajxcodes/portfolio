@@ -1,7 +1,7 @@
 name: AI Pull Request Reviewer
 
 on:
-  pull_request:
+  pull_request_target:
     types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - 'apps/api/**'
@@ -23,6 +23,8 @@ jobs:
     - name: Checkout Repository
       uses: actions/checkout@v4
       with:
+        ref: ${{ github.event.pull_request.head.sha }}
+        repository: ${{ github.event.pull_request.head.repo.full_name }}
         fetch-depth: 0 # Fetch all history so we can generate diffs
 
     - name: Generate PR Diff
