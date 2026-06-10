@@ -6,27 +6,44 @@ const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:5808"
 test.describe("Traffic Attribution Analytics", () => {
   // Before the click-analytics test, ensure a profile with a GitHub link is active.
   // The admin spec activates a profile with no contact links, which would break this test.
+  // NOTE: GET /api/resume (list) does NOT eager-load links, so we must check each
+  // profile individually via GET /api/resume/{id} which does include links.
   test.beforeEach(async ({}, testInfo) => {
     if (testInfo.title !== "should post click analytics on external link clicks with correct referrer") {
       return;
     }
     const apiContext = await playwrightRequest.newContext({ baseURL: API_BASE });
     try {
-      // Fetch all profiles (requires auth bypass in dev/e2e)
-      const res = await apiContext.get("/api/resume");
-      if (!res.ok()) return;
-      const profiles: any[] = await res.json();
-      // Find a profile that has a GitHub link
-      const profileWithGithub = profiles.find((p: any) =>
-        Array.isArray(p.links) && p.links.some((l: any) => l.linkType?.keyIdentifier === "github")
-      );
-      if (profileWithGithub) {
-        await apiContext.post(`/api/resume/${profileWithGithub.id}/activate`);
+      // Fast path: check if the currently active profile already has a GitHub link
+      const activeRes = await apiContext.get("/api/resume/active");
+      if (activeRes.ok()) {
+        const active: any = await activeRes.json();
+        const hasGithub = Array.isArray(active.links) &&
+          active.links.some((l: any) => l.linkType?.keyIdentifier === "github");
+        if (hasGithub) return;
+      }
+
+      // Active profile has no GitHub link — find one that does by fetching each profile's full details
+      const listRes = await apiContext.get("/api/resume");
+      if (!listRes.ok()) return;
+      const profiles: any[] = await listRes.json();
+
+      for (const profile of profiles) {
+        const detailRes = await apiContext.get(`/api/resume/${profile.id}`);
+        if (!detailRes.ok()) continue;
+        const detail: any = await detailRes.json();
+        const hasGithub = Array.isArray(detail.links) &&
+          detail.links.some((l: any) => l.linkType?.keyIdentifier === "github");
+        if (hasGithub) {
+          await apiContext.post(`/api/resume/${profile.id}/activate`);
+          break;
+        }
       }
     } finally {
       await apiContext.dispose();
     }
   });
+
 
   test("should extract ref parameter and post page view analytics", async ({ page }) => {
     // Intercept POST request to the analytics views endpoint
