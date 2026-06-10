@@ -37,14 +37,23 @@ jobs:
     - name: Run Backend Tests with Coverage
       run: |
         dotnet test apps/api/Portfolio.sln --no-build -c Release --verbosity normal \
+          --logger "trx;LogFileName=test-results.trx" \
           /p:CollectCoverage=true \
           /p:CoverletOutputFormat=cobertura \
           /p:Threshold=50 \
           /p:ThresholdType=line \
           /p:ThresholdStat=Total
 
+    - name: Upload Backend Test Results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: backend-test-results
+        path: apps/api/src/Portfolio.Tests/TestResults/test-results.trx
+
     - name: Upload Backend Coverage Report
       uses: actions/upload-artifact@v4
+      if: always()
       with:
         name: backend-coverage
         path: apps/api/src/Portfolio.Tests/coverage.cobertura.xml
@@ -107,10 +116,18 @@ jobs:
       run: pnpm install --frozen-lockfile
 
     - name: Run Frontend Tests with Coverage
-      run: pnpm run test --coverage --watchAll=false
+      run: pnpm run test --coverage --watchAll=false --json --outputFile=jest-results.json
+
+    - name: Upload Frontend Test Results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: frontend-test-results
+        path: apps/web/jest-results.json
 
     - name: Upload Frontend Coverage Report
       uses: actions/upload-artifact@v4
+      if: always()
       with:
         name: frontend-coverage
         path: apps/web/coverage/
@@ -148,6 +165,13 @@ jobs:
     - name: Run Playwright Tests
       run: pnpm run test:e2e
 
+    - name: Upload Playwright Test Results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: playwright-test-results
+        path: apps/web/playwright-results.json
+
     - name: Upload Playwright Report
       uses: actions/upload-artifact@v4
       if: failure()
@@ -155,5 +179,29 @@ jobs:
         name: playwright-report
         path: apps/web/playwright-report/
         retries-on-error: true
+
+  ci-summary:
+    name: CI Performance & Coverage Summary
+    runs-on: ubuntu-latest
+    needs: [backend-tests, frontend-build, frontend-tests, playwright-e2e]
+    if: always()
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Download All Artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: artifacts
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+
+    - name: Generate Summary Report
+      run: node .github/scripts/generate-summary.js
+      env:
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
 

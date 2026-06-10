@@ -3,7 +3,51 @@
 import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5808";
+// Synchronous check to avoid async/microtask delay in tests and for cached values
+function getLocalGeoDetailsSync() {
+  const isLocal = typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
+  const isTest = typeof process !== "undefined" && process.env.NODE_ENV === "test";
+  const geoUrl = process.env.NEXT_PUBLIC_GEOIP_SERVICE_URL;
+
+  // If we are not local, in a test environment, or have no GeoIP service URL configured, skip geolocation
+  if (!isLocal || isTest || !geoUrl) {
+    return { Country: null, City: null };
+  }
+
+  try {
+    const cached = sessionStorage.getItem("local_geo_details");
+    if (cached) {
+      return JSON.parse(cached);
+    }
+  } catch (e) {}
+  
+  return null; // Needs async fetch
+}
+
+// Asynchronous fetch from GeoIP service
+async function fetchLocalGeoDetailsAsync() {
+  const geoUrl = process.env.NEXT_PUBLIC_GEOIP_SERVICE_URL;
+  if (!geoUrl) return { Country: null, City: null };
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2000);
+    
+    const res = await fetch(geoUrl, { signal: controller.signal });
+    clearTimeout(timeoutId);
+    
+    const data = await res.json();
+    const geo = {
+      Country: data.country_name || data.country || null,
+      City: data.city || null
+    };
+    
+    sessionStorage.setItem("local_geo_details", JSON.stringify(geo));
+    return geo;
+  } catch (e) {
+    return { Country: null, City: null };
+  }
+}
 
 export function useTrafficTracker() {
   const pathname = usePathname();
@@ -27,14 +71,25 @@ export function useTrafficTracker() {
     if (lastTrackedPath.current !== pathname) {
       lastTrackedPath.current = pathname;
 
-      fetch(`${API_BASE_URL}/api/analytics/views`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ReferrerSource: referrerSource,
-          UserAgent: navigator.userAgent,
-        }),
-      }).catch(err => console.error("Failed to log page view telemetry:", err));
+      const track = async () => {
+        let geo = getLocalGeoDetailsSync();
+        if (!geo) {
+          geo = await fetchLocalGeoDetailsAsync();
+        }
+        
+        fetch("/api/analytics/views", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ReferrerSource: referrerSource,
+            UserAgent: navigator.userAgent,
+            Country: geo.Country,
+            City: geo.City
+          }),
+        }).catch(err => console.error("Failed to log page view telemetry:", err));
+      };
+
+      track();
     }
   }, [pathname]);
 
@@ -70,15 +125,27 @@ export function useTrafficTracker() {
             // Only post click analytics if we resolved a valid or fallback LinkId Guid
             if (linkId !== "00000000-0000-0000-0000-000000000000") {
               const referrerSource = sessionStorage.getItem("referrer_source") || "Direct";
-              fetch(`${API_BASE_URL}/api/analytics/clicks`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  LinkId: linkId,
-                  ReferrerSource: referrerSource,
-                  UserAgent: navigator.userAgent,
-                }),
-              }).catch(err => console.error("Failed to log link click telemetry:", err));
+              
+              const trackClick = async () => {
+                let geo = getLocalGeoDetailsSync();
+                if (!geo) {
+                  geo = await fetchLocalGeoDetailsAsync();
+                }
+                
+                fetch("/api/analytics/clicks", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    LinkId: linkId,
+                    ReferrerSource: referrerSource,
+                    UserAgent: navigator.userAgent,
+                    Country: geo.Country,
+                    City: geo.City
+                  }),
+                }).catch(err => console.error("Failed to log link click telemetry:", err));
+              };
+
+              trackClick();
             }
           }
         } catch {
