@@ -140,24 +140,27 @@ jobs:
           - Next.js 15 and React 19 are the active versions in the web project.
           - You MUST carefully review both the C# backend code and the React/Next.js frontend code in the diff. Ensure you provide inline comments for any logic, security, accessibility, or performance issues found in the frontend ('apps/web/**') files.
           
-          You must respond with a SINGLE JSON object with the following structure:
-          {
-            "summary": "A markdown string containing a high-level summary of the PR and a bullet-pointed changelog.",
-            "resolvedThreads": ["threadId1", "threadId2"],
-            "comments": [
-              {
-                "path": "apps/api/src/Portfolio.Domain/Blog/Tag.cs",
-                "line": 15,
-                "severity": "info",
-                "body": "🤖 **Antigravity AI Suggestion**\\n\\nConsider making this property read-only..."
-              }
-            ]
-          }
-
-          Evaluation Rules:
-          1. **PR Summary (\`summary\`)**: Provide a clear, professional summary of the PR's achievements and files changed. This will be updated directly in the PR description body.
-          2. **Old Issues Resolve (\`resolvedThreads\`)**: Compare the new Git Diff against the unresolved reviews list below. If the changes in the Diff successfully fix an issue, include its 'threadId' in the array so we can resolve the conversation thread.
-          3. **New Issues (\`comments\`)**: Find logic flaws, security vulnerabilities, or performance issues in the modified files. Identify the specific file path and the line number in the *new* file (right side of the diff) where the issue is. Every comment MUST have a 'severity' property set to one of 'critical', 'warning', or 'info'. Every comment body MUST start with "🤖 **Antigravity AI Suggestion**\\n\\n". Do NOT suggest new comments for issues that are already listed in the 'unresolved previous AI reviews' below. If the code looks great, keep the comments list empty.
+           You must respond with a SINGLE JSON object with the following structure:
+           {
+             "summary": "A markdown string containing a high-level summary of the PR and a bullet-pointed changelog.",
+             "confidenceLevel": "High | Medium | Low",
+             "confidenceExplanation": "Why this confidence level was chosen based on code complexity, completeness, and diff size.",
+             "resolvedThreads": ["threadId1", "threadId2"],
+             "comments": [
+               {
+                 "path": "apps/api/src/Portfolio.Domain/Blog/Tag.cs",
+                 "line": 15,
+                 "severity": "info",
+                 "body": "🤖 **Antigravity AI Suggestion**\\n\\nConsider making this property read-only..."
+               }
+             ]
+           }
+ 
+           Evaluation Rules:
+           1. **PR Summary (\`summary\`)**: Provide a clear, professional summary of the PR's achievements and files changed. This will be updated directly in the PR description body.
+           2. **Confidence (\`confidenceLevel\` and \`confidenceExplanation\`)**: Assess and state your confidence in the correctness and thoroughness of your review (High, Medium, or Low) and explain why briefly.
+           3. **Old Issues Resolve (\`resolvedThreads\`)**: Compare the new Git Diff against the unresolved reviews list below. If the changes in the Diff successfully fix an issue, include its 'threadId' in the array so we can resolve the conversation thread.
+           4. **New Issues (\`comments\`)**: Find logic flaws, security vulnerabilities, or performance issues in the modified files. Identify the specific file path and the line number in the *new* file (right side of the diff) where the issue is. Every comment MUST have a 'severity' property set to one of 'critical', 'warning', or 'info'. Every comment body MUST start with "🤖 **Antigravity AI Suggestion**\\n\\n". Do NOT suggest new comments for issues that are already listed in the 'unresolved previous AI reviews' below. If the code looks great, keep the comments list empty.
 
           Here are the unresolved previous AI reviews on this PR:
           \`\`\`json
@@ -253,11 +256,11 @@ jobs:
                    messages: [
                      {
                        role: 'system',
-                        content: "You are Antigravity, an expert senior software engineer and security auditor reviewing a pull request for an enterprise portfolio website.\n\nYou must respond with a SINGLE JSON object exactly matching this structure:\n{\n  \"summary\": \"...\",\n  \"resolvedThreads\": [\"id1\"],\n  \"comments\": [\n    { \"path\": \"...\", \"line\": 15, \"severity\": \"info\", \"body\": \"🤖 **Antigravity AI Suggestion**\\n\\n...\" }\n  ]\n}\n\nNote: every comment in \"comments\" must have a 'severity' property set to one of 'critical', 'warning', or 'info'. Do NOT suggest duplicate comments for issues that are already unresolved in the previous reviews."
+                        content: "You are Antigravity, an expert senior software engineer and security auditor reviewing a pull request for an enterprise portfolio website.\n\nYou must respond with a SINGLE JSON object exactly matching this structure:\n{\n  \"summary\": \"...\",\n  \"confidenceLevel\": \"High | Medium | Low\",\n  \"confidenceExplanation\": \"...\",\n  \"resolvedThreads\": [\"id1\"],\n  \"comments\": [\n    { \"path\": \"...\", \"line\": 15, \"severity\": \"info\", \"body\": \"🤖 **Antigravity AI Suggestion**\\n\\n...\" }\n  ]\n}\n\nNote: every comment in \"comments\" must have a 'severity' property set to one of 'critical', 'warning', or 'info'. Do NOT suggest duplicate comments for issues that are already unresolved in the previous reviews."
                      },
                      {
                        role: 'user',
-                       content: `Evaluation Rules:\n1. PR Summary ('summary')\n2. Old Issues Resolve ('resolvedThreads'): Return array of resolved threadIds.\n3. New Issues ('comments'): Inline comments for logic/security flaws.\n\nHere are the unresolved previous AI reviews:\n${previousThreadsText}\n\nHere is the git diff of the PR changes:\n\`\`\`diff\n${diffText}\n\`\`\``
+                       content: `Evaluation Rules:\n1. PR Summary ('summary')\n2. Confidence ('confidenceLevel' and 'confidenceExplanation')\n3. Old Issues Resolve ('resolvedThreads'): Return array of resolved threadIds.\n4. New Issues ('comments'): Inline comments for logic/security flaws.\n\nHere are the unresolved previous AI reviews:\n${previousThreadsText}\n\nHere is the git diff of the PR changes:\n\`\`\`diff\n${diffText}\n\`\`\``
                      }
                    ],
                    temperature: 0.1,
@@ -388,6 +391,63 @@ jobs:
                 }
               }
             }
+
+            // 4. Post Run Summary Comment
+            const resolvedCount = reviewData.resolvedThreads ? reviewData.resolvedThreads.length : 0;
+            const newCommentsCount = reviewData.comments ? reviewData.comments.length : 0;
+            
+            const resolvedList = [];
+            if (reviewData.resolvedThreads) {
+              for (const threadId of reviewData.resolvedThreads) {
+                const thread = unresolvedBotThreads.find(t => t.threadId === threadId);
+                if (thread) {
+                  resolvedList.push(`- Path: \`${thread.path}\` (Line ${thread.line})`);
+                } else {
+                  resolvedList.push(`- Thread ID: \`${threadId}\``);
+                }
+              }
+            }
+            const resolvedDetails = resolvedList.length > 0 ? resolvedList.join('\n') : "_None_";
+
+            const newList = [];
+            if (reviewData.comments) {
+              for (const comment of reviewData.comments) {
+                newList.push(`- \`[${comment.severity || 'info'}]\` \`${comment.path}\` (Line ${comment.line})`);
+              }
+            }
+            const newCommentsDetails = newList.length > 0 ? newList.join('\n') : "_None_";
+
+            const outstandingList = [];
+            for (const thread of unresolvedBotThreads) {
+              if (!reviewData.resolvedThreads || !reviewData.resolvedThreads.includes(thread.threadId)) {
+                outstandingList.push(`- Path: \`${thread.path}\` (Line ${thread.line})`);
+              }
+            }
+            const outstandingCount = outstandingList.length;
+            const outstandingDetails = outstandingList.length > 0 ? outstandingList.join('\n') : "_None_";
+
+            const summaryCommentBody = `### 🤖 Antigravity AI Review Run Summary
+
+- **Confidence Level**: **${reviewData.confidenceLevel || 'N/A'}** - *${reviewData.confidenceExplanation || ''}*
+
+#### 🔧 Comments Resolved (${resolvedCount})
+${resolvedDetails}
+
+#### 📝 New Comments Added (${newCommentsCount})
+${newCommentsDetails}
+
+#### ⏳ Outstanding Comments (${outstandingCount})
+${outstandingDetails}
+
+*Powered by Google Gemini (${successfulModel})*`;
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: summaryCommentBody
+            });
+            console.log("Successfully posted AI review run summary comment to PR.");
           } catch (error) {
             console.error("Error generating or posting review:", error);
             
@@ -406,55 +466,3 @@ jobs:
               }
             }
           }
-
-  ci-summary:
-    name: CI Performance & Coverage Summary
-    runs-on: ubuntu-latest
-    needs: [review]
-    if: always()
-    steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v4
-
-    - name: Find CI Workflow Run for this SHA
-      id: find-run
-      uses: actions/github-script@v7
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        script: |
-          const sha = context.payload.pull_request.head.sha;
-          const { data: runs } = await github.rest.actions.listWorkflowRunsForRepo({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            head_sha: sha,
-            event: 'pull_request',
-            per_page: 20
-          });
-          const ciRun = runs.workflow_runs.find(r => r.name === 'Portfolio CI/CD Pipeline');
-          if (ciRun) {
-            core.setOutput('run_id', ciRun.id.toString());
-            console.log(`Found CI run: ${ciRun.id} (status: ${ciRun.status})`);
-          } else {
-            core.setOutput('run_id', '');
-            console.log('No CI pipeline run found for this SHA.');
-          }
-
-    - name: Download CI Artifacts
-      if: steps.find-run.outputs.run_id != ''
-      uses: actions/download-artifact@v4
-      with:
-        path: artifacts
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        run-id: ${{ steps.find-run.outputs.run_id }}
-
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: 20
-
-    - name: Generate Summary Report
-      run: node .github/scripts/generate-summary.js
-      env:
-        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-
-
