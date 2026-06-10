@@ -185,6 +185,7 @@ jobs:
         exit 1
 
     - name: Seed Database for E2E Tests
+      working-directory: ${{ github.workspace }}
       run: node apps/web/e2e/seed.js
       env:
         NEXT_PUBLIC_API_BASE_URL: http://localhost:5808
