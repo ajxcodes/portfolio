@@ -29,25 +29,23 @@ jobs:
         echo "Vercel deployments are handled natively via the Vercel GitHub integration."
         echo "Merging to main automatically triggers a production deployment in Vercel."
 
-    - name: Register GitHub Deployment Status
+    - name: Create GitHub Deployment
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        echo "Registering deployment status in GitHub..."
-        # Create deployment and capture ID (bypassing required status checks to avoid 409 Conflict)
-        DEPLOYMENT_ID=$(gh api repos/${{ github.repository }}/deployments \
-          -f ref=main \
-          -f description="Automatic deployment after successful CI checks" \
-          -F required_contexts='[]' \
-          --jq '.id')
+        echo "Creating GitHub deployment..."
+        DEPLOYMENT_ID=$(echo '{"ref": "main", "description": "Automatic deployment after successful CI checks", "required_contexts": []}' | \
+          gh api repos/${{ github.repository }}/deployments --input - --jq '.id')
+        echo "DEPLOYMENT_ID=$DEPLOYMENT_ID" >> $GITHUB_ENV
         
-        # Create successful deployment status link
+        # Set status to in_progress
         gh api repos/${{ github.repository }}/deployments/$DEPLOYMENT_ID/statuses \
-          -f state=success \
-          -f description="CI validation passed. Deployments triggered." \
+          -f state=in_progress \
+          -f description="Deployments triggered, verifying health..." \
           -f log_url="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
     - name: Verify Deployments are Live
+      id: verify
       run: |
         echo "Waiting 60 seconds for initial deployment sync..."
         sleep 60
@@ -88,4 +86,52 @@ jobs:
           done
         else
           echo "PROD_WEB_URL secret not set. Skipping Frontend verification."
+        fi
+
+    - name: Update GitHub Deployment Status (Success)
+      if: success()
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        gh api repos/${{ github.repository }}/deployments/$DEPLOYMENT_ID/statuses \
+          -f state=success \
+          -f description="Deployments successfully verified and live." \
+          -f log_url="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+    - name: Update GitHub Deployment Status (Failure)
+      if: failure()
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        if [ -n "$DEPLOYMENT_ID" ]; then
+          gh api repos/${{ github.repository }}/deployments/$DEPLOYMENT_ID/statuses \
+            -f state=failure \
+            -f description="Deployments failed verification or timed out." \
+            -f log_url="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+        else
+          echo "No deployment ID found, skipping status update."
+        fi
+
+    - name: Generate Status Summary Card
+      if: always()
+      run: |
+        echo "### Deployment Report 🚀" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        if [ "${{ steps.verify.outcome }}" = "success" ]; then
+          echo "#### ✅ Status: **Success**" >> $GITHUB_STEP_SUMMARY
+          echo "All services are verified live and responsive." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Service | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "| --- | --- |" >> $GITHUB_STEP_SUMMARY
+          echo "| Frontend (Vercel) | 🟢 Live |" >> $GITHUB_STEP_SUMMARY
+          echo "| Web API (Render) | 🟢 Live |" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "#### ❌ Status: **Failure**" >> $GITHUB_STEP_SUMMARY
+          echo "One or more services failed verification or timed out during deployment check." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Service | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "| --- | --- |" >> $GITHUB_STEP_SUMMARY
+          echo "| Frontend (Vercel) | 🔴 Unverified / Offline |" >> $GITHUB_STEP_SUMMARY
+          echo "| Web API (Render) | 🔴 Unverified / Offline |" >> $GITHUB_STEP_SUMMARY
         fi
