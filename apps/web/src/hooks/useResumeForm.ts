@@ -85,13 +85,20 @@ export function useResumeForm() {
           if (data.links) {
             data.links.forEach((l: any) => {
               const key = l.linkType?.keyIdentifier || l.linkType?.name?.toLowerCase();
-              if (key === "email") { setEmail(l.url || ""); setEmailHeader(l.displayInHeader !== false); }
-              if (key === "phone") { setPhone(l.url || ""); setPhoneHeader(l.displayInHeader !== false); }
-              if (key === "website") { setWebsite(l.url || ""); setWebsiteHeader(l.displayInHeader !== false); }
-              if (key === "linkedin") { setLinkedinVal(l.url || ""); setLinkedinHeader(l.displayInHeader !== false); }
-              if (key === "calendar") { setCalendar(l.url || ""); setCalendarHeader(l.displayInHeader !== false); }
-              if (key === "github") { setGithubVal(l.url || ""); setGithubHeader(l.displayInHeader !== false); }
-              if (key === "instagram") { setInstagramVal(l.url || ""); setInstagramHeader(l.displayInHeader !== false); }
+              const setters: Record<string, [React.Dispatch<React.SetStateAction<string>>, React.Dispatch<React.SetStateAction<boolean>>]> = {
+                email: [setEmail, setEmailHeader],
+                phone: [setPhone, setPhoneHeader],
+                website: [setWebsite, setWebsiteHeader],
+                linkedin: [setLinkedinVal, setLinkedinHeader],
+                calendar: [setCalendar, setCalendarHeader],
+                github: [setGithubVal, setGithubHeader],
+                instagram: [setInstagramVal, setInstagramHeader]
+              };
+              if (key && setters[key]) {
+                const [setUrl, setHeader] = setters[key];
+                setUrl(l.url || "");
+                setHeader(l.displayInHeader !== false);
+              }
             });
           }
 
