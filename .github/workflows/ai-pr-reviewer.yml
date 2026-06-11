@@ -29,8 +29,8 @@ jobs:
     - name: Generate PR Diff
       run: |
         git fetch origin ${{ github.base_ref }}
-        # Generate diff between the target branch and the PR branch
-        git diff origin/${{ github.base_ref }}...HEAD > pr_diff.txt
+        # Generate diff between the target branch and the PR branch, excluding lockfiles and assets
+        git diff origin/${{ github.base_ref }}...HEAD -- . ':(exclude)pnpm-lock.yaml' ':(exclude)package-lock.json' ':(exclude)*.svg' > pr_diff.txt
         # Check size of diff
         ls -la pr_diff.txt
 
@@ -56,9 +56,9 @@ jobs:
             return;
           }
 
-          // Truncate if diff is exceptionally large (e.g. > 3MB) to prevent token limits
-          // Gemini 2.5 Flash has a context window of 1M+ tokens, so 3 million characters (~750k tokens) is safe.
-          const maxCharLimit = 3000000;
+          // Truncate if diff is exceptionally large (e.g. > 500k) to prevent token limits
+          // Gemini 2.5 Flash has a context window of 1M+ tokens, but we want to optimize quota usage
+          const maxCharLimit = 500000;
           if (diffText.length > maxCharLimit) {
             diffText = diffText.substring(0, maxCharLimit) + "\n\n...[Diff truncated due to size limit]...";
           }

@@ -5,9 +5,9 @@ test.describe("Resume Download Flow", () => {
     // Navigate to the resume page. The database is seeded by seed.js so the resume exists.
     await page.goto("/resume");
 
-    // Wait for the Download Resume button to appear
-    const downloadButton = page.locator('a[aria-label="Download Resume"]');
-    await expect(downloadButton).toBeVisible();
+    // Wait for the Download Resume button to appear (use specific locator to avoid matching Header links)
+    const downloadButton = page.locator('#contact-links-section a[aria-label="Download Resume"]');
+    await expect(downloadButton).toBeVisible({ timeout: 15000 });
     
     // Click the button to trigger the modal and API generation
     await downloadButton.click();
