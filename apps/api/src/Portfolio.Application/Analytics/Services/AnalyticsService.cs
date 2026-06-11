@@ -37,8 +37,8 @@ public class AnalyticsService(
                 return;
             }
             
-            log.TargetUrl = link.Url;
-            log.LinkTypeName = link.LinkType?.Name;
+            log.TargetUrl = link.Url?.Replace("\r", "")?.Replace("\n", "");
+            log.LinkTypeName = link.LinkType?.Name?.Replace("\r", "")?.Replace("\n", "");
         }
 
         await repository.LogLinkClickAsync(log);

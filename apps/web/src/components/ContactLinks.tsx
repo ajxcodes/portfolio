@@ -56,7 +56,17 @@ export const ContactLinks = ({ contact, showText = true, downloadUrl }: ContactL
 
   const regularLinks = contact.links.filter(l => l.type.toLowerCase() !== 'resume');
 
-  const items: any[] = regularLinks.map(link => ({
+  interface ContactLinkItem {
+    href: string;
+    Icon: React.ElementType;
+    text: string;
+    label: string;
+    linkId?: string;
+    download?: boolean;
+    onClick?: (e: React.MouseEvent) => void;
+  }
+
+  const items: ContactLinkItem[] = regularLinks.map(link => ({
     href: formatHref(link.type, link.url),
     Icon: iconMap[link.type.toLowerCase()] || LinkIcon,
     text: formatText(link.type, link.url),

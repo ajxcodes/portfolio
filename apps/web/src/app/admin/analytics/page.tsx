@@ -228,6 +228,12 @@ export default function AnalyticsPage() {
                   {showTotalViews ? "Showing: Total Views" : "Showing: Unique Visitors"}
                 </button>
               </div>
+              {!showTotalViews && (
+                <p className="text-[10px] text-muted-foreground italic flex items-center gap-1 mt-2">
+                  <AlertCircle className="w-3 h-3" />
+                  Fallback IDs are used if IP address is missing.
+                </p>
+              )}
               <div className="h-64 w-full mt-4">
                 {viewsByDate.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
