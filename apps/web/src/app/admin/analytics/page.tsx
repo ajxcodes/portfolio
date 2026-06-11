@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseBrowser";
 import { 
@@ -48,7 +48,7 @@ export default function AnalyticsPage() {
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
 
-  const viewsByDate = React.useMemo(() => {
+  const viewsByDate = useMemo(() => {
     if (!summary) return [];
     const counts: Record<string, number> = {};
     [...summary.recentPageViews].reverse().forEach(view => {
@@ -58,7 +58,7 @@ export default function AnalyticsPage() {
     return Object.entries(counts).map(([date, count]) => ({ date, count }));
   }, [summary]);
 
-  const clicksByLink = React.useMemo(() => {
+  const clicksByLink = useMemo(() => {
     if (!summary) return [];
     const counts: Record<string, number> = {};
     summary.recentLinkClicks.forEach(click => {
