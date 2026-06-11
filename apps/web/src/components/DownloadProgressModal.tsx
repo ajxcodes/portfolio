@@ -153,6 +153,7 @@ export const DownloadProgressModal = ({
                   strokeWidth="6"
                   fill="transparent"
                   strokeDasharray={301.6}
+                  initial={{ strokeDashoffset: 301.6 }}
                   animate={{
                     strokeDashoffset: 301.6 - (301.6 * progress) / 100,
                   }}
