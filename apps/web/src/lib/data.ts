@@ -11,6 +11,7 @@ export interface ProfileLink {
   linkId?: string;
   type: string;
   url: string;
+  displayInHeader?: boolean;
 }
 
 export interface ContactInfo {
@@ -166,7 +167,8 @@ export const getResumeData = cache(async (): Promise<{ personalInfo: PersonalInf
             contactLinks.push({
               linkId: l.id,
               type: key,
-              url: l.url
+              url: l.url,
+              displayInHeader: l.displayInHeader !== false
             });
           }
         });

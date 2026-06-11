@@ -13,6 +13,9 @@ public class ResumeProfileLinkConfiguration : IEntityTypeConfiguration<ResumePro
         builder.Property(l => l.Url)
             .IsRequired()
             .HasMaxLength(255);
+
+        builder.Property(l => l.DisplayInHeader)
+            .HasDefaultValue(true);
             
         builder.Property(l => l.UpdatedAt)
             .HasDefaultValueSql("CURRENT_TIMESTAMP");

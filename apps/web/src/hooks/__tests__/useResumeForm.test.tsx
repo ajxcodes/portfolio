@@ -326,7 +326,7 @@ describe("useResumeForm Hook", () => {
         title: "Principal Architect",
         intro: "Hello world",
         links: [
-          { linkTypeName: "Email", linkTypeKey: "email", url: "jane@example.com" }
+          { linkTypeName: "Email", linkTypeKey: "email", url: "jane@example.com", displayInHeader: true }
         ],
         workExperiences: [
           expect.objectContaining({

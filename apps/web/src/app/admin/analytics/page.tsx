@@ -82,7 +82,7 @@ export default function AnalyticsPage() {
     if (!summary) return [];
     const counts: Record<string, number> = {};
     summary.recentLinkClicks.forEach(click => {
-      const name = click.link.linkType.name;
+      const name = click.link?.linkType?.name || (click as any).linkTypeName || "Unknown Link";
       counts[name] = (counts[name] || 0) + 1;
     });
     return Object.entries(counts).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count);

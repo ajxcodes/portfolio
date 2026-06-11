@@ -45,20 +45,13 @@ function ResumeFormContent() {
     setPhotoUrlLight,
     photoUrlDark,
     setPhotoUrlDark,
-    email,
-    setEmail,
-    phone,
-    setPhone,
-    website,
-    setWebsite,
-    linkedinVal,
-    setLinkedinVal,
-    calendar,
-    setCalendar,
-    githubVal,
-    setGithubVal,
-    instagramVal,
-    setInstagramVal,
+    email, setEmail, emailHeader, setEmailHeader,
+    phone, setPhone, phoneHeader, setPhoneHeader,
+    website, setWebsite, websiteHeader, setWebsiteHeader,
+    linkedinVal, setLinkedinVal, linkedinHeader, setLinkedinHeader,
+    calendar, setCalendar, calendarHeader, setCalendarHeader,
+    githubVal, setGithubVal, githubHeader, setGithubHeader,
+    instagramVal, setInstagramVal, instagramHeader, setInstagramHeader,
     experiences,
     availableCategories,
     newSkillNameMap,
@@ -331,10 +324,16 @@ function ResumeFormContent() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div>
-              <label htmlFor="email" className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider mb-2">
-                <Mail className="w-3.5 h-3.5 text-muted-foreground" />
-                Email Address
-              </label>
+              <div className="flex items-center justify-between mb-2">
+                <label htmlFor="email" className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider">
+                  <Mail className="w-3.5 h-3.5 text-muted-foreground" />
+                  Email Address
+                </label>
+                <label className="flex items-center gap-1.5 text-[10px] cursor-pointer">
+                  <input type="checkbox" checked={emailHeader} onChange={(e) => setEmailHeader(e.target.checked)} className="accent-primary" />
+                  Header
+                </label>
+              </div>
               <input
                 id="email"
                 type="email"
@@ -346,10 +345,16 @@ function ResumeFormContent() {
             </div>
 
             <div>
-              <label htmlFor="phone" className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider mb-2">
-                <Phone className="w-3.5 h-3.5 text-muted-foreground" />
-                Phone Number
-              </label>
+              <div className="flex items-center justify-between mb-2">
+                <label htmlFor="phone" className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider">
+                  <Phone className="w-3.5 h-3.5 text-muted-foreground" />
+                  Phone Number
+                </label>
+                <label className="flex items-center gap-1.5 text-[10px] cursor-pointer">
+                  <input type="checkbox" checked={phoneHeader} onChange={(e) => setPhoneHeader(e.target.checked)} className="accent-primary" />
+                  Header
+                </label>
+              </div>
               <input
                 id="phone"
                 type="text"
@@ -361,10 +366,16 @@ function ResumeFormContent() {
             </div>
 
             <div>
-              <label htmlFor="website" className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider mb-2">
-                <Globe className="w-3.5 h-3.5 text-muted-foreground" />
-                Personal Website
-              </label>
+              <div className="flex items-center justify-between mb-2">
+                <label htmlFor="website" className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider">
+                  <Globe className="w-3.5 h-3.5 text-muted-foreground" />
+                  Personal Website
+                </label>
+                <label className="flex items-center gap-1.5 text-[10px] cursor-pointer">
+                  <input type="checkbox" checked={websiteHeader} onChange={(e) => setWebsiteHeader(e.target.checked)} className="accent-primary" />
+                  Header
+                </label>
+              </div>
               <input
                 id="website"
                 type="text"
@@ -376,10 +387,16 @@ function ResumeFormContent() {
             </div>
 
             <div>
-              <label htmlFor="linkedinVal" className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider mb-2">
-                <Linkedin className="w-3.5 h-3.5 text-muted-foreground" />
-                LinkedIn Profile URL
-              </label>
+              <div className="flex items-center justify-between mb-2">
+                <label htmlFor="linkedinVal" className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider">
+                  <Linkedin className="w-3.5 h-3.5 text-muted-foreground" />
+                  LinkedIn Profile URL
+                </label>
+                <label className="flex items-center gap-1.5 text-[10px] cursor-pointer">
+                  <input type="checkbox" checked={linkedinHeader} onChange={(e) => setLinkedinHeader(e.target.checked)} className="accent-primary" />
+                  Header
+                </label>
+              </div>
               <input
                 id="linkedinVal"
                 type="text"
@@ -391,10 +408,16 @@ function ResumeFormContent() {
             </div>
 
             <div>
-              <label htmlFor="calendar" className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider mb-2">
-                <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
-                Calendar Scheduling Link
-              </label>
+              <div className="flex items-center justify-between mb-2">
+                <label htmlFor="calendar" className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider">
+                  <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
+                  Calendar Scheduling Link
+                </label>
+                <label className="flex items-center gap-1.5 text-[10px] cursor-pointer">
+                  <input type="checkbox" checked={calendarHeader} onChange={(e) => setCalendarHeader(e.target.checked)} className="accent-primary" />
+                  Header
+                </label>
+              </div>
               <input
                 id="calendar"
                 type="text"
@@ -406,10 +429,16 @@ function ResumeFormContent() {
             </div>
 
             <div>
-              <label htmlFor="githubVal" className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider mb-2">
-                <Github className="w-3.5 h-3.5 text-muted-foreground" />
-                GitHub Profile URL
-              </label>
+              <div className="flex items-center justify-between mb-2">
+                <label htmlFor="githubVal" className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider">
+                  <Github className="w-3.5 h-3.5 text-muted-foreground" />
+                  GitHub Profile URL
+                </label>
+                <label className="flex items-center gap-1.5 text-[10px] cursor-pointer">
+                  <input type="checkbox" checked={githubHeader} onChange={(e) => setGithubHeader(e.target.checked)} className="accent-primary" />
+                  Header
+                </label>
+              </div>
               <input
                 id="githubVal"
                 type="text"
@@ -421,10 +450,16 @@ function ResumeFormContent() {
             </div>
 
             <div>
-              <label htmlFor="instagramVal" className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider mb-2">
-                <Instagram className="w-3.5 h-3.5 text-muted-foreground" />
-                Instagram Profile URL
-              </label>
+              <div className="flex items-center justify-between mb-2">
+                <label htmlFor="instagramVal" className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider">
+                  <Instagram className="w-3.5 h-3.5 text-muted-foreground" />
+                  Instagram Profile URL
+                </label>
+                <label className="flex items-center gap-1.5 text-[10px] cursor-pointer">
+                  <input type="checkbox" checked={instagramHeader} onChange={(e) => setInstagramHeader(e.target.checked)} className="accent-primary" />
+                  Header
+                </label>
+              </div>
               <input
                 id="instagramVal"
                 type="text"
