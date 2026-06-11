@@ -37,8 +37,8 @@ public class AnalyticsService(
                 return;
             }
             
-            log.TargetUrl = link.Url?.Replace("\r", "")?.Replace("\n", "");
-            log.LinkTypeName = link.LinkType?.Name?.Replace("\r", "")?.Replace("\n", "");
+            log.TargetUrl = System.Text.RegularExpressions.Regex.Replace(link.Url ?? "", @"[\r\n\t]", "");
+            log.LinkTypeName = System.Text.RegularExpressions.Regex.Replace(link.LinkType?.Name ?? "", @"[\r\n\t]", "");
         }
 
         await repository.LogLinkClickAsync(log);

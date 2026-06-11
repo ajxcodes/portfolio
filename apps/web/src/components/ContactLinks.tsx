@@ -85,7 +85,7 @@ export const ContactLinks = ({ contact, showText = true, downloadUrl }: ContactL
       download: true,
       onClick: (e: React.MouseEvent) => { e.preventDefault(); setIsModalOpen(true); },
       linkId: resumeLink?.linkId || 'resume',
-    } as any);
+    });
   }
 
   return (
