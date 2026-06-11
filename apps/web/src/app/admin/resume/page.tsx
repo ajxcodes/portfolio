@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, startTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseBrowser";
@@ -83,7 +83,9 @@ export default function ResumeProfilesPage() {
       }
 
       await loadProfiles();
-      router.refresh();
+      startTransition(() => {
+        router.refresh();
+      });
     } catch (err: any) {
       setErrorMsg(err.message || "Failed to activate resume profile.");
     } finally {
