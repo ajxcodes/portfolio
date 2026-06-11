@@ -81,7 +81,7 @@ export const ContactLinks = ({ contact, showText = true, downloadUrl }: ContactL
   }
 
   // Resume download
-  if (downloadUrl && (contact.linkIds?.resume || contact.linkIds?.Resume)) {
+  if (downloadUrl) {
     items.push({
       href: downloadUrl,
       Icon: DownloadIcon,
@@ -89,7 +89,7 @@ export const ContactLinks = ({ contact, showText = true, downloadUrl }: ContactL
       label: 'Download Resume',
       download: true,
       onClick: (e) => { e.preventDefault(); setIsModalOpen(true); },
-      linkId: contact.linkIds?.resume || contact.linkIds?.Resume,
+      linkId: contact.linkIds?.resume || contact.linkIds?.Resume || 'resume',
     });
   }
 
