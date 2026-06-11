@@ -16,7 +16,7 @@ test.describe('Admin Control Panel', () => {
     // Verify that the Recharts container renders (or fallback message if no data)
     // Wait for the loading skeleton to disappear first
     await expect(page.locator('text=Views Over Time')).toBeVisible({ timeout: 10000 });
-    const chartOrFallback = page.locator('.recharts-responsive-container, text=Not enough data to display chart').first();
+    const chartOrFallback = page.locator('.recharts-responsive-container').or(page.getByText('Not enough data to display chart')).first();
     await expect(chartOrFallback).toBeVisible();
   });
 

@@ -43,6 +43,9 @@ interface AnalyticsSummary {
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5808";
 
+const TOOLTIP_CONTENT_STYLE = { backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--primary)/0.2)', borderRadius: '8px' };
+const TOOLTIP_ITEM_STYLE = { color: 'hsl(var(--primary))' };
+
 export default function AnalyticsPage() {
   const [summary, setSummary] = useState<AnalyticsSummary | null>(null);
   const [loading, setLoading] = useState(true);
@@ -184,8 +187,8 @@ export default function AnalyticsPage() {
                       <XAxis dataKey="date" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
                       <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value}`} />
                       <Tooltip 
-                        contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--primary)/0.2)', borderRadius: '8px' }} 
-                        itemStyle={{ color: 'hsl(var(--primary))' }}
+                        contentStyle={TOOLTIP_CONTENT_STYLE} 
+                        itemStyle={TOOLTIP_ITEM_STYLE}
                       />
                       <Line type="monotone" dataKey="count" stroke="hsl(var(--primary))" strokeWidth={3} dot={{ r: 4, fill: 'hsl(var(--primary))' }} activeDot={{ r: 6 }} />
                     </LineChart>
@@ -210,8 +213,8 @@ export default function AnalyticsPage() {
                       <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} allowDecimals={false} />
                       <Tooltip 
                         cursor={{ fill: 'hsl(var(--primary)/0.1)' }}
-                        contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--primary)/0.2)', borderRadius: '8px' }} 
-                        itemStyle={{ color: 'hsl(var(--primary))' }}
+                        contentStyle={TOOLTIP_CONTENT_STYLE} 
+                        itemStyle={TOOLTIP_ITEM_STYLE}
                       />
                       <Bar dataKey="count" fill="hsl(var(--primary)/0.8)" radius={[4, 4, 0, 0]} />
                     </BarChart>

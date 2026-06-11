@@ -67,7 +67,19 @@ export const JsonDiffViewer = ({ oldValues, newValues }: JsonDiffViewerProps) =>
     if (val === undefined || val === null) return <span className="text-muted-foreground/50">null</span>;
     if (typeof val === 'boolean') return <span className="text-amber-500/80">{val.toString()}</span>;
     if (typeof val === 'number') return <span className="text-indigo-400">{val}</span>;
-    if (typeof val === 'object') return <span>{JSON.stringify(val)}</span>;
+    if (typeof val === 'object') {
+      return (
+        <details className="cursor-pointer group">
+          <summary className="text-muted-foreground hover:text-foreground text-[10px] select-none transition-colors">
+            <span className="group-open:hidden">View Object</span>
+            <span className="hidden group-open:inline">Hide Object</span>
+          </summary>
+          <pre className="mt-2 p-2 bg-background/50 rounded border border-primary/10 text-[10px] overflow-x-auto max-h-32">
+            {JSON.stringify(val, null, 2)}
+          </pre>
+        </details>
+      );
+    }
     return <span className="text-emerald-500/80">"{val}"</span>;
   };
 
