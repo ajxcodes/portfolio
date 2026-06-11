@@ -40,7 +40,7 @@ services:
       DB_NAME: portfolio
       DB_USER: user
       DB_PASSWORD: e2e_test_password
-      S3_ENDPOINT: http://localhost:9000
+      S3_ENDPOINT: http://minio:9000
       S3_ACCESS_KEY: minioadmin
       S3_SECRET_KEY: minioadminpassword
       S3_BUCKET_NAME: portfolio-media
@@ -49,3 +49,18 @@ services:
         condition: service_healthy
     # No container-side healthcheck — the aspnet slim image has no curl/wget.
     # Readiness is polled from the runner host in the CI "Wait for API" step.
+
+  minio:
+    image: minio/minio:latest
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadminpassword
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+
+volumes:
+  minio_data:
