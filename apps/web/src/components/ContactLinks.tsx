@@ -6,6 +6,7 @@ import {
   CalendarIcon,
   DownloadIcon,
   InstagramIcon,
+  LinkIcon,
 } from '@/components/icons';
 import { type ContactInfo } from '@/lib/data';
 import { DownloadProgressModal } from '@/components/DownloadProgressModal';
@@ -18,91 +19,63 @@ interface ContactLinksProps {
   downloadUrl?: string;
 }
 
+const iconMap: Record<string, React.ComponentType<{ className: string }>> = {
+  email: MailIcon,
+  linkedin: LinkedInIcon,
+  github: GitHubIcon,
+  calendar: CalendarIcon,
+  instagram: InstagramIcon,
+};
+
+const formatText = (type: string, url: string) => {
+  switch (type.toLowerCase()) {
+    case 'email': return url.replace('mailto:', '');
+    case 'linkedin': return url.replace(/https?:\/\/(www\.)?linkedin\.com\/in\//i, '').replace(/\/$/, '');
+    case 'github': return url.replace(/https?:\/\/(www\.)?github\.com\//i, '').replace(/\/$/, '');
+    case 'instagram': return url.replace(/https?:\/\/(www\.)?instagram\.com\//i, '').replace(/\/$/, '');
+    case 'calendar': return "Let's Chat";
+    default: return url.replace(/^https?:\/\//i, '').replace(/\/$/, '');
+  }
+};
+
+const formatHref = (type: string, url: string) => {
+  if (type.toLowerCase() === 'email') {
+    return url.includes('@') && !url.startsWith('mailto:') ? `mailto:${url}` : url;
+  }
+  return url.startsWith('http') || url.startsWith('mailto:') ? url : `https://${url}`;
+};
+
 export const ContactLinks = ({ contact, showText = true, downloadUrl }: ContactLinksProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Defensive check
-  if (!contact) {
-    console.error("ContactLinks component was rendered without the required 'contact' prop.");
+  if (!contact || !contact.links) {
+    console.error("ContactLinks component was rendered without the required 'contact.links' array.");
     return null;
   }
 
-  const items: Array<{
-    href: string;
-    Icon: React.ComponentType<{ className: string }>;
-    text: string;
-    label: string;
-    download?: boolean;
-    onClick?: (e: React.MouseEvent) => void;
-    linkId: string;
-  }> = [];
+  const regularLinks = contact.links.filter(l => l.type.toLowerCase() !== 'resume');
 
-  // Email
-  if (contact.email && (contact.linkIds?.email || contact.linkIds?.Email)) {
-    items.push({
-      href: contact.email.includes('@') && !contact.email.startsWith('mailto:') ? `mailto:${contact.email}` : contact.email,
-      Icon: MailIcon,
-      text: contact.email.replace('mailto:', ''),
-      label: `Email ${contact.email}`,
-      linkId: contact.linkIds?.email || contact.linkIds?.Email,
-    });
-  }
-
-  // LinkedIn
-  if (contact.linkedin && (contact.linkIds?.linkedin || contact.linkIds?.LinkedIn)) {
-    items.push({
-      href: contact.linkedin.startsWith('http') ? contact.linkedin : `https://${contact.linkedin}`,
-      Icon: LinkedInIcon,
-      text: contact.linkedin.replace(/https?:\/\/(www\.)?linkedin\.com\/in\//, '').replace(/\/$/, ''),
-      label: 'LinkedIn Profile',
-      linkId: contact.linkIds?.linkedin || contact.linkIds?.LinkedIn,
-    });
-  }
-
-  // GitHub
-  if (contact.github && (contact.linkIds?.github || contact.linkIds?.GitHub)) {
-    items.push({
-      href: contact.github.startsWith('http') ? contact.github : `https://${contact.github}`,
-      Icon: GitHubIcon,
-      text: contact.github.replace(/https?:\/\/(www\.)?github\.com\//, '').replace(/\/$/, ''),
-      label: 'GitHub Profile',
-      linkId: contact.linkIds?.github || contact.linkIds?.GitHub,
-    });
-  }
-
-  // Calendar
-  if (contact.calendar && (contact.linkIds?.calendar || contact.linkIds?.Calendar)) {
-    items.push({
-      href: contact.calendar,
-      Icon: CalendarIcon,
-      text: "Let's Chat",
-      label: 'Schedule a meeting',
-      linkId: contact.linkIds?.calendar || contact.linkIds?.Calendar,
-    });
-  }
-
-  // Instagram
-  if (contact.instagram && (contact.linkIds?.instagram || contact.linkIds?.Instagram)) {
-    items.push({
-      href: contact.instagram.startsWith('http') ? contact.instagram : `https://${contact.instagram}`,
-      Icon: InstagramIcon,
-      text: contact.instagram.replace(/https?:\/\/(www\.)?instagram\.com\//, '').replace(/\/$/, ''),
-      label: 'Instagram Profile',
-      linkId: contact.linkIds?.instagram || contact.linkIds?.Instagram,
-    });
-  }
+  const items: any[] = regularLinks.map(link => ({
+    href: formatHref(link.type, link.url),
+    Icon: iconMap[link.type.toLowerCase()] || LinkIcon,
+    text: formatText(link.type, link.url),
+    label: `${link.type.charAt(0).toUpperCase() + link.type.slice(1)} Link`,
+    linkId: link.linkId,
+  }));
 
   // Resume download
   if (downloadUrl) {
+    const resumeLink = contact.links.find(l => l.type.toLowerCase() === 'resume');
     items.push({
       href: downloadUrl,
       Icon: DownloadIcon,
       text: "Resume",
       label: 'Download Resume',
       download: true,
-      onClick: (e) => { e.preventDefault(); setIsModalOpen(true); },
-      linkId: contact.linkIds?.resume || contact.linkIds?.Resume || 'resume',
-    });
+      onClick: (e: React.MouseEvent) => { e.preventDefault(); setIsModalOpen(true); },
+      linkId: resumeLink?.linkId || 'resume',
+    } as any);
   }
 
   return (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseBrowser";
 import { 
@@ -53,6 +53,8 @@ export default function AnalyticsPage() {
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
   const [showTotalViews, setShowTotalViews] = useState(false);
+
+  const toggleViews = useCallback(() => setShowTotalViews(prev => !prev), []);
 
   const viewsByDate = useMemo(() => {
     if (!summary) return [];
@@ -219,7 +221,7 @@ export default function AnalyticsPage() {
                 </h3>
                 <button
                   type="button"
-                  onClick={() => setShowTotalViews(!showTotalViews)}
+                  onClick={toggleViews}
                   className="px-2.5 py-1 text-[10px] font-bold rounded-md bg-primary/10 border border-primary/20 hover:bg-primary/20 text-primary transition-colors uppercase tracking-wider flex items-center gap-1.5"
                 >
                   <Eye className="w-3 h-3" />

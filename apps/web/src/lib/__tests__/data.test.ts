@@ -93,8 +93,8 @@ describe('data access API fetch handlers', () => {
     expect(data.personalInfo.name).toBe('Test Name');
     expect(data.personalInfo.title).toBe('Test Title');
     expect(data.personalInfo.photoUrlLight).toBe('/light.png');
-    expect(data.resume.contact.github).toBe('github.com/test');
-    expect(data.resume.contact.email).toBe('test@email.com');
+    expect(data.resume.contact.links.find(l => l.type === 'github')?.url).toBe('github.com/test');
+    expect(data.resume.contact.links.find(l => l.type === 'email')?.url).toBe('test@email.com');
 
     // Verify display order sorting
     expect(data.resume.experience[0].company).toBe('Company A');
@@ -118,7 +118,7 @@ describe('data access API fetch handlers', () => {
     
     // Checks that fallback contains default static details
     expect(data.personalInfo.name).toBe('Alvin Jorrel Pascual');
-    expect(data.resume.contact.github).toBe('github.com/ajxcodes');
+    expect(data.resume.contact.links.find(l => l.type === 'github')?.url).toBe('github.com/ajxcodes');
   });
 
   it('falls back to default configurations when responses are not ok', async () => {

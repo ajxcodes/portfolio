@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using NSubstitute;
 using Portfolio.Application.Analytics.Repositories;
 using Portfolio.Application.Analytics.Services;
@@ -12,11 +13,12 @@ public class AnalyticsServiceTests
 {
     private readonly IAnalyticsRepository _repositoryMock = Substitute.For<IAnalyticsRepository>();
     private readonly IResumeRepository _resumeRepositoryMock = Substitute.For<IResumeRepository>();
+    private readonly ILogger<AnalyticsService> _loggerMock = Substitute.For<ILogger<AnalyticsService>>();
     private readonly AnalyticsService _service;
 
     public AnalyticsServiceTests()
     {
-        _service = new AnalyticsService(_repositoryMock, _resumeRepositoryMock);
+        _service = new AnalyticsService(_repositoryMock, _resumeRepositoryMock, _loggerMock);
     }
 
     [Fact]
