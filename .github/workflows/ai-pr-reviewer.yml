@@ -57,8 +57,8 @@ jobs:
           }
 
           // Truncate if diff is exceptionally large (e.g. > 500k) to prevent token limits
-          // Gemini 2.5 Flash has a context window of 1M+ tokens, but we want to optimize quota usage
-          const maxCharLimit = 500000;
+          // Gemini 2.5 Flash has a context window of 1M+ tokens, # High limit to accommodate large feature PRs (like AI Chat). Excludes protect against junk tokens.
+          const maxCharLimit = 3000000;
           if (diffText.length > maxCharLimit) {
             diffText = diffText.substring(0, maxCharLimit) + "\n\n...[Diff truncated due to size limit]...";
           }
@@ -175,7 +175,7 @@ jobs:
 
           try {
             let response;
-            const models = ['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-2.0-flash'];
+            const models = ['gemini-3.1-flash-lite', 'gemini-2.5-flash', 'gemini-2.5-pro'];
             let success = false;
             let successfulModel = '';
 
