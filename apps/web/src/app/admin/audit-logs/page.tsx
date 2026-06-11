@@ -12,6 +12,8 @@ import {
   Search,
   AlertCircle
 } from "lucide-react";
+import { AdminSkeleton } from "@/components/admin/AdminSkeleton";
+import { JsonDiffViewer } from "@/components/admin/JsonDiffViewer";
 
 interface AuditLog {
   id: string;
@@ -112,7 +114,7 @@ export default function AuditLogsPage() {
       )}
 
       {loading ? (
-        <div className="text-center py-12 animate-pulse text-muted-foreground text-xs">Loading database audit logs...</div>
+        <AdminSkeleton />
       ) : logs.length === 0 ? (
         <div className="terminal-card rounded-xl p-12 text-center text-muted-foreground text-xs">
           No modification audit entries have been logged in the database yet.
@@ -183,23 +185,13 @@ export default function AuditLogsPage() {
                   </div>
                 </div>
 
-                {selectedLog.oldValues && selectedLog.oldValues !== "{}" && (
-                  <div className="space-y-2">
-                    <span className="block text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">Original Values</span>
-                    <pre className="p-4 bg-primary/5 border border-primary/10 rounded text-xs font-mono overflow-x-auto text-foreground/80 leading-relaxed max-h-[160px] whitespace-pre-wrap">
-                      {JSON.stringify(JSON.parse(selectedLog.oldValues), null, 2)}
-                    </pre>
-                  </div>
-                )}
-
-                {selectedLog.newValues && selectedLog.newValues !== "{}" && (
-                  <div className="space-y-2">
-                    <span className="block text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">Modified Values</span>
-                    <pre className="p-4 bg-primary/5 border border-primary/10 rounded text-xs font-mono overflow-x-auto text-foreground/80 leading-relaxed max-h-[160px] whitespace-pre-wrap">
-                      {JSON.stringify(JSON.parse(selectedLog.newValues), null, 2)}
-                    </pre>
-                  </div>
-                )}
+                <div className="mt-4 pt-2 border-t border-primary/10">
+                  <span className="block text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80 mb-3">Field Differences</span>
+                  <JsonDiffViewer 
+                    oldValues={selectedLog.oldValues} 
+                    newValues={selectedLog.newValues} 
+                  />
+                </div>
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center text-center h-full text-muted-foreground/70">

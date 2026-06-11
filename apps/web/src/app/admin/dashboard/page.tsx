@@ -12,6 +12,7 @@ import {
   FileClock,
   ArrowRight
 } from "lucide-react";
+import { AdminSkeleton } from "@/components/admin/AdminSkeleton";
 
 interface Profile {
   id: string;
@@ -118,11 +119,7 @@ export default function DashboardPage() {
 
       {/* Profiles Grid */}
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-pulse">
-          {[1, 2].map((i) => (
-            <div key={i} className="terminal-card h-48 rounded-xl" />
-          ))}
-        </div>
+        <AdminSkeleton />
       ) : profiles.length === 0 ? (
         <div className="terminal-card rounded-xl p-12 text-center border-dashed">
           <UserSquare className="w-12 h-12 mx-auto text-muted-foreground/50 mb-4" />
