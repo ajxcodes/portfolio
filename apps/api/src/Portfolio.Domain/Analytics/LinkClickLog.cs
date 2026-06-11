@@ -5,7 +5,9 @@ namespace Portfolio.Domain.Analytics;
 public class LinkClickLog
 {
     public Guid Id { get; set; } = Guid.CreateVersion7();
-    public Guid LinkId { get; set; }
+    public Guid? LinkId { get; set; }
+    public string? TargetUrl { get; set; }
+    public string? LinkTypeName { get; set; }
     public DateTime ClickedAt { get; set; } = DateTime.UtcNow;
     public string? IpAddress { get; set; }
     public string? UserAgent { get; set; }

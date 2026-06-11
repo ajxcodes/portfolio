@@ -44,10 +44,12 @@ describe('useTerminalShell Hook and Strategies', () => {
       }
     ],
     contact: {
-      email: 'me@ajx.codes',
-      github: 'github.com/ajxcodes',
-      linkedin: 'linkedin.com/in/alvinjorrel',
-      calendar: 'cal.com/ajx'
+      links: [
+        { type: 'email', url: 'me@ajx.codes' },
+        { type: 'github', url: 'github.com/ajxcodes' },
+        { type: 'linkedin', url: 'linkedin.com/in/alvinjorrel' },
+        { type: 'calendar', url: 'cal.com/ajx' }
+      ]
     },
     skills: [],
     projects: [],
@@ -179,13 +181,13 @@ describe('useTerminalShell Hook and Strategies', () => {
     });
 
     it('should handle missing contact fields gracefully', () => {
-      const emptyResume = { ...mockResume, contact: {} };
+      const emptyResume = { ...mockResume, contact: { links: [] } };
       const { result } = renderHook(() => useTerminalShell(mockBlogPosts, emptyResume));
       act(() => {
         result.current.executeCommand('cat contact');
       });
       const historyLength = result.current.history.length;
-      expect(result.current.history[historyLength - 4].text).toBe('email    : N/A');
+      expect(result.current.history[historyLength - 1].text).toBe('No contact information available.');
     });
 
     it('should show blog details if found', () => {

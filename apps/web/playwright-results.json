@@ -11,7 +11,7 @@
     "grepInvert": null,
     "maxFailures": 0,
     "metadata": {
-      "actualWorkers": 5
+      "actualWorkers": 8
     },
     "preserveOutput": "always",
     "projects": [
@@ -20,7 +20,7 @@
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 5
+          "actualWorkers": 8
         },
         "id": "chromium",
         "name": "chromium",
@@ -64,6 +64,125 @@
   },
   "suites": [
     {
+      "title": "admin.spec.ts",
+      "file": "admin.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Admin Control Panel",
+          "file": "admin.spec.ts",
+          "line": 3,
+          "column": 6,
+          "specs": [
+            {
+              "title": "should load the traffic telemetry page",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4061,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-11T18:39:12.343Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "d4043a9dd1ab94463227-a5ff8bcacadd04fc7db7",
+              "file": "admin.spec.ts",
+              "line": 4,
+              "column": 7
+            },
+            {
+              "title": "should load the audit logs page",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 3037,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-11T18:39:12.402Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "d4043a9dd1ab94463227-c527a7c92fd629bab49d",
+              "file": "admin.spec.ts",
+              "line": 29,
+              "column": 7
+            },
+            {
+              "title": "should create, save, activate, and view a new resume profile",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 6690,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-11T18:39:12.335Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "d4043a9dd1ab94463227-4c315fd48d1371760832",
+              "file": "admin.spec.ts",
+              "line": 53,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
       "title": "analytics.spec.ts",
       "file": "analytics.spec.ts",
       "column": 0,
@@ -73,7 +192,7 @@
         {
           "title": "Traffic Attribution Analytics",
           "file": "analytics.spec.ts",
-          "line": 5,
+          "line": 6,
           "column": 6,
           "specs": [
             {
@@ -89,15 +208,15 @@
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
+                      "workerIndex": 3,
+                      "parallelIndex": 3,
                       "status": "passed",
-                      "duration": 1792,
+                      "duration": 2445,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-06-10T16:51:58.198Z",
+                      "startTime": "2026-06-11T18:39:12.428Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -107,7 +226,7 @@
               ],
               "id": "634c82c6846b68aa8d60-84234bfb66f7d085b58b",
               "file": "analytics.spec.ts",
-              "line": 45,
+              "line": 48,
               "column": 7
             },
             {
@@ -123,15 +242,15 @@
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 1,
-                      "parallelIndex": 1,
+                      "workerIndex": 4,
+                      "parallelIndex": 4,
                       "status": "passed",
-                      "duration": 1956,
+                      "duration": 2569,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-06-10T16:51:58.192Z",
+                      "startTime": "2026-06-11T18:39:12.360Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -141,7 +260,143 @@
               ],
               "id": "634c82c6846b68aa8d60-357cf8a7f637f335eda1",
               "file": "analytics.spec.ts",
-              "line": 63,
+              "line": 68,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "blog.spec.ts",
+      "file": "blog.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Blog Page",
+          "file": "blog.spec.ts",
+          "line": 3,
+          "column": 6,
+          "specs": [
+            {
+              "title": "should load the blog page and render empty state",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 5,
+                      "status": "passed",
+                      "duration": 2243,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-11T18:39:12.290Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "a378e5ce917615b4b643-b350d436cff0d7fee633",
+              "file": "blog.spec.ts",
+              "line": 4,
+              "column": 7
+            },
+            {
+              "title": "should navigate to blog post detail page when a post is clicked",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 6,
+                      "parallelIndex": 6,
+                      "status": "passed",
+                      "duration": 2081,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-11T18:39:12.322Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "a378e5ce917615b4b643-7192517a962fe4af05c9",
+              "file": "blog.spec.ts",
+              "line": 18,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "download.spec.ts",
+      "file": "download.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Resume Download Flow",
+          "file": "download.spec.ts",
+          "line": 3,
+          "column": 6,
+          "specs": [
+            {
+              "title": "should successfully generate and download resume PDF",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 7,
+                      "parallelIndex": 7,
+                      "status": "passed",
+                      "duration": 4528,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-11T18:39:12.301Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "29cf83cb0d33ef5cc857-b46633c50006fc3043b6",
+              "file": "download.spec.ts",
+              "line": 4,
               "column": 7
             }
           ]
@@ -174,15 +429,15 @@
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 2,
-                      "parallelIndex": 2,
+                      "workerIndex": 6,
+                      "parallelIndex": 6,
                       "status": "passed",
-                      "duration": 1307,
+                      "duration": 1514,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-06-10T16:51:58.190Z",
+                      "startTime": "2026-06-11T18:39:14.570Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -193,6 +448,40 @@
               "id": "d318381359a9b96acb1e-fbe43f818ed637226a05",
               "file": "home.spec.ts",
               "line": 4,
+              "column": 7
+            },
+            {
+              "title": "should cycle themes using the ThemeSwitcher button",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 5,
+                      "status": "passed",
+                      "duration": 1744,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-11T18:39:14.690Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "d318381359a9b96acb1e-d5e83be3df7ba7e8b947",
+              "file": "home.spec.ts",
+              "line": 14,
               "column": 7
             }
           ]
@@ -228,12 +517,12 @@
                       "workerIndex": 3,
                       "parallelIndex": 3,
                       "status": "passed",
-                      "duration": 2476,
+                      "duration": 2318,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-06-10T16:51:58.207Z",
+                      "startTime": "2026-06-11T18:39:15.047Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -243,7 +532,7 @@
               ],
               "id": "2352191a150b5313c38a-865157ab54e20925dacc",
               "file": "resume.spec.ts",
-              "line": 64,
+              "line": 44,
               "column": 7
             },
             {
@@ -262,12 +551,12 @@
                       "workerIndex": 4,
                       "parallelIndex": 4,
                       "status": "passed",
-                      "duration": 2945,
+                      "duration": 2690,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-06-10T16:51:58.209Z",
+                      "startTime": "2026-06-11T18:39:15.105Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -277,7 +566,7 @@
               ],
               "id": "2352191a150b5313c38a-352d524a6b800dd59279",
               "file": "resume.spec.ts",
-              "line": 82,
+              "line": 62,
               "column": 7
             }
           ]
@@ -287,9 +576,9 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-06-10T16:51:55.097Z",
-    "duration": 6347.959000000001,
-    "expected": 5,
+    "startTime": "2026-06-11T18:39:07.145Z",
+    "duration": 12252.801000000001,
+    "expected": 12,
     "skipped": 0,
     "unexpected": 0,
     "flaky": 0

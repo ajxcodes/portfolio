@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using NSubstitute;
 using Portfolio.Application.Analytics.Repositories;
 using Portfolio.Application.Analytics.Services;
@@ -12,11 +13,12 @@ public class AnalyticsServiceTests
 {
     private readonly IAnalyticsRepository _repositoryMock = Substitute.For<IAnalyticsRepository>();
     private readonly IResumeRepository _resumeRepositoryMock = Substitute.For<IResumeRepository>();
+    private readonly ILogger<AnalyticsService> _loggerMock = Substitute.For<ILogger<AnalyticsService>>();
     private readonly AnalyticsService _service;
 
     public AnalyticsServiceTests()
     {
-        _service = new AnalyticsService(_repositoryMock, _resumeRepositoryMock);
+        _service = new AnalyticsService(_repositoryMock, _resumeRepositoryMock, _loggerMock);
     }
 
     [Fact]
@@ -39,12 +41,20 @@ public class AnalyticsServiceTests
         // Arrange
         var linkId = Guid.NewGuid();
         var log = new LinkClickLog { Id = Guid.NewGuid(), LinkId = linkId };
-        _resumeRepositoryMock.LinkExistsAsync(linkId).Returns(true);
+        var mockLink = new Portfolio.Domain.Resume.ResumeProfileLink 
+        { 
+            Id = linkId, 
+            Url = "https://example.com", 
+            LinkType = new Portfolio.Domain.Resume.ResumeProfileLinkType { Name = "Twitter" } 
+        };
+        _resumeRepositoryMock.GetLinkByIdAsync(linkId).Returns(mockLink);
 
         // Act
         await _service.LogLinkClickAsync(log);
 
         // Assert
+        log.TargetUrl.ShouldBe("https://example.com");
+        log.LinkTypeName.ShouldBe("Twitter");
         await _repositoryMock.Received(1).LogLinkClickAsync(log);
         await _repositoryMock.Received(1).SaveChangesAsync();
     }
@@ -83,7 +93,7 @@ public class AnalyticsServiceTests
         // Arrange
         var linkId = Guid.NewGuid();
         var log = new LinkClickLog { Id = Guid.NewGuid(), LinkId = linkId };
-        _resumeRepositoryMock.LinkExistsAsync(linkId).Returns(false);
+        _resumeRepositoryMock.GetLinkByIdAsync(linkId).Returns((Portfolio.Domain.Resume.ResumeProfileLink?)null);
 
         // Act
         await _service.LogLinkClickAsync(log);

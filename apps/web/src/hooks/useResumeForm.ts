@@ -47,6 +47,7 @@ export function useResumeForm() {
   const [linkedinVal, setLinkedinVal] = useState("");
   const [calendar, setCalendar] = useState("");
   const [githubVal, setGithubVal] = useState("");
+  const [instagramVal, setInstagramVal] = useState("");
 
   // Experiences & categories
   const [experiences, setExperiences] = useState<ExperienceItem[]>([]);
@@ -83,6 +84,7 @@ export function useResumeForm() {
               if (key === "linkedin") setLinkedinVal(l.url || "");
               if (key === "calendar") setCalendar(l.url || "");
               if (key === "github") setGithubVal(l.url || "");
+              if (key === "instagram") setInstagramVal(l.url || "");
             });
           }
 
@@ -330,6 +332,7 @@ export function useResumeForm() {
     if (linkedinVal) linksList.push({ linkTypeName: "LinkedIn", linkTypeKey: "linkedin", url: linkedinVal });
     if (calendar) linksList.push({ linkTypeName: "Calendar", linkTypeKey: "calendar", url: calendar });
     if (githubVal) linksList.push({ linkTypeName: "GitHub", linkTypeKey: "github", url: githubVal });
+    if (instagramVal) linksList.push({ linkTypeName: "Instagram", linkTypeKey: "instagram", url: instagramVal });
 
     const payload = {
       name,
@@ -396,6 +399,8 @@ export function useResumeForm() {
     setCalendar,
     githubVal,
     setGithubVal,
+    instagramVal,
+    setInstagramVal,
     experiences,
     availableCategories,
     newSkillNameMap,

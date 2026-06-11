@@ -18,6 +18,12 @@ test.describe('Admin Control Panel', () => {
     await expect(page.locator('text=Views Over Time')).toBeVisible({ timeout: 10000 });
     const chartOrFallback = page.locator('.recharts-responsive-container').or(page.getByText('Not enough data to display chart')).first();
     await expect(chartOrFallback).toBeVisible();
+
+    // Verify toggle for Unique/Total Views
+    const toggleButton = page.locator('button', { hasText: /Showing: Unique Visitors/i });
+    await expect(toggleButton).toBeVisible();
+    await toggleButton.click();
+    await expect(page.locator('button', { hasText: /Showing: Total Views/i })).toBeVisible();
   });
 
   test('should load the audit logs page', async ({ page }) => {
@@ -61,6 +67,7 @@ test.describe('Admin Control Panel', () => {
     await page.locator('#title').fill('Automated Test Engineer');
     await page.locator('#intro').fill('This profile was fully generated and validated by an E2E Playwright test.');
     await page.locator('#email').fill('playwright-test@ajx.codes');
+    await page.locator('#instagramVal').fill('https://instagram.com/playwright');
 
     // 4. Add a Job
     await page.locator('button:has-text("Add Job")').click();

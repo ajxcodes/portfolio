@@ -22,7 +22,8 @@ import {
   Briefcase,
   X,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Instagram
 } from "lucide-react";
 
 import { useResumeForm, ExperienceItem } from "@/hooks/useResumeForm";
@@ -56,6 +57,8 @@ function ResumeFormContent() {
     setCalendar,
     githubVal,
     setGithubVal,
+    instagramVal,
+    setInstagramVal,
     experiences,
     availableCategories,
     newSkillNameMap,
@@ -414,6 +417,21 @@ function ResumeFormContent() {
                 onChange={(e) => setGithubVal(e.target.value)}
                 className="w-full px-4 py-2 bg-primary/5 border border-primary/20 rounded-md focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all text-xs"
                 placeholder="https://github.com/username"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="instagramVal" className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider mb-2">
+                <Instagram className="w-3.5 h-3.5 text-muted-foreground" />
+                Instagram Profile URL
+              </label>
+              <input
+                id="instagramVal"
+                type="text"
+                value={instagramVal}
+                onChange={(e) => setInstagramVal(e.target.value)}
+                className="w-full px-4 py-2 bg-primary/5 border border-primary/20 rounded-md focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all text-xs"
+                placeholder="https://instagram.com/username"
               />
             </div>
           </div>

@@ -2,6 +2,8 @@ using Portfolio.Application.Analytics.Repositories;
 using Portfolio.Application.Resume.Repositories;
 using Portfolio.Domain.Analytics;
 
+using Microsoft.Extensions.Logging;
+
 namespace Portfolio.Application.Analytics.Services;
 
 public interface IAnalyticsService
@@ -13,7 +15,8 @@ public interface IAnalyticsService
 
 public class AnalyticsService(
     IAnalyticsRepository repository,
-    IResumeRepository resumeRepository) : IAnalyticsService
+    IResumeRepository resumeRepository,
+    ILogger<AnalyticsService> logger) : IAnalyticsService
 {
     public async Task LogPageViewAsync(PageViewLog log)
     {
@@ -25,10 +28,17 @@ public class AnalyticsService(
     {
         // Safety guard: silently discard clicks for link IDs that don't exist in the DB.
         // The frontend is responsible for sending the correct DB GUID via data-link-id.
-        var linkExists = await resumeRepository.LinkExistsAsync(log.LinkId);
-        if (!linkExists)
+        if (log.LinkId.HasValue)
         {
-            return;
+            var link = await resumeRepository.GetLinkByIdAsync(log.LinkId.Value);
+            if (link == null)
+            {
+                logger.LogWarning("Link click received for missing LinkId {LinkId}. This may indicate a desync between the frontend and backend.", log.LinkId);
+                return;
+            }
+            
+            log.TargetUrl = System.Text.RegularExpressions.Regex.Replace(link.Url ?? "", @"[\r\n\t]", "");
+            log.LinkTypeName = System.Text.RegularExpressions.Regex.Replace(link.LinkType?.Name ?? "", @"[\r\n\t]", "");
         }
 
         await repository.LogLinkClickAsync(log);

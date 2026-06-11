@@ -47,12 +47,10 @@ window.IntersectionObserver = MockIntersectionObserver as any;
 
 describe('Header Component', () => {
   const mockContact = {
-    email: 'me@ajx.codes',
-    phone: '',
-    website: '',
-    linkedin: '',
-    calendar: '',
-    github: 'https://github.com/ajxcodes'
+    links: [
+      { type: 'email', url: 'me@ajx.codes' },
+      { type: 'github', url: 'https://github.com/ajxcodes' }
+    ]
   };
 
   beforeEach(() => {
@@ -87,13 +85,13 @@ describe('Header Component', () => {
   });
 
   it('falls back to lowercase name without spaces if no github is available', () => {
-    const contactNoGithub = { ...mockContact, github: '' };
+    const contactNoGithub = { links: [] };
     render(<Header name="Alex Jones" contact={contactNoGithub} />);
     expect(screen.getByText('alexjones')).toBeInTheDocument();
   });
 
   it('falls back to lowercase name without spaces if github url is invalid', () => {
-    const contactInvalidGithub = { ...mockContact, github: 'https://othersite.com' };
+    const contactInvalidGithub = { links: [{ type: 'github', url: 'https://othersite.com' }] };
     render(<Header name="Alex Jones" contact={contactInvalidGithub} />);
     expect(screen.getByText('https://othersite.com')).toBeInTheDocument();
   });

@@ -7,14 +7,14 @@ export interface PersonalInfo {
   photoUrlDark?: string;
 }
 
+export interface ProfileLink {
+  linkId?: string;
+  type: string;
+  url: string;
+}
+
 export interface ContactInfo {
-  email: string;
-  phone: string;
-  website: string;
-  linkedin: string;
-  calendar: string;
-  github: string;
-  linkIds?: Record<string, string>;
+  links: ProfileLink[];
 }
 
 export interface SkillGroup {
@@ -93,12 +93,12 @@ const defaultData: PortfolioData = {
   },
   resume: {
     contact: {
-      email: "me@ajx.codes",
-      phone: "",
-      website: "",
-      linkedin: "linkedin.com/in/alvinjorrel",
-      calendar: "https://calendar.app.google/waCKdLPyQZeYYUEx8",
-      github: "github.com/ajxcodes",
+      links: [
+        { type: "email", url: "me@ajx.codes" },
+        { type: "linkedin", url: "linkedin.com/in/alvinjorrel" },
+        { type: "calendar", url: "https://calendar.app.google/waCKdLPyQZeYYUEx8" },
+        { type: "github", url: "github.com/ajxcodes" }
+      ]
     },
     summary: {
       lead: "A senior software engineer and technical leader with over a decade of experience in the .NET ecosystem.",
@@ -159,20 +159,20 @@ export const getResumeData = cache(async (): Promise<{ personalInfo: PersonalInf
       portfolioData.resume.photoUrlDark = active.photoUrlDark;
 
       if (active.links && active.links.length > 0) {
-        const contactLinks: Record<string, string> = {};
-        const linkIds: Record<string, string> = {};
+        const contactLinks: ProfileLink[] = [];
         active.links.forEach((l: any) => {
           const key = l.linkType?.keyIdentifier || l.linkType?.name?.toLowerCase();
           if (key) {
-            contactLinks[key] = l.url;
-            linkIds[key] = l.id;
+            contactLinks.push({
+              linkId: l.id,
+              type: key,
+              url: l.url
+            });
           }
         });
-        portfolioData.resume.contact = {
-          ...portfolioData.resume.contact,
-          ...contactLinks,
-          linkIds,
-        };
+        portfolioData.resume.contact = { links: contactLinks };
+      } else {
+        portfolioData.resume.contact = { links: [] };
       }
 
       portfolioData.resume.downloadUrl = `${apiUrl}/api/resume/active/download`;

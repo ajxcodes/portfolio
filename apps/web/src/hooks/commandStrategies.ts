@@ -70,12 +70,18 @@ export const catHandler: CommandHandler = {
     }
     const target = arg.toLowerCase();
     if (target === 'contact') {
-      return [
-        { type: 'output', text: `email    : ${context.resume.contact?.email || 'N/A'}` },
-        { type: 'output', text: `github   : ${context.resume.contact?.github || 'N/A'}` },
-        { type: 'output', text: `linkedin : ${context.resume.contact?.linkedin || 'N/A'}` },
-        { type: 'output', text: `calendar : ${context.resume.contact?.calendar || 'N/A'}` }
-      ];
+      const output: TerminalHistoryItem[] = [];
+      if (context.resume.contact?.links) {
+        context.resume.contact.links.forEach(link => {
+          if (link.type.toLowerCase() !== 'resume') {
+            output.push({ type: 'output', text: `${link.type.padEnd(8)} : ${link.url}` });
+          }
+        });
+      }
+      if (output.length === 0) {
+        output.push({ type: 'output', text: 'No contact information available.' });
+      }
+      return output;
     }
     if (target.startsWith('blog/')) {
       const slug = arg.substring(5);

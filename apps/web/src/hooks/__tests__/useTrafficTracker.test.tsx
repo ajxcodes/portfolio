@@ -105,6 +105,72 @@ describe('useTrafficTracker Hook', () => {
     expect(global.fetch).toHaveBeenCalledTimes(2);
   });
 
+  it('fetches geo details asynchronously in development mode', async () => {
+    const originalEnv = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'development';
+    process.env.NEXT_PUBLIC_GEOIP_SERVICE_URL = 'http://localhost:8080/geo';
+    
+    // 1st fetch: GeoIP, 2nd fetch: /api/analytics/views
+    (global.fetch as jest.Mock).mockImplementation((url) => {
+      if (url === 'http://localhost:8080/geo') {
+        return Promise.resolve({
+          json: async () => ({ country_name: 'Canada', city: 'Calgary' })
+        });
+      }
+      return Promise.resolve({ ok: true });
+    });
+
+    render(<TestTrackerComponent />);
+
+    await act(async () => {
+      await new Promise(resolve => setTimeout(resolve, 0));
+    });
+
+    expect(global.fetch).toHaveBeenCalledWith('http://localhost:8080/geo', expect.any(Object));
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/api/analytics/views'),
+      expect.objectContaining({
+        body: expect.stringContaining('"Country":"Canada"')
+      })
+    );
+
+    // Test the sync cache path now that it's in sessionStorage
+    const { rerender } = render(<TestTrackerComponent />);
+    mockUsePathname.mockReturnValue('/another-path');
+    rerender(<TestTrackerComponent />);
+
+    process.env.NODE_ENV = originalEnv;
+  });
+
+  it('handles geo details fetch failure gracefully', async () => {
+    const originalEnv = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'development';
+    process.env.NEXT_PUBLIC_GEOIP_SERVICE_URL = 'http://localhost:8080/geo';
+    
+    (global.fetch as jest.Mock).mockImplementation((url) => {
+      if (url === 'http://localhost:8080/geo') {
+        return Promise.reject(new Error('Geo fetch failed'));
+      }
+      return Promise.resolve({ ok: true });
+    });
+
+    render(<TestTrackerComponent />);
+
+    await act(async () => {
+      await new Promise(resolve => setTimeout(resolve, 0));
+    });
+
+    // Should still log the page view but with null country/city
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/api/analytics/views'),
+      expect.objectContaining({
+        body: expect.stringContaining('"Country":null')
+      })
+    );
+
+    process.env.NODE_ENV = originalEnv;
+  });
+
   it('tracks outbound link clicks only when data-link-id is present', () => {
     render(<TestTrackerComponent />);
     

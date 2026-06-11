@@ -85,7 +85,7 @@ export const Header = ({ name, contact, downloadUrl, photoUrlLight, photoUrlDark
           >
             <Avatar size={40} altText={name} photoUrlLight={photoUrlLight} photoUrlDark={photoUrlDark} />
             <span className="hidden sm:flex items-center gap-1 text-lg font-bold font-mono tracking-tight text-primary">
-              {getGithubUsername(contact.github) || name.toLowerCase().replace(/\s+/g, '')}
+              {getGithubUsername(contact.links?.find(l => l.type.toLowerCase() === 'github')?.url) || name.toLowerCase().replace(/\s+/g, '')}
             </span>
           </Link>
         </div>
