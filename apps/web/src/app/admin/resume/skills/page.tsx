@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseBrowser";
 import { Plus, Trash2, Edit2, Check, X, AlertCircle, ChevronDown, Search } from "lucide-react";
 import * as LucideIcons from "lucide-react";
+import { AdminSkeleton } from "@/components/admin/AdminSkeleton";
 
 const lucideIconNames = Object.keys(LucideIcons).filter((name) => 
   !name.endsWith("Icon") && 
@@ -280,7 +281,7 @@ export default function SkillsLibraryPage() {
       </div>
 
       {loading ? (
-        <div className="text-center text-muted-foreground py-10 animate-pulse text-xs">Loading skills...</div>
+        <AdminSkeleton />
       ) : categories.length === 0 ? (
         <div className="text-center text-muted-foreground py-10 text-xs">No skill categories created yet.</div>
       ) : (

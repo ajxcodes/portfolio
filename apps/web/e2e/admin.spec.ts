@@ -12,6 +12,12 @@ test.describe('Admin Control Panel', () => {
     // Verify presence of metrics cards
     const totalViewsCard = page.locator('text=Total Views');
     await expect(totalViewsCard).toBeVisible();
+
+    // Verify that the Recharts container renders (or fallback message if no data)
+    // Wait for the loading skeleton to disappear first
+    await expect(page.locator('text=Views Over Time')).toBeVisible({ timeout: 10000 });
+    const chartOrFallback = page.locator('.recharts-responsive-container, text=Not enough data to display chart').first();
+    await expect(chartOrFallback).toBeVisible();
   });
 
   test('should load the audit logs page', async ({ page }) => {
@@ -21,6 +27,21 @@ test.describe('Admin Control Panel', () => {
     // Verify audit logs header
     const header = page.locator('h1');
     await expect(header).toContainText('audit_trails');
+
+    // Wait for loading to finish and logs to appear (or empty state)
+    // If logs exist, click the first one and verify the JsonDiffViewer appears
+    const logRows = page.locator('tbody tr');
+    const emptyState = page.locator('text=No modification audit entries have been logged');
+    
+    await Promise.any([
+      expect(logRows.first()).toBeVisible({ timeout: 10000 }),
+      expect(emptyState).toBeVisible({ timeout: 10000 })
+    ]);
+
+    if (await logRows.count() > 0) {
+      await logRows.first().click();
+      await expect(page.locator('text=Field Differences')).toBeVisible();
+    }
   });
 
   test('should create, save, activate, and view a new resume profile', async ({ page }) => {

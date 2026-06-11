@@ -12,6 +12,8 @@ import {
   Globe, 
   AlertCircle 
 } from "lucide-react";
+import { AdminSkeleton } from "@/components/admin/AdminSkeleton";
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 
 interface AnalyticsSummary {
   totalPageViews: number;
@@ -46,8 +48,25 @@ export default function AnalyticsPage() {
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
 
+  const viewsByDate = React.useMemo(() => {
+    if (!summary) return [];
+    const counts: Record<string, number> = {};
+    [...summary.recentPageViews].reverse().forEach(view => {
+      const date = new Date(view.viewedAt).toLocaleDateString([], { month: 'short', day: 'numeric' });
+      counts[date] = (counts[date] || 0) + 1;
+    });
+    return Object.entries(counts).map(([date, count]) => ({ date, count }));
+  }, [summary]);
 
-
+  const clicksByLink = React.useMemo(() => {
+    if (!summary) return [];
+    const counts: Record<string, number> = {};
+    summary.recentLinkClicks.forEach(click => {
+      const name = click.link.linkType.name;
+      counts[name] = (counts[name] || 0) + 1;
+    });
+    return Object.entries(counts).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count);
+  }, [summary]);
   const fetchAuthHeaders = async () => {
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
@@ -86,7 +105,7 @@ export default function AnalyticsPage() {
   }, []);
 
   if (loading) {
-    return <div className="text-center py-12 animate-pulse text-muted-foreground">Loading site analytics...</div>;
+    return <AdminSkeleton />;
   }
 
   return (
@@ -147,6 +166,59 @@ export default function AnalyticsPage() {
               <div>
                 <span className="text-[10px] text-muted-foreground font-bold uppercase">Outbound Clicks</span>
                 <p className="text-2xl font-bold text-foreground mt-0.5">{summary.recentLinkClicks.length}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            {/* Page Views Chart */}
+            <div className="terminal-card p-6 rounded-xl space-y-4">
+              <h3 className="font-bold text-sm text-foreground/90 flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 text-primary" />
+                Views Over Time
+              </h3>
+              <div className="h-64 w-full mt-4">
+                {viewsByDate.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={viewsByDate}>
+                      <XAxis dataKey="date" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                      <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value}`} />
+                      <Tooltip 
+                        contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--primary)/0.2)', borderRadius: '8px' }} 
+                        itemStyle={{ color: 'hsl(var(--primary))' }}
+                      />
+                      <Line type="monotone" dataKey="count" stroke="hsl(var(--primary))" strokeWidth={3} dot={{ r: 4, fill: 'hsl(var(--primary))' }} activeDot={{ r: 6 }} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex items-center justify-center h-full text-muted-foreground text-xs italic">Not enough data to display chart</div>
+                )}
+              </div>
+            </div>
+
+            {/* Link Clicks Chart */}
+            <div className="terminal-card p-6 rounded-xl space-y-4">
+              <h3 className="font-bold text-sm text-foreground/90 flex items-center gap-2">
+                <MousePointerClick className="w-4 h-4 text-primary" />
+                Clicks by Link
+              </h3>
+              <div className="h-64 w-full mt-4">
+                {clicksByLink.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={clicksByLink}>
+                      <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                      <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} allowDecimals={false} />
+                      <Tooltip 
+                        cursor={{ fill: 'hsl(var(--primary)/0.1)' }}
+                        contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--primary)/0.2)', borderRadius: '8px' }} 
+                        itemStyle={{ color: 'hsl(var(--primary))' }}
+                      />
+                      <Bar dataKey="count" fill="hsl(var(--primary)/0.8)" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex items-center justify-center h-full text-muted-foreground text-xs italic">Not enough data to display chart</div>
+                )}
               </div>
             </div>
           </div>
