@@ -33,7 +33,7 @@ export const JsonDiffViewer = ({ action, changes }: JsonDiffViewerProps) => {
               oldObj[key] = val.Original;
               newObj[key] = val.Current;
             } else {
-              oldObj[key] = val;
+              oldObj[key] = undefined;
               newObj[key] = val;
             }
           }

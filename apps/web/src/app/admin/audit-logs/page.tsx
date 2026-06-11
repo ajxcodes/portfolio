@@ -70,8 +70,15 @@ export default function AuditLogsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const formatAction = (action: string) => {
-    switch (action.toUpperCase()) {
+  const parseActionString = (actionStr: string) => {
+    const parts = (actionStr || "UNKNOWN").trim().split(' ');
+    const actionType = parts[0];
+    const resourceName = parts.slice(1).join(' ') || "System";
+    return { actionType, resourceName };
+  };
+
+  const formatAction = (actionType: string) => {
+    switch (actionType.toUpperCase()) {
       case "INSERT":
         return <span className="bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 px-2 py-0.5 rounded text-[10px] font-bold">Created</span>;
       case "UPDATE":
@@ -79,7 +86,7 @@ export default function AuditLogsPage() {
       case "DELETE":
         return <span className="bg-destructive/10 text-destructive border border-destructive/20 px-2 py-0.5 rounded text-[10px] font-bold">Deleted</span>;
       default:
-        return <span className="bg-primary/10 text-primary border border-primary/20 px-2 py-0.5 rounded text-[10px] font-bold">{action}</span>;
+        return <span className="bg-primary/10 text-primary border border-primary/20 px-2 py-0.5 rounded text-[10px] font-bold">{actionType}</span>;
     }
   };
 
@@ -131,7 +138,9 @@ export default function AuditLogsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-primary/5">
-                  {logs.map((log) => (
+                  {logs.map((log) => {
+                    const { actionType, resourceName } = parseActionString(log.action);
+                    return (
                     <tr 
                       key={log.id} 
                       onClick={() => setSelectedLog(log)}
@@ -144,11 +153,11 @@ export default function AuditLogsPage() {
                       <td className="p-4 text-muted-foreground">
                         {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} &middot; {new Date(log.timestamp).toLocaleDateString()}
                       </td>
-                      <td className="p-4 font-bold text-foreground/80">{log.action.split(' ')[1] || "System"}</td>
-                      <td className="p-4">{formatAction(log.action.split(' ')[0])}</td>
+                      <td className="p-4 font-bold text-foreground/80">{resourceName}</td>
+                      <td className="p-4">{formatAction(actionType)}</td>
                       <td className="p-4 text-foreground/70 truncate max-w-[120px]">{log.actor || "System"}</td>
                     </tr>
-                  ))}
+                  )})}
                 </tbody>
               </table>
             </div>
@@ -156,19 +165,21 @@ export default function AuditLogsPage() {
 
           {/* Details side panel */}
           <div className="terminal-card rounded-xl p-6 flex flex-col justify-between h-[60vh]">
-            {selectedLog ? (
+            {selectedLog ? (() => {
+              const { actionType, resourceName } = parseActionString(selectedLog.action);
+              return (
               <div className="space-y-6 overflow-y-auto flex-1 pr-2">
                 <div className="flex justify-between items-start gap-4">
                   <h3 className="font-bold text-sm text-primary leading-tight">
                     Change Details
                   </h3>
-                  {formatAction(selectedLog.action)}
+                  {formatAction(actionType)}
                 </div>
 
                 <div className="space-y-4 text-xs text-muted-foreground">
                   <div className="flex items-center gap-2.5">
                     <Layers className="w-4 h-4 text-primary/70 flex-shrink-0" />
-                    <span className="font-bold text-foreground/80">Table: {selectedLog.action.split(' ')[1] || "Unknown"}</span>
+                    <span className="font-bold text-foreground/80">Table: {resourceName}</span>
                   </div>
                   <div className="flex items-center gap-2.5">
                     <User className="w-4 h-4 text-primary/70 flex-shrink-0" />
@@ -185,12 +196,12 @@ export default function AuditLogsPage() {
                 <div className="mt-4 pt-2 border-t border-primary/10">
                   <span className="block text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80 mb-3">Field Differences</span>
                   <JsonDiffViewer 
-                    action={selectedLog.action.split(' ')[0]} 
+                    action={actionType} 
                     changes={selectedLog.changes} 
                   />
                 </div>
               </div>
-            ) : (
+            )})() : (
               <div className="flex flex-col items-center justify-center text-center h-full text-muted-foreground/70">
                 <Search className="w-8 h-8 mb-3 text-muted-foreground/40" />
                 <p className="text-xs font-bold">Select an audit entry on the left to examine detailed modification changes.</p>
