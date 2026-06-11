@@ -17,13 +17,10 @@ import { JsonDiffViewer } from "@/components/admin/JsonDiffViewer";
 
 interface AuditLog {
   id: string;
-  tableName: string;
   action: string;
-  keyValues: string;
-  oldValues: string | null;
-  newValues: string | null;
-  actorEmail: string;
+  actor: string;
   timestamp: string;
+  changes: string | null;
 }
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5808";
@@ -147,9 +144,9 @@ export default function AuditLogsPage() {
                       <td className="p-4 text-muted-foreground">
                         {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} &middot; {new Date(log.timestamp).toLocaleDateString()}
                       </td>
-                      <td className="p-4 font-bold text-foreground/80">{log.tableName}</td>
-                      <td className="p-4">{formatAction(log.action)}</td>
-                      <td className="p-4 text-foreground/70 truncate max-w-[120px]">{log.actorEmail || "System"}</td>
+                      <td className="p-4 font-bold text-foreground/80">{log.action.split(' ')[1] || "System"}</td>
+                      <td className="p-4">{formatAction(log.action.split(' ')[0])}</td>
+                      <td className="p-4 text-foreground/70 truncate max-w-[120px]">{log.actor || "System"}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -171,11 +168,11 @@ export default function AuditLogsPage() {
                 <div className="space-y-4 text-xs text-muted-foreground">
                   <div className="flex items-center gap-2.5">
                     <Layers className="w-4 h-4 text-primary/70 flex-shrink-0" />
-                    <span className="font-bold text-foreground/80">Table: {selectedLog.tableName}</span>
+                    <span className="font-bold text-foreground/80">Table: {selectedLog.action.split(' ')[1] || "Unknown"}</span>
                   </div>
                   <div className="flex items-center gap-2.5">
                     <User className="w-4 h-4 text-primary/70 flex-shrink-0" />
-                    <span className="font-bold text-foreground/80 truncate">Actor: {selectedLog.actorEmail || "System"}</span>
+                    <span className="font-bold text-foreground/80 truncate">Actor: {selectedLog.actor || "System"}</span>
                   </div>
                   <div className="flex items-center gap-2.5">
                     <Calendar className="w-4 h-4 text-primary/70 flex-shrink-0" />
@@ -188,8 +185,8 @@ export default function AuditLogsPage() {
                 <div className="mt-4 pt-2 border-t border-primary/10">
                   <span className="block text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80 mb-3">Field Differences</span>
                   <JsonDiffViewer 
-                    oldValues={selectedLog.oldValues} 
-                    newValues={selectedLog.newValues} 
+                    action={selectedLog.action.split(' ')[0]} 
+                    changes={selectedLog.changes} 
                   />
                 </div>
               </div>

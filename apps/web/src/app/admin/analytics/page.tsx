@@ -13,7 +13,7 @@ import {
   AlertCircle 
 } from "lucide-react";
 import { AdminSkeleton } from "@/components/admin/AdminSkeleton";
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
 
 interface AnalyticsSummary {
   totalPageViews: number;
@@ -45,6 +45,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5
 
 const TOOLTIP_CONTENT_STYLE = { backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--primary)/0.2)', borderRadius: '8px' };
 const TOOLTIP_ITEM_STYLE = { color: 'hsl(var(--primary))' };
+const PIE_COLORS = ['hsl(var(--primary))', 'hsl(var(--primary)/0.8)', 'hsl(var(--primary)/0.6)', 'hsl(var(--primary)/0.4)', 'hsl(var(--primary)/0.2)'];
 
 export default function AnalyticsPage() {
   const [summary, setSummary] = useState<AnalyticsSummary | null>(null);
@@ -70,6 +71,27 @@ export default function AnalyticsPage() {
     });
     return Object.entries(counts).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count);
   }, [summary]);
+
+  const viewsByLocation = useMemo(() => {
+    if (!summary) return [];
+    const counts: Record<string, number> = {};
+    summary.recentPageViews.forEach(view => {
+      const loc = (view.country && view.country !== 'Unknown') ? view.country : 'Unknown';
+      counts[loc] = (counts[loc] || 0) + 1;
+    });
+    return Object.entries(counts).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count).slice(0, 5);
+  }, [summary]);
+
+  const viewsByReferrer = useMemo(() => {
+    if (!summary) return [];
+    const counts: Record<string, number> = {};
+    summary.recentPageViews.forEach(view => {
+      const ref = view.referrerSource || 'Direct';
+      counts[ref] = (counts[ref] || 0) + 1;
+    });
+    return Object.entries(counts).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count).slice(0, 5);
+  }, [summary]);
+
   const fetchAuthHeaders = async () => {
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
@@ -217,6 +239,69 @@ export default function AnalyticsPage() {
                         itemStyle={TOOLTIP_ITEM_STYLE}
                       />
                       <Bar dataKey="count" fill="hsl(var(--primary)/0.8)" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex items-center justify-center h-full text-muted-foreground text-xs italic">Not enough data to display chart</div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            {/* Traffic by Referrer Chart */}
+            <div className="terminal-card p-6 rounded-xl space-y-4">
+              <h3 className="font-bold text-sm text-foreground/90 flex items-center gap-2">
+                <Globe className="w-4 h-4 text-primary" />
+                Traffic by Referrer
+              </h3>
+              <div className="h-64 w-full mt-4">
+                {viewsByReferrer.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={viewsByReferrer}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={80}
+                        paddingAngle={5}
+                        dataKey="count"
+                      >
+                        {viewsByReferrer.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip 
+                        contentStyle={TOOLTIP_CONTENT_STYLE} 
+                        itemStyle={TOOLTIP_ITEM_STYLE}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex items-center justify-center h-full text-muted-foreground text-xs italic">Not enough data to display chart</div>
+                )}
+              </div>
+            </div>
+
+            {/* Traffic by Location Chart */}
+            <div className="terminal-card p-6 rounded-xl space-y-4">
+              <h3 className="font-bold text-sm text-foreground/90 flex items-center gap-2">
+                <Globe className="w-4 h-4 text-primary" />
+                Traffic by Location (Country)
+              </h3>
+              <div className="h-64 w-full mt-4">
+                {viewsByLocation.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={viewsByLocation} layout="vertical" margin={{ left: 20 }}>
+                      <XAxis type="number" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} allowDecimals={false} />
+                      <YAxis dataKey="name" type="category" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} width={80} />
+                      <Tooltip 
+                        cursor={{ fill: 'hsl(var(--primary)/0.1)' }}
+                        contentStyle={TOOLTIP_CONTENT_STYLE} 
+                        itemStyle={TOOLTIP_ITEM_STYLE}
+                      />
+                      <Bar dataKey="count" fill="hsl(var(--primary)/0.6)" radius={[0, 4, 4, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 ) : (

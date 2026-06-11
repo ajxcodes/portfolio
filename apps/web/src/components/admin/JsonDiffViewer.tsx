@@ -2,8 +2,8 @@ import React, { useMemo } from 'react';
 import { Plus, Minus, Equal } from 'lucide-react';
 
 interface JsonDiffViewerProps {
-  oldValues: string | null;
-  newValues: string | null;
+  action: string;
+  changes: string | null;
 }
 
 interface DiffRow {
@@ -13,21 +13,36 @@ interface DiffRow {
   newVal: any;
 }
 
-export const JsonDiffViewer = ({ oldValues, newValues }: JsonDiffViewerProps) => {
+export const JsonDiffViewer = ({ action, changes }: JsonDiffViewerProps) => {
   const diffs = useMemo(() => {
     let oldObj: Record<string, any> = {};
     let newObj: Record<string, any> = {};
 
     try {
-      if (oldValues && oldValues !== "{}") oldObj = JSON.parse(oldValues);
+      if (changes && changes !== "{}") {
+        const parsed = JSON.parse(changes);
+        
+        if (action === 'INSERT') {
+          newObj = parsed;
+        } else if (action === 'DELETE') {
+          oldObj = parsed;
+        } else if (action === 'UPDATE') {
+          for (const key of Object.keys(parsed)) {
+            const val = parsed[key];
+            if (val && typeof val === 'object' && ('Original' in val || 'Current' in val)) {
+              oldObj[key] = val.Original;
+              newObj[key] = val.Current;
+            } else {
+              oldObj[key] = val;
+              newObj[key] = val;
+            }
+          }
+        } else {
+          newObj = parsed;
+        }
+      }
     } catch (e) {
-      console.warn("Failed to parse oldValues JSON in diff viewer");
-    }
-
-    try {
-      if (newValues && newValues !== "{}") newObj = JSON.parse(newValues);
-    } catch (e) {
-      console.warn("Failed to parse newValues JSON in diff viewer");
+      console.warn("Failed to parse changes JSON in diff viewer");
     }
 
     const allKeys = Array.from(new Set([...Object.keys(oldObj), ...Object.keys(newObj)])).sort();
@@ -53,7 +68,7 @@ export const JsonDiffViewer = ({ oldValues, newValues }: JsonDiffViewerProps) =>
     });
 
     return rows;
-  }, [oldValues, newValues]);
+  }, [action, changes]);
 
   if (diffs.length === 0) {
     return (

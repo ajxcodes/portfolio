@@ -28,6 +28,7 @@ import {
 import { useResumeForm, ExperienceItem } from "@/hooks/useResumeForm";
 import { CategorySelect } from "@/components/admin/CategorySelect";
 import { ExistingSkillSelect } from "@/components/admin/ExistingSkillSelect";
+import { ProfileSkeleton } from "@/components/admin/ProfileSkeleton";
 import { MONTHS, YEARS, formatPeriod, calculateDuration } from "@/lib/resumePeriodUtils";
 
 function ResumeFormContent() {
@@ -100,7 +101,7 @@ function ResumeFormContent() {
   };
 
   if (fetchLoading) {
-    return <div className="text-center py-12 animate-pulse text-muted-foreground">Loading profile data...</div>;
+    return <ProfileSkeleton />;
   }
 
   const allSkillsFlat = availableCategories.flatMap(c => c.skills || []);
