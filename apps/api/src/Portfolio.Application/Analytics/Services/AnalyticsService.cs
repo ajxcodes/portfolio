@@ -25,10 +25,16 @@ public class AnalyticsService(
     {
         // Safety guard: silently discard clicks for link IDs that don't exist in the DB.
         // The frontend is responsible for sending the correct DB GUID via data-link-id.
-        var linkExists = await resumeRepository.LinkExistsAsync(log.LinkId);
-        if (!linkExists)
+        if (log.LinkId.HasValue)
         {
-            return;
+            var link = await resumeRepository.GetLinkByIdAsync(log.LinkId.Value);
+            if (link == null)
+            {
+                return;
+            }
+            
+            log.TargetUrl = link.Url;
+            log.LinkTypeName = link.LinkType?.Name;
         }
 
         await repository.LogLinkClickAsync(log);

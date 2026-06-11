@@ -5,6 +5,7 @@ import {
   GitHubIcon,
   CalendarIcon,
   DownloadIcon,
+  InstagramIcon,
 } from '@/components/icons';
 import { type ContactInfo } from '@/lib/data';
 import { DownloadProgressModal } from '@/components/DownloadProgressModal';
@@ -77,6 +78,17 @@ export const ContactLinks = ({ contact, showText = true, downloadUrl }: ContactL
       text: "Let's Chat",
       label: 'Schedule a meeting',
       linkId: contact.linkIds?.calendar || contact.linkIds?.Calendar,
+    });
+  }
+
+  // Instagram
+  if (contact.instagram && (contact.linkIds?.instagram || contact.linkIds?.Instagram)) {
+    items.push({
+      href: contact.instagram.startsWith('http') ? contact.instagram : `https://${contact.instagram}`,
+      Icon: InstagramIcon,
+      text: contact.instagram.replace(/https?:\/\/(www\.)?instagram\.com\//, '').replace(/\/$/, ''),
+      label: 'Instagram Profile',
+      linkId: contact.linkIds?.instagram || contact.linkIds?.Instagram,
     });
   }
 

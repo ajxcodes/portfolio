@@ -25,6 +25,7 @@ interface AnalyticsSummary {
     userAgent: string | null;
     country: string | null;
     city: string | null;
+    ipAddress: string | null;
   }>;
   recentLinkClicks: Array<{
     id: string;
@@ -51,16 +52,29 @@ export default function AnalyticsPage() {
   const [summary, setSummary] = useState<AnalyticsSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
+  const [showTotalViews, setShowTotalViews] = useState(false);
 
   const viewsByDate = useMemo(() => {
     if (!summary) return [];
-    const counts: Record<string, number> = {};
-    [...summary.recentPageViews].reverse().forEach(view => {
-      const date = new Date(view.viewedAt).toLocaleDateString([], { month: 'short', day: 'numeric' });
-      counts[date] = (counts[date] || 0) + 1;
-    });
-    return Object.entries(counts).map(([date, count]) => ({ date, count }));
-  }, [summary]);
+    
+    if (showTotalViews) {
+      const counts: Record<string, number> = {};
+      [...summary.recentPageViews].reverse().forEach(view => {
+        const date = new Date(view.viewedAt).toLocaleDateString([], { month: 'short', day: 'numeric' });
+        counts[date] = (counts[date] || 0) + 1;
+      });
+      return Object.entries(counts).map(([date, count]) => ({ date, count }));
+    } else {
+      const counts: Record<string, Set<string>> = {};
+      [...summary.recentPageViews].reverse().forEach(view => {
+        const date = new Date(view.viewedAt).toLocaleDateString([], { month: 'short', day: 'numeric' });
+        if (!counts[date]) counts[date] = new Set<string>();
+        // Fallback to ID if no IP is present to still count it as unique (though it shouldn't happen)
+        counts[date].add(view.ipAddress || view.id);
+      });
+      return Object.entries(counts).map(([date, set]) => ({ date, count: set.size }));
+    }
+  }, [summary, showTotalViews]);
 
   const clicksByLink = useMemo(() => {
     if (!summary) return [];
@@ -198,10 +212,20 @@ export default function AnalyticsPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
             {/* Page Views Chart */}
             <div className="terminal-card p-6 rounded-xl space-y-4">
-              <h3 className="font-bold text-sm text-foreground/90 flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-primary" />
-                Views Over Time
-              </h3>
+              <div className="flex items-center justify-between">
+                <h3 className="font-bold text-sm text-foreground/90 flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4 text-primary" />
+                  Views Over Time
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setShowTotalViews(!showTotalViews)}
+                  className="px-2.5 py-1 text-[10px] font-bold rounded-md bg-primary/10 border border-primary/20 hover:bg-primary/20 text-primary transition-colors uppercase tracking-wider flex items-center gap-1.5"
+                >
+                  <Eye className="w-3 h-3" />
+                  {showTotalViews ? "Showing: Total Views" : "Showing: Unique Visitors"}
+                </button>
+              </div>
               <div className="h-64 w-full mt-4">
                 {viewsByDate.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">

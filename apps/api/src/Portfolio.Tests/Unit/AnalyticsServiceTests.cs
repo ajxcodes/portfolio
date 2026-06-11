@@ -39,12 +39,20 @@ public class AnalyticsServiceTests
         // Arrange
         var linkId = Guid.NewGuid();
         var log = new LinkClickLog { Id = Guid.NewGuid(), LinkId = linkId };
-        _resumeRepositoryMock.LinkExistsAsync(linkId).Returns(true);
+        var mockLink = new Portfolio.Domain.Resume.ResumeProfileLink 
+        { 
+            Id = linkId, 
+            Url = "https://example.com", 
+            LinkType = new Portfolio.Domain.Resume.ResumeProfileLinkType { Name = "Twitter" } 
+        };
+        _resumeRepositoryMock.GetLinkByIdAsync(linkId).Returns(mockLink);
 
         // Act
         await _service.LogLinkClickAsync(log);
 
         // Assert
+        log.TargetUrl.ShouldBe("https://example.com");
+        log.LinkTypeName.ShouldBe("Twitter");
         await _repositoryMock.Received(1).LogLinkClickAsync(log);
         await _repositoryMock.Received(1).SaveChangesAsync();
     }
@@ -83,7 +91,7 @@ public class AnalyticsServiceTests
         // Arrange
         var linkId = Guid.NewGuid();
         var log = new LinkClickLog { Id = Guid.NewGuid(), LinkId = linkId };
-        _resumeRepositoryMock.LinkExistsAsync(linkId).Returns(false);
+        _resumeRepositoryMock.GetLinkByIdAsync(linkId).Returns((Portfolio.Domain.Resume.ResumeProfileLink?)null);
 
         // Act
         await _service.LogLinkClickAsync(log);

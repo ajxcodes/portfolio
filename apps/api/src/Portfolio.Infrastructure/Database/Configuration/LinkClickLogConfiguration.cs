@@ -28,10 +28,16 @@ public class LinkClickLogConfiguration : IEntityTypeConfiguration<LinkClickLog>
         builder.Property(c => c.City)
             .HasMaxLength(100);
 
+        builder.Property(c => c.TargetUrl)
+            .HasMaxLength(2000);
+            
+        builder.Property(c => c.LinkTypeName)
+            .HasMaxLength(50);
+
         // Relationships
         builder.HasOne(c => c.Link)
             .WithMany(l => l.Clicks)
             .HasForeignKey(c => c.LinkId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }
