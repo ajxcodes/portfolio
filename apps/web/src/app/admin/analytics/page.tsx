@@ -31,12 +31,13 @@ interface AnalyticsSummary {
     id: string;
     clickedAt: string;
     referrerSource: string | null;
+    linkTypeName?: string;
     link: {
       url: string;
       linkType: {
         name: string;
       };
-    };
+    } | null;
     country: string | null;
     city: string | null;
   }>;
@@ -82,7 +83,7 @@ export default function AnalyticsPage() {
     if (!summary) return [];
     const counts: Record<string, number> = {};
     summary.recentLinkClicks.forEach(click => {
-      const name = click.link?.linkType?.name || ('linkTypeName' in click ? String(click.linkTypeName) : null) || "Unknown Link";
+      const name = click.link?.linkType?.name || click.linkTypeName || "Unknown Link";
       counts[name] = (counts[name] || 0) + 1;
     });
     return Object.entries(counts).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count);
@@ -404,7 +405,7 @@ export default function AnalyticsPage() {
                         <td className="py-3">
                           <div className="flex flex-col">
                             <span className="font-bold text-[11px] text-foreground/80 leading-none">
-                              {click.link?.linkType?.name || ('linkTypeName' in click ? String(click.linkTypeName) : "Unknown Link")}
+                              {click.link?.linkType?.name || click.linkTypeName || "Unknown Link"}
                             </span>
                             <span className="text-[9px] text-muted-foreground truncate max-w-[180px] mt-1">
                               {click.link?.url || "URL Unavailable"}
