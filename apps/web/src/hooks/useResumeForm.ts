@@ -381,6 +381,7 @@ export function useResumeForm() {
       await saveProfile(profileId, payload);
       setSuccessMsg("Profile details saved successfully!");
       setTimeout(() => {
+        router.refresh();
         router.push("/admin/resume");
       }, 1500);
     } catch (err: any) {

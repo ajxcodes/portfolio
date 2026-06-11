@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseBrowser";
 import { 
   UserSquare, 
@@ -23,6 +24,7 @@ interface Profile {
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5808";
 
 export default function ResumeProfilesPage() {
+  const router = useRouter();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
@@ -81,6 +83,7 @@ export default function ResumeProfilesPage() {
       }
 
       await loadProfiles();
+      router.refresh();
     } catch (err: any) {
       setErrorMsg(err.message || "Failed to activate resume profile.");
     } finally {
