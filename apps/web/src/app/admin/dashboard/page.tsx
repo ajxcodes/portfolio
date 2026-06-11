@@ -10,7 +10,8 @@ import {
   AlertCircle,
   Eye,
   FileClock,
-  ArrowRight
+  ArrowRight,
+  Layers
 } from "lucide-react";
 import { AdminSkeleton } from "@/components/admin/AdminSkeleton";
 
@@ -197,7 +198,7 @@ export default function DashboardPage() {
       )}
 
       {/* Quick Stats Banner */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-12 pt-6 border-t border-primary/10">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-12 pt-6 border-t border-primary/10">
         <Link 
           href="/admin/analytics"
           className="flex items-center justify-between p-6 terminal-card rounded-xl hover:border-primary/40 transition-all duration-300 group"
@@ -225,6 +226,22 @@ export default function DashboardPage() {
             <div>
               <h3 className="font-bold text-foreground text-sm">Database Audit Logs</h3>
               <p className="text-[10px] text-muted-foreground mt-0.5">Track modifications audit trails</p>
+            </div>
+          </div>
+          <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-transform group-hover:translate-x-1" />
+        </Link>
+
+        <Link 
+          href="/admin/resume/skills"
+          className="flex items-center justify-between p-6 terminal-card rounded-xl hover:border-primary/40 transition-all duration-300 group"
+        >
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-card border border-primary/10 rounded-lg text-primary">
+              <Layers className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="font-bold text-foreground text-sm">Skills Library</h3>
+              <p className="text-[10px] text-muted-foreground mt-0.5">Manage global reusable skills</p>
             </div>
           </div>
           <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-transform group-hover:translate-x-1" />
