@@ -8,6 +8,7 @@ public class ResumeLinkDto
     public string LinkTypeName { get; set; } = string.Empty;
     public string LinkTypeKey { get; set; } = string.Empty;
     public string Url { get; set; } = string.Empty;
+    public bool DisplayInHeader { get; set; } = true;
 }
 
 public class WorkExperienceDto
@@ -137,6 +138,7 @@ public class ResumeService(IResumeRepository repository) : IResumeService
                     ProfileId = profile.Id,
                     LinkTypeId = linkType.Id,
                     Url = linkDto.Url,
+                    DisplayInHeader = linkDto.DisplayInHeader,
                     UpdatedAt = DateTime.UtcNow
                 };
                 await repository.AddProfileLinkAsync(profileLink);
@@ -232,6 +234,7 @@ public class ResumeService(IResumeRepository repository) : IResumeService
                     ProfileId = id,
                     LinkTypeId = linkType.Id,
                     Url = linkDto.Url,
+                    DisplayInHeader = linkDto.DisplayInHeader,
                     UpdatedAt = DateTime.UtcNow
                 };
                 await repository.AddProfileLinkAsync(profileLink);

@@ -32,6 +32,51 @@ import { ExistingSkillSelect } from "@/components/admin/ExistingSkillSelect";
 import { ProfileSkeleton } from "@/components/admin/ProfileSkeleton";
 import { MONTHS, YEARS, formatPeriod, calculateDuration } from "@/lib/resumePeriodUtils";
 
+interface ContactInputGroupProps {
+  id: string;
+  label: string;
+  icon: React.ElementType;
+  type?: string;
+  placeholder: string;
+  value: string;
+  onChangeValue: (val: string) => void;
+  headerChecked: boolean;
+  onChangeHeader: (checked: boolean) => void;
+}
+
+const ContactInputGroup = ({
+  id,
+  label,
+  icon: Icon,
+  type = "text",
+  placeholder,
+  value,
+  onChangeValue,
+  headerChecked,
+  onChangeHeader
+}: ContactInputGroupProps) => (
+  <div>
+    <div className="flex items-center justify-between mb-2">
+      <label htmlFor={id} className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider">
+        <Icon className="w-3.5 h-3.5 text-muted-foreground" />
+        {label}
+      </label>
+      <label className="flex items-center gap-1.5 text-[10px] cursor-pointer">
+        <input type="checkbox" checked={headerChecked} onChange={(e) => onChangeHeader(e.target.checked)} className="accent-primary" />
+        Header
+      </label>
+    </div>
+    <input
+      id={id}
+      type={type}
+      value={value}
+      onChange={(e) => onChangeValue(e.target.value)}
+      className="w-full px-4 py-2 bg-primary/5 border border-primary/20 rounded-md focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all text-xs"
+      placeholder={placeholder}
+    />
+  </div>
+);
+
 function ResumeFormContent() {
   const {
     profileId,
@@ -45,20 +90,13 @@ function ResumeFormContent() {
     setPhotoUrlLight,
     photoUrlDark,
     setPhotoUrlDark,
-    email,
-    setEmail,
-    phone,
-    setPhone,
-    website,
-    setWebsite,
-    linkedinVal,
-    setLinkedinVal,
-    calendar,
-    setCalendar,
-    githubVal,
-    setGithubVal,
-    instagramVal,
-    setInstagramVal,
+    email, setEmail, emailHeader, setEmailHeader,
+    phone, setPhone, phoneHeader, setPhoneHeader,
+    website, setWebsite, websiteHeader, setWebsiteHeader,
+    linkedinVal, setLinkedinVal, linkedinHeader, setLinkedinHeader,
+    calendar, setCalendar, calendarHeader, setCalendarHeader,
+    githubVal, setGithubVal, githubHeader, setGithubHeader,
+    instagramVal, setInstagramVal, instagramHeader, setInstagramHeader,
     experiences,
     availableCategories,
     newSkillNameMap,
@@ -330,110 +368,83 @@ function ResumeFormContent() {
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <div>
-              <label htmlFor="email" className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider mb-2">
-                <Mail className="w-3.5 h-3.5 text-muted-foreground" />
-                Email Address
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-2 bg-primary/5 border border-primary/20 rounded-md focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all text-xs"
-                placeholder="mail@example.com"
-              />
-            </div>
+            <ContactInputGroup
+              id="email"
+              label="Email Address"
+              icon={Mail}
+              type="email"
+              placeholder="mail@example.com"
+              value={email}
+              onChangeValue={setEmail}
+              headerChecked={emailHeader}
+              onChangeHeader={setEmailHeader}
+            />
 
-            <div>
-              <label htmlFor="phone" className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider mb-2">
-                <Phone className="w-3.5 h-3.5 text-muted-foreground" />
-                Phone Number
-              </label>
-              <input
-                id="phone"
-                type="text"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="w-full px-4 py-2 bg-primary/5 border border-primary/20 rounded-md focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all text-xs"
-                placeholder="+1 234 567 890"
-              />
-            </div>
+            <ContactInputGroup
+              id="phone"
+              label="Phone Number"
+              icon={Phone}
+              placeholder="+1 234 567 890"
+              value={phone}
+              onChangeValue={setPhone}
+              headerChecked={phoneHeader}
+              onChangeHeader={setPhoneHeader}
+            />
 
-            <div>
-              <label htmlFor="website" className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider mb-2">
-                <Globe className="w-3.5 h-3.5 text-muted-foreground" />
-                Personal Website
-              </label>
-              <input
-                id="website"
-                type="text"
-                value={website}
-                onChange={(e) => setWebsite(e.target.value)}
-                className="w-full px-4 py-2 bg-primary/5 border border-primary/20 rounded-md focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all text-xs"
-                placeholder="https://example.com"
-              />
-            </div>
+            <ContactInputGroup
+              id="website"
+              label="Personal Website"
+              icon={Globe}
+              placeholder="https://example.com"
+              value={website}
+              onChangeValue={setWebsite}
+              headerChecked={websiteHeader}
+              onChangeHeader={setWebsiteHeader}
+            />
 
-            <div>
-              <label htmlFor="linkedinVal" className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider mb-2">
-                <Linkedin className="w-3.5 h-3.5 text-muted-foreground" />
-                LinkedIn Profile URL
-              </label>
-              <input
-                id="linkedinVal"
-                type="text"
-                value={linkedinVal}
-                onChange={(e) => setLinkedinVal(e.target.value)}
-                className="w-full px-4 py-2 bg-primary/5 border border-primary/20 rounded-md focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all text-xs"
-                placeholder="https://linkedin.com/in/username"
-              />
-            </div>
+            <ContactInputGroup
+              id="linkedinVal"
+              label="LinkedIn Profile URL"
+              icon={Linkedin}
+              placeholder="https://linkedin.com/in/username"
+              value={linkedinVal}
+              onChangeValue={setLinkedinVal}
+              headerChecked={linkedinHeader}
+              onChangeHeader={setLinkedinHeader}
+            />
 
-            <div>
-              <label htmlFor="calendar" className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider mb-2">
-                <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
-                Calendar Scheduling Link
-              </label>
-              <input
-                id="calendar"
-                type="text"
-                value={calendar}
-                onChange={(e) => setCalendar(e.target.value)}
-                className="w-full px-4 py-2 bg-primary/5 border border-primary/20 rounded-md focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all text-xs"
-                placeholder="https://cal.com/username"
-              />
-            </div>
+            <ContactInputGroup
+              id="calendar"
+              label="Calendar Scheduling Link"
+              icon={Calendar}
+              placeholder="https://cal.com/username"
+              value={calendar}
+              onChangeValue={setCalendar}
+              headerChecked={calendarHeader}
+              onChangeHeader={setCalendarHeader}
+            />
 
-            <div>
-              <label htmlFor="githubVal" className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider mb-2">
-                <Github className="w-3.5 h-3.5 text-muted-foreground" />
-                GitHub Profile URL
-              </label>
-              <input
-                id="githubVal"
-                type="text"
-                value={githubVal}
-                onChange={(e) => setGithubVal(e.target.value)}
-                className="w-full px-4 py-2 bg-primary/5 border border-primary/20 rounded-md focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all text-xs"
-                placeholder="https://github.com/username"
-              />
-            </div>
+            <ContactInputGroup
+              id="githubVal"
+              label="GitHub Profile URL"
+              icon={Github}
+              placeholder="https://github.com/username"
+              value={githubVal}
+              onChangeValue={setGithubVal}
+              headerChecked={githubHeader}
+              onChangeHeader={setGithubHeader}
+            />
 
-            <div>
-              <label htmlFor="instagramVal" className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider mb-2">
-                <Instagram className="w-3.5 h-3.5 text-muted-foreground" />
-                Instagram Profile URL
-              </label>
-              <input
-                id="instagramVal"
-                type="text"
-                value={instagramVal}
-                onChange={(e) => setInstagramVal(e.target.value)}
-                className="w-full px-4 py-2 bg-primary/5 border border-primary/20 rounded-md focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all text-xs"
-                placeholder="https://instagram.com/username"
-              />
-            </div>
+            <ContactInputGroup
+              id="instagramVal"
+              label="Instagram Profile URL"
+              icon={Instagram}
+              placeholder="https://instagram.com/username"
+              value={instagramVal}
+              onChangeValue={setInstagramVal}
+              headerChecked={instagramHeader}
+              onChangeHeader={setInstagramHeader}
+            />
           </div>
         </div>
 

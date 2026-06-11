@@ -208,8 +208,8 @@ public class ResumeServiceTests
             PhotoUrlDark = "dark.jpg",
             Links = new List<ResumeLinkDto>
             {
-                new() { LinkTypeName = "GitHub", LinkTypeKey = "github", Url = "https://github.com" },
-                new() { LinkTypeName = "LinkedIn", LinkTypeKey = "linkedin", Url = "https://linkedin.com" }
+                new() { LinkTypeName = "GitHub", LinkTypeKey = "github", Url = "https://github.com", DisplayInHeader = false },
+                new() { LinkTypeName = "LinkedIn", LinkTypeKey = "linkedin", Url = "https://linkedin.com", DisplayInHeader = true }
             },
             WorkExperiences = new List<WorkExperienceDto>
             {
@@ -242,7 +242,8 @@ public class ResumeServiceTests
         result.PhotoUrlDark.ShouldBe("dark.jpg");
 
         await _repositoryMock.Received(1).AddProfileAsync(Arg.Any<ResumeProfile>());
-        await _repositoryMock.Received(2).AddProfileLinkAsync(Arg.Any<ResumeProfileLink>());
+        await _repositoryMock.Received(1).AddProfileLinkAsync(Arg.Is<ResumeProfileLink>(l => l.Url == "https://github.com" && l.DisplayInHeader == false));
+        await _repositoryMock.Received(1).AddProfileLinkAsync(Arg.Is<ResumeProfileLink>(l => l.Url == "https://linkedin.com" && l.DisplayInHeader == true));
         await _repositoryMock.Received(1).AddProfileLinkTypeAsync(Arg.Is<ResumeProfileLinkType>(lt => lt.KeyIdentifier == "linkedin"));
         await _repositoryMock.Received(1).AddWorkExperienceAsync(Arg.Any<WorkExperience>());
         await _repositoryMock.Received(2).AddExperienceHighlightAsync(Arg.Any<ExperienceHighlight>());
@@ -267,7 +268,7 @@ public class ResumeServiceTests
             PhotoUrlDark = "new-dark.jpg",
             Links = new List<ResumeLinkDto>
             {
-                new() { LinkTypeName = "GitHub", LinkTypeKey = "github", Url = "https://github.com/new" }
+                new() { LinkTypeName = "GitHub", LinkTypeKey = "github", Url = "https://github.com/new", DisplayInHeader = false }
             },
             WorkExperiences = new List<WorkExperienceDto>
             {
@@ -300,7 +301,7 @@ public class ResumeServiceTests
         await _repositoryMock.Received(1).RemoveLinksByProfileIdAsync(profileId);
         await _repositoryMock.Received(1).RemoveWorkExperiencesByProfileIdAsync(profileId);
         await _repositoryMock.Received(1).AddProfileLinkTypeAsync(Arg.Any<ResumeProfileLinkType>());
-        await _repositoryMock.Received(1).AddProfileLinkAsync(Arg.Any<ResumeProfileLink>());
+        await _repositoryMock.Received(1).AddProfileLinkAsync(Arg.Is<ResumeProfileLink>(l => l.Url == "https://github.com/new" && l.DisplayInHeader == false));
         await _repositoryMock.Received(1).AddWorkExperienceAsync(Arg.Any<WorkExperience>());
         await _repositoryMock.Received(1).AddExperienceHighlightAsync(Arg.Any<ExperienceHighlight>());
         await _repositoryMock.Received(1).AddWorkExperienceSkillAsync(Arg.Any<WorkExperienceSkill>());

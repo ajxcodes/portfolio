@@ -8,6 +8,7 @@ public class ResumeProfileLink
     public Guid ProfileId { get; set; }
     public Guid LinkTypeId { get; set; }
     public string Url { get; set; } = string.Empty;
+    public bool DisplayInHeader { get; set; } = true;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
     // Navigation properties

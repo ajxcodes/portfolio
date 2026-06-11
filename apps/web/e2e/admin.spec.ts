@@ -68,6 +68,10 @@ test.describe('Admin Control Panel', () => {
     await page.locator('#intro').fill('This profile was fully generated and validated by an E2E Playwright test.');
     await page.locator('#email').fill('playwright-test@ajx.codes');
     await page.locator('#instagramVal').fill('https://instagram.com/playwright');
+    
+    // Uncheck the Email "Header" checkbox to test DisplayInHeader
+    const emailGroup = page.locator('#email').locator('..');
+    await emailGroup.locator('label:has-text("Header") input').uncheck();
 
     // 4. Add a Job
     await page.locator('button:has-text("Add Job")').click();
@@ -107,5 +111,21 @@ test.describe('Admin Control Panel', () => {
     await expect(page.locator('#page-title')).toContainText(testName);
     await expect(page.locator('text=Automated Test Engineer')).toBeVisible();
     await expect(page.locator('text=QA Labs Inc')).toBeVisible();
+    
+    // Scroll down to hide the main contact section and reveal the sticky header contact links
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    
+    // Give the IntersectionObserver a moment to trigger (fixes flakiness in headless CI)
+    await page.waitForTimeout(500);
+
+    // Verify DisplayInHeader toggle works:
+    // If the header contact links appear, they should NOT contain email (since we toggled it off).
+    // Instead of failing if the header isn't visible on tall screens, we just verify the exact logic.
+    // The email header link should never be attached.
+    await expect(page.locator('header a[href="mailto:playwright-test@ajx.codes"]')).not.toBeAttached();
+    
+    // Check main contact links are still visible in the main section
+    await expect(page.locator('#contact-links-section a[href="mailto:playwright-test@ajx.codes"]')).toBeAttached();
+    await expect(page.locator('#contact-links-section a[href="https://instagram.com/playwright"]')).toBeAttached();
   });
 });

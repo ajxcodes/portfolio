@@ -42,12 +42,19 @@ export function useResumeForm() {
 
   // Contacts
   const [email, setEmail] = useState("");
+  const [emailHeader, setEmailHeader] = useState(true);
   const [phone, setPhone] = useState("");
+  const [phoneHeader, setPhoneHeader] = useState(true);
   const [website, setWebsite] = useState("");
+  const [websiteHeader, setWebsiteHeader] = useState(true);
   const [linkedinVal, setLinkedinVal] = useState("");
+  const [linkedinHeader, setLinkedinHeader] = useState(true);
   const [calendar, setCalendar] = useState("");
+  const [calendarHeader, setCalendarHeader] = useState(true);
   const [githubVal, setGithubVal] = useState("");
+  const [githubHeader, setGithubHeader] = useState(true);
   const [instagramVal, setInstagramVal] = useState("");
+  const [instagramHeader, setInstagramHeader] = useState(true);
 
   // Experiences & categories
   const [experiences, setExperiences] = useState<ExperienceItem[]>([]);
@@ -78,13 +85,20 @@ export function useResumeForm() {
           if (data.links) {
             data.links.forEach((l: any) => {
               const key = l.linkType?.keyIdentifier || l.linkType?.name?.toLowerCase();
-              if (key === "email") setEmail(l.url || "");
-              if (key === "phone") setPhone(l.url || "");
-              if (key === "website") setWebsite(l.url || "");
-              if (key === "linkedin") setLinkedinVal(l.url || "");
-              if (key === "calendar") setCalendar(l.url || "");
-              if (key === "github") setGithubVal(l.url || "");
-              if (key === "instagram") setInstagramVal(l.url || "");
+              const setters: Record<string, [React.Dispatch<React.SetStateAction<string>>, React.Dispatch<React.SetStateAction<boolean>>]> = {
+                email: [setEmail, setEmailHeader],
+                phone: [setPhone, setPhoneHeader],
+                website: [setWebsite, setWebsiteHeader],
+                linkedin: [setLinkedinVal, setLinkedinHeader],
+                calendar: [setCalendar, setCalendarHeader],
+                github: [setGithubVal, setGithubHeader],
+                instagram: [setInstagramVal, setInstagramHeader]
+              };
+              if (key && setters[key]) {
+                const [setUrl, setHeader] = setters[key];
+                setUrl(l.url || "");
+                setHeader(l.displayInHeader !== false);
+              }
             });
           }
 
@@ -326,13 +340,13 @@ export function useResumeForm() {
     setSuccessMsg("");
 
     const linksList = [];
-    if (email) linksList.push({ linkTypeName: "Email", linkTypeKey: "email", url: email });
-    if (phone) linksList.push({ linkTypeName: "Phone", linkTypeKey: "phone", url: phone });
-    if (website) linksList.push({ linkTypeName: "Website", linkTypeKey: "website", url: website });
-    if (linkedinVal) linksList.push({ linkTypeName: "LinkedIn", linkTypeKey: "linkedin", url: linkedinVal });
-    if (calendar) linksList.push({ linkTypeName: "Calendar", linkTypeKey: "calendar", url: calendar });
-    if (githubVal) linksList.push({ linkTypeName: "GitHub", linkTypeKey: "github", url: githubVal });
-    if (instagramVal) linksList.push({ linkTypeName: "Instagram", linkTypeKey: "instagram", url: instagramVal });
+    if (email) linksList.push({ linkTypeName: "Email", linkTypeKey: "email", url: email, displayInHeader: emailHeader });
+    if (phone) linksList.push({ linkTypeName: "Phone", linkTypeKey: "phone", url: phone, displayInHeader: phoneHeader });
+    if (website) linksList.push({ linkTypeName: "Website", linkTypeKey: "website", url: website, displayInHeader: websiteHeader });
+    if (linkedinVal) linksList.push({ linkTypeName: "LinkedIn", linkTypeKey: "linkedin", url: linkedinVal, displayInHeader: linkedinHeader });
+    if (calendar) linksList.push({ linkTypeName: "Calendar", linkTypeKey: "calendar", url: calendar, displayInHeader: calendarHeader });
+    if (githubVal) linksList.push({ linkTypeName: "GitHub", linkTypeKey: "github", url: githubVal, displayInHeader: githubHeader });
+    if (instagramVal) linksList.push({ linkTypeName: "Instagram", linkTypeKey: "instagram", url: instagramVal, displayInHeader: instagramHeader });
 
     const payload = {
       name,
@@ -387,20 +401,13 @@ export function useResumeForm() {
     setPhotoUrlLight,
     photoUrlDark,
     setPhotoUrlDark,
-    email,
-    setEmail,
-    phone,
-    setPhone,
-    website,
-    setWebsite,
-    linkedinVal,
-    setLinkedinVal,
-    calendar,
-    setCalendar,
-    githubVal,
-    setGithubVal,
-    instagramVal,
-    setInstagramVal,
+    email, setEmail, emailHeader, setEmailHeader,
+    phone, setPhone, phoneHeader, setPhoneHeader,
+    website, setWebsite, websiteHeader, setWebsiteHeader,
+    linkedinVal, setLinkedinVal, linkedinHeader, setLinkedinHeader,
+    calendar, setCalendar, calendarHeader, setCalendarHeader,
+    githubVal, setGithubVal, githubHeader, setGithubHeader,
+    instagramVal, setInstagramVal, instagramHeader, setInstagramHeader,
     experiences,
     availableCategories,
     newSkillNameMap,

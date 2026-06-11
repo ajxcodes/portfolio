@@ -7,6 +7,7 @@ import {
   DownloadIcon,
   InstagramIcon,
   LinkIcon,
+  PhoneIcon,
 } from '@/components/icons';
 import { type ContactInfo } from '@/lib/data';
 import { DownloadProgressModal } from '@/components/DownloadProgressModal';
@@ -25,6 +26,7 @@ const iconMap: Record<string, React.ComponentType<{ className: string }>> = {
   github: GitHubIcon,
   calendar: CalendarIcon,
   instagram: InstagramIcon,
+  phone: PhoneIcon,
 };
 
 const formatText = (type: string, url: string) => {
@@ -41,6 +43,9 @@ const formatText = (type: string, url: string) => {
 const formatHref = (type: string, url: string) => {
   if (type.toLowerCase() === 'email') {
     return url.includes('@') && !url.startsWith('mailto:') ? `mailto:${url}` : url;
+  }
+  if (type.toLowerCase() === 'phone') {
+    return url.startsWith('tel:') ? url : `tel:${url.replace(/[^0-9+]/g, '')}`;
   }
   return url.startsWith('http') || url.startsWith('mailto:') ? url : `https://${url}`;
 };
@@ -66,7 +71,9 @@ export const ContactLinks = ({ contact, showText = true, downloadUrl }: ContactL
     onClick?: (e: React.MouseEvent) => void;
   }
 
-  const items: ContactLinkItem[] = regularLinks.map(link => ({
+  const items: ContactLinkItem[] = regularLinks
+    .filter(link => showText || link.displayInHeader !== false)
+    .map(link => ({
     href: formatHref(link.type, link.url),
     Icon: iconMap[link.type.toLowerCase()] || LinkIcon,
     text: formatText(link.type, link.url),
