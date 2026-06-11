@@ -404,10 +404,10 @@ export default function AnalyticsPage() {
                         <td className="py-3">
                           <div className="flex flex-col">
                             <span className="font-bold text-[11px] text-foreground/80 leading-none">
-                              {click.link.linkType.name}
+                              {click.link?.linkType?.name || ('linkTypeName' in click ? String(click.linkTypeName) : "Unknown Link")}
                             </span>
                             <span className="text-[9px] text-muted-foreground truncate max-w-[180px] mt-1">
-                              {click.link.url}
+                              {click.link?.url || "URL Unavailable"}
                             </span>
                           </div>
                         </td>
