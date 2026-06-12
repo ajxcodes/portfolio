@@ -12,7 +12,8 @@ using Xunit;
 
 namespace Portfolio.Tests.Integration;
 
-public class ResumeRepositoryIntegrationTests : IClassFixture<DbTestFixture>
+[Collection("SharedDbCollection")]
+public class ResumeRepositoryIntegrationTests
 {
     private readonly DbTestFixture _fixture;
 

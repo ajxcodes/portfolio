@@ -10,7 +10,8 @@ using Xunit;
 
 namespace Portfolio.Tests.Integration;
 
-public class AuditIntegrationTests : IClassFixture<DbTestFixture>
+[Collection("SharedDbCollection")]
+public class AuditIntegrationTests
 {
     private readonly DbTestFixture _fixture;
 

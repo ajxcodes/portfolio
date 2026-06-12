@@ -189,4 +189,46 @@ describe('data access API fetch handlers', () => {
     expect(data.resume.skills[0].items).toEqual([]);
     expect(data.blogPosts).toEqual([]);
   });
+  it('handles empty or null work experience details and link types', async () => {
+    const mockActiveProfile = {
+      name: 'Test Name',
+      links: [
+        { linkType: { name: 'fallback-type' }, url: 'test.com', displayInHeader: false },
+        { linkType: null, url: 'invalid.com' }
+      ],
+      workExperiences: [
+        {
+          company: 'Null details',
+          role: 'Dev',
+          period: '2023',
+          highlights: null,
+          workExperienceSkills: [
+            { skill: null },
+            { skill: { skillName: 'Valid Skill' } }
+          ]
+        }
+      ]
+    };
+
+    (global.fetch as jest.Mock)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockActiveProfile
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => []
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => []
+      });
+
+    const data = await getPortfolioData();
+    expect(data.resume.experience[0].results).toEqual([]);
+    expect(data.resume.experience[0].skills).toEqual(['Valid Skill']);
+    expect(data.resume.contact.links[0].type).toBe('fallback-type');
+    expect(data.resume.contact.links[0].displayInHeader).toBe(false);
+    expect(data.resume.contact.links.length).toBe(1); // the invalid link is ignored
+  });
 });

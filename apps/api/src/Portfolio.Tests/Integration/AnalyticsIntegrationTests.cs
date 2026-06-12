@@ -12,7 +12,8 @@ using Xunit;
 
 namespace Portfolio.Tests.Integration;
 
-public class AnalyticsIntegrationTests : IClassFixture<DbTestFixture>
+[Collection("SharedDbCollection")]
+public class AnalyticsIntegrationTests
 {
     private readonly DbTestFixture _fixture;
     private readonly HttpClient _client;

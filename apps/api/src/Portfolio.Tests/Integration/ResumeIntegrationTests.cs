@@ -9,7 +9,8 @@ using Xunit;
 
 namespace Portfolio.Tests.Integration;
 
-public class ResumeIntegrationTests : IClassFixture<DbTestFixture>
+[Collection("SharedDbCollection")]
+public class ResumeIntegrationTests
 {
     private readonly DbTestFixture _fixture;
     private readonly HttpClient _client;

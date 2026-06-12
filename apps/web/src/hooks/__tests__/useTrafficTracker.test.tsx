@@ -271,4 +271,51 @@ describe('useTrafficTracker Hook', () => {
       useRefSpy.mockRestore();
     }
   });
+
+  it('does nothing when clicking an element outside of any anchor tag', () => {
+    render(
+      <div>
+        <TestTrackerComponent />
+        <button data-testid="non-anchor-btn">Click Me</button>
+      </div>
+    );
+    (global.fetch as jest.Mock).mockClear();
+
+    fireEvent.click(screen.getByTestId('non-anchor-btn'));
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  it('does nothing when clicking an anchor tag without an href', () => {
+    render(
+      <div>
+        <TestTrackerComponent />
+        <a data-testid="no-href-anchor">No Href</a>
+      </div>
+    );
+    (global.fetch as jest.Mock).mockClear();
+
+    fireEvent.click(screen.getByTestId('no-href-anchor'));
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  it('tracks clicks correctly when clicking a child element inside a valid anchor tag', () => {
+    render(
+      <div>
+        <TestTrackerComponent />
+        <a 
+          href="https://external.com" 
+          data-link-id="12345678-1234-1234-1234-1234567890ab" 
+        >
+          <span data-testid="inner-span">Click My Child</span>
+        </a>
+      </div>
+    );
+    (global.fetch as jest.Mock).mockClear();
+
+    fireEvent.click(screen.getByTestId('inner-span'));
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/api/analytics/clicks'),
+      expect.any(Object)
+    );
+  });
 });

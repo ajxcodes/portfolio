@@ -1,0 +1,19 @@
+{
+  "stryker-config": {
+    "project": "Portfolio.Application.csproj",
+    "reporters": [
+      "html",
+      "json",
+      "progress",
+      "cleartext"
+    ],
+    "thresholds": {
+      "high": 90,
+      "low": 85,
+      "break": 80
+    },
+    "mutate": [
+      "**/*.cs"
+    ]
+  }
+}

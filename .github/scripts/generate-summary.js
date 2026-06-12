@@ -148,6 +148,58 @@ async function main() {
     }
   }
 
+  // 5.5 Resolve and parse Stryker Mutation Test Results
+  let mutationReport = null;
+  let frontendMutationReport = null;
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    
+    function findMutationReport(dir, targetFile) {
+      if (!fs.existsSync(dir)) return null;
+      const files = fs.readdirSync(dir);
+      for (const file of files) {
+        const fullPath = path.join(dir, file);
+        if (fs.statSync(fullPath).isDirectory()) {
+          const res = findMutationReport(fullPath, targetFile);
+          if (res) return res;
+        } else if (file === targetFile) {
+          return fullPath;
+        }
+      }
+      return null;
+    }
+    
+    function parseStrykerData(reportPath) {
+      if (!reportPath) return null;
+      const content = fs.readFileSync(reportPath, 'utf8');
+      const data = JSON.parse(content);
+      let total = 0, killed = 0, survived = 0;
+      if (data.files) {
+         for (const file in data.files) {
+            const mutants = data.files[file].mutants || [];
+            for (const mutant of mutants) {
+               total++;
+               if (mutant.status === 'Killed' || mutant.status === 'Timeout') killed++;
+               if (mutant.status === 'Survived' || mutant.status === 'NoCoverage') survived++;
+            }
+         }
+      }
+      let score = 0;
+      if (total > 0) score = ((killed / total) * 100).toFixed(2);
+      return { total, killed, survived, score };
+    }
+    
+    const beReportPath = findMutationReport('artifacts/mutation-report', 'mutation-report.json') || findMutationReport('apps/api/src/Portfolio.Tests/StrykerOutput', 'mutation-report.json');
+    mutationReport = parseStrykerData(beReportPath);
+    
+    const feReportPath = findMutationReport('artifacts/frontend-mutation-report', 'mutation.json') || findMutationReport('apps/web/reports/mutation', 'mutation.json');
+    frontendMutationReport = parseStrykerData(feReportPath);
+    
+  } catch (e) {
+    console.error('Failed to parse Mutation JSON:', e.message);
+  }
+
   // Generate Markdown summary
   let markdown = `# 🚀 CI/CD Test & Coverage Summary\n\n`;
 
@@ -190,6 +242,20 @@ async function main() {
     }
   }
   markdown += `\n`;
+
+  // Mutation Testing Table
+  if (mutationReport || frontendMutationReport) {
+    markdown += `### 🧬 Mutation Testing Report\n\n`;
+    markdown += `| Component | Total Mutants | Killed | Survived | Mutation Score |\n`;
+    markdown += `| :--- | :---: | :---: | :---: | :---: |\n`;
+    if (mutationReport) {
+      markdown += `| **Backend (.NET Stryker)** | ${mutationReport.total} | ${mutationReport.killed} | ${mutationReport.survived} | **${mutationReport.score}%** |\n`;
+    }
+    if (frontendMutationReport) {
+      markdown += `| **Frontend (StrykerJS)** | ${frontendMutationReport.total} | ${frontendMutationReport.killed} | ${frontendMutationReport.survived} | **${frontendMutationReport.score}%** |\n`;
+    }
+    markdown += `\n`;
+  }
 
   // AI Summary section
   const apiKey = process.env.GEMINI_API_KEY;

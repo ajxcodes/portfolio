@@ -339,4 +339,141 @@ describe("useResumeForm Hook", () => {
     );
     expect(result.current.successMsg).toBe("Profile details saved successfully!");
   });
+
+  it("should filter out empty highlights when saving profile", async () => {
+    mockGet.mockReturnValue("new");
+
+    const { result } = await renderAndResolveHook();
+
+    await act(async () => {
+      result.current.addExperience();
+    });
+
+    await act(async () => {
+      result.current.updateExperience(0, "highlights", ["valid", "   ", "", "also valid"]);
+    });
+
+    const mockEvent = { preventDefault: jest.fn() } as unknown as React.FormEvent;
+
+    await act(async () => {
+      await result.current.handleSubmit(mockEvent);
+    });
+
+    expect(adminService.saveProfile).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        workExperiences: expect.arrayContaining([
+          expect.objectContaining({
+            highlights: ["valid", "also valid"]
+          })
+        ])
+      })
+    );
+  });
+
+  it("should handle createSkillInline error properly", async () => {
+    mockGet.mockReturnValue("new");
+    (adminService.createSkillInline as jest.Mock).mockRejectedValueOnce(new Error("Network Error"));
+
+    const { result } = await renderAndResolveHook();
+
+    await act(async () => {
+      result.current.addExperience();
+    });
+
+    await act(async () => {
+      result.current.setNewSkillNameMap({ 0: "React" });
+      result.current.setNewSkillCatMap({ 0: "cat-1" });
+    });
+
+    await act(async () => {
+      await result.current.handleCreateSkillInline(0);
+    });
+
+    expect(result.current.errorMsg).toBe("Network Error");
+  });
+
+  it("should handle updateExperience with partial object correctly", async () => {
+    const { result } = await renderAndResolveHook();
+
+    act(() => {
+      result.current.addExperience();
+    });
+
+    act(() => {
+      result.current.updateExperience(0, { company: "Google" });
+    });
+
+    expect(result.current.experiences[0].company).toBe("Google");
+  });
+
+  it("should format period correctly when not current and missing end date", async () => {
+    mockGet.mockReturnValue("new");
+    (adminService.saveProfile as jest.Mock).mockResolvedValueOnce({});
+
+    const { result } = await renderAndResolveHook();
+
+    act(() => {
+      result.current.addExperience();
+      result.current.updateExperience(0, {
+        startMonth: "Jan",
+        startYear: "2020",
+        isCurrent: false,
+        endMonth: "",
+        endYear: "",
+      });
+    });
+
+    const mockEvent = { preventDefault: jest.fn() } as unknown as React.FormEvent;
+
+    await act(async () => {
+      await result.current.handleSubmit(mockEvent);
+    });
+
+    expect(adminService.saveProfile).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        workExperiences: expect.arrayContaining([
+          expect.objectContaining({
+            period: expect.any(String)
+          })
+        ])
+      })
+    );
+  });
+
+  it("should handle saveProfile error properly", async () => {
+    mockGet.mockReturnValue("new");
+    (adminService.saveProfile as jest.Mock).mockRejectedValueOnce(new Error("Save Error"));
+
+    const { result } = await renderAndResolveHook();
+
+    const mockEvent = { preventDefault: jest.fn() } as unknown as React.FormEvent;
+
+    await act(async () => {
+      await result.current.handleSubmit(mockEvent);
+    });
+
+    expect(result.current.errorMsg).toBe("Save Error");
+  });
+
+  it("should handle adding and removing a skill from an experience", async () => {
+    const { result } = await renderAndResolveHook();
+
+    act(() => {
+      result.current.addExperience();
+    });
+
+    act(() => {
+      result.current.updateExperience(0, "skillIds", ["skill-x"]);
+    });
+    expect(result.current.experiences[0].skillIds).toContain("skill-x");
+
+    // Removing skill
+    act(() => {
+      result.current.updateExperience(0, "skillIds", []);
+    });
+    expect(result.current.experiences[0].skillIds).not.toContain("skill-x");
+  });
+
 });
