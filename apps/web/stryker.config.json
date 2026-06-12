@@ -1,0 +1,27 @@
+{
+  "$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
+  "packageManager": "pnpm",
+  "reporters": [
+    "html",
+    "clear-text",
+    "progress",
+    "json"
+  ],
+  "testRunner": "jest",
+  "plugins": [
+    "@stryker-mutator/jest-runner"
+  ],
+  "jest": {
+    "projectType": "custom",
+    "configFile": "jest.config.js"
+  },
+  "coverageAnalysis": "perTest",
+  "mutate": [
+    "src/hooks/**/*.ts",
+    "src/hooks/**/*.tsx",
+    "src/lib/**/*.ts",
+    "!src/**/__tests__/**/*",
+    "!src/**/*.test.*"
+  ],
+  "tempDirName": "stryker-tmp"
+}

@@ -3,38 +3,25 @@ using Portfolio.Infrastructure.Storage.Services;
 using Shouldly;
 using Testcontainers.Minio;
 using Xunit;
+using Portfolio.Tests.Infrastructure;
 
 namespace Portfolio.Tests.Integration;
 
-public class S3StorageIntegrationTests : IAsyncLifetime
+[Collection("SharedDbCollection")]
+public class S3StorageIntegrationTests
 {
-    private MinioContainer _minioContainer = null!;
+    private readonly DbTestFixture _fixture;
 
-    [DllImport("libc", EntryPoint = "getuid")]
-    private static extern uint GetUid();
-
-    public async Task InitializeAsync()
+    public S3StorageIntegrationTests(DbTestFixture fixture)
     {
-        ConfigureDockerHostForPodman();
-
-        _minioContainer = new MinioBuilder("minio/minio")
-            .WithUsername("minioadmin")
-            .WithPassword("minioadminpassword")
-            .Build();
-
-        await _minioContainer.StartAsync();
-    }
-
-    public async Task DisposeAsync()
-    {
-        await _minioContainer.DisposeAsync();
+        _fixture = fixture;
     }
 
     [Fact]
     public async Task UploadFileAsync_ShouldSuccessfullyUploadFileToMinio_AndReturnAccessibleUrl()
     {
         // Arrange
-        var endpoint = _minioContainer.GetConnectionString();
+        var endpoint = _fixture.MinioContainer.GetConnectionString();
         Environment.SetEnvironmentVariable("S3_ENDPOINT", endpoint);
         Environment.SetEnvironmentVariable("S3_ACCESS_KEY", "minioadmin");
         Environment.SetEnvironmentVariable("S3_SECRET_KEY", "minioadminpassword");
@@ -63,30 +50,5 @@ public class S3StorageIntegrationTests : IAsyncLifetime
 
         var fetchedBytes = await fetchResponse.Content.ReadAsByteArrayAsync();
         fetchedBytes.ShouldBe(fileContent);
-    }
-
-    private void ConfigureDockerHostForPodman()
-    {
-        if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("DOCKER_HOST")))
-        {
-            return;
-        }
-
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-        {
-            try
-            {
-                var uid = GetUid();
-                var podmanSocketPath = $"/run/user/{uid}/podman/podman.sock";
-                if (File.Exists(podmanSocketPath))
-                {
-                    Environment.SetEnvironmentVariable("DOCKER_HOST", $"unix://{podmanSocketPath}");
-                }
-            }
-            catch
-            {
-                // Graceful fallback
-            }
-        }
     }
 }

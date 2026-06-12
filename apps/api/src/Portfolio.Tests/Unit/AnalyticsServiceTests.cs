@@ -99,7 +99,75 @@ public class AnalyticsServiceTests
         await _service.LogLinkClickAsync(log);
 
         // Assert
-        await _repositoryMock.DidNotReceive().LogLinkClickAsync(log);
+        _loggerMock.Received(1).Log(
+            LogLevel.Warning,
+            Arg.Any<EventId>(),
+            Arg.Is<object>(o => o.ToString().Contains("Link click received for missing LinkId")),
+            null,
+            Arg.Any<Func<object, Exception, string>>()!);
+        
+        await _repositoryMock.DidNotReceive().LogLinkClickAsync(Arg.Any<LinkClickLog>());
         await _repositoryMock.DidNotReceive().SaveChangesAsync();
+    }
+
+    [Fact]
+    public async Task LogLinkClickAsync_SavesRecord_WhenLinkIdIsNull()
+    {
+        // Arrange
+        var log = new LinkClickLog { Id = Guid.NewGuid(), LinkId = null };
+
+        // Act
+        await _service.LogLinkClickAsync(log);
+
+        // Assert
+        await _resumeRepositoryMock.DidNotReceive().GetLinkByIdAsync(Arg.Any<Guid>());
+        await _repositoryMock.Received(1).LogLinkClickAsync(log);
+        await _repositoryMock.Received(1).SaveChangesAsync();
+    }
+
+    [Fact]
+    public async Task LogLinkClickAsync_StripsNewlinesFromUrlAndTypeName()
+    {
+        // Arrange
+        var linkId = Guid.NewGuid();
+        var log = new LinkClickLog { Id = Guid.NewGuid(), LinkId = linkId };
+        var mockLink = new Portfolio.Domain.Resume.ResumeProfileLink 
+        { 
+            Id = linkId, 
+            Url = "https://\r\nexample\t.com", 
+            LinkType = new Portfolio.Domain.Resume.ResumeProfileLinkType { Name = "Twit\r\nter" } 
+        };
+        _resumeRepositoryMock.GetLinkByIdAsync(linkId).Returns(mockLink);
+
+        // Act
+        await _service.LogLinkClickAsync(log);
+
+        // Assert
+        log.TargetUrl.ShouldBe("https://example.com");
+        log.LinkTypeName.ShouldBe("Twitter");
+        await _repositoryMock.Received(1).LogLinkClickAsync(log);
+    }
+
+    [Fact]
+    public async Task LogLinkClickAsync_HandlesNullUrlAndLinkType()
+    {
+        // Arrange
+        var linkId = Guid.NewGuid();
+        var log = new LinkClickLog { Id = Guid.NewGuid(), LinkId = linkId };
+        var mockLink = new Portfolio.Domain.Resume.ResumeProfileLink 
+        { 
+            Id = linkId, 
+            Url = null, 
+            LinkType = null 
+        };
+        _resumeRepositoryMock.GetLinkByIdAsync(linkId).Returns(mockLink);
+
+        // Act
+        await _service.LogLinkClickAsync(log);
+
+        // Assert
+        log.TargetUrl.ShouldBe("");
+        log.LinkTypeName.ShouldBe("");
+        await _repositoryMock.Received(1).LogLinkClickAsync(log);
     }
 }

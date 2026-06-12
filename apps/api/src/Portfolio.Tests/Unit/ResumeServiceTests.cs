@@ -321,4 +321,212 @@ public class ResumeServiceTests
             await _service.UpdateProfileWithDetailsAsync(id, new UpdateResumeRequest());
         });
     }
+
+    [Fact]
+    public async Task GetProfileByIdAsync_ReturnsProfileFromRepository()
+    {
+        // Arrange
+        var id = Guid.NewGuid();
+        var profile = new ResumeProfile { Id = id, Name = "Test" };
+        _repositoryMock.GetProfileByIdAsync(id).Returns(profile);
+
+        // Act
+        var result = await _service.GetProfileByIdAsync(id);
+
+        // Assert
+        result.ShouldBe(profile);
+        await _repositoryMock.Received(1).GetProfileByIdAsync(id);
+    }
+
+    [Fact]
+    public async Task CreateProfileWithDetailsAsync_UsesDefaultPhotos_WhenNull()
+    {
+        // Arrange
+        var request = new CreateResumeRequest
+        {
+            Name = "A", Title = "B", Intro = "C",
+            PhotoUrlLight = null, PhotoUrlDark = null
+        };
+
+        // Act
+        var result = await _service.CreateProfileWithDetailsAsync(request);
+
+        // Assert
+        result.PhotoUrlLight.ShouldBe("https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80");
+        result.PhotoUrlDark.ShouldBe("https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=300&q=80");
+    }
+
+    [Fact]
+    public async Task CreateProfileWithDetailsAsync_UsesProvidedPhotos_WhenNotNull()
+    {
+        // Arrange
+        var request = new CreateResumeRequest
+        {
+            Name = "A", Title = "B", Intro = "C",
+            PhotoUrlLight = "http://light.jpg", PhotoUrlDark = "http://dark.jpg"
+        };
+
+        // Act
+        var result = await _service.CreateProfileWithDetailsAsync(request);
+
+        // Assert
+        result.PhotoUrlLight.ShouldBe("http://light.jpg");
+        result.PhotoUrlDark.ShouldBe("http://dark.jpg");
+    }
+
+    [Fact]
+    public async Task UpdateProfileWithDetailsAsync_KeepsExistingPhotos_WhenNull()
+    {
+        // Arrange
+        var id = Guid.NewGuid();
+        var profile = new ResumeProfile { Id = id, PhotoUrlLight = "old-light", PhotoUrlDark = "old-dark" };
+        _repositoryMock.GetProfileByIdAsync(id).Returns(profile);
+
+        var request = new UpdateResumeRequest
+        {
+            Name = "A", Title = "B", Intro = "C",
+            PhotoUrlLight = null, PhotoUrlDark = null
+        };
+
+        // Act
+        await _service.UpdateProfileWithDetailsAsync(id, request);
+
+        // Assert
+        profile.PhotoUrlLight.ShouldBe("old-light");
+        profile.PhotoUrlDark.ShouldBe("old-dark");
+        await _repositoryMock.Received(1).UpdateProfileAsync(profile);
+    }
+
+    [Fact]
+    public async Task UpdateProfileWithDetailsAsync_UpdatesPhotos_WhenProvided()
+    {
+        // Arrange
+        var id = Guid.NewGuid();
+        var profile = new ResumeProfile { Id = id, PhotoUrlLight = "old-light", PhotoUrlDark = "old-dark" };
+        _repositoryMock.GetProfileByIdAsync(id).Returns(profile);
+
+        var request = new UpdateResumeRequest
+        {
+            Name = "A", Title = "B", Intro = "C",
+            PhotoUrlLight = "new-light", PhotoUrlDark = "new-dark"
+        };
+
+        // Act
+        await _service.UpdateProfileWithDetailsAsync(id, request);
+
+        // Assert
+        // Assert
+        profile.PhotoUrlLight.ShouldBe("new-light");
+        profile.PhotoUrlDark.ShouldBe("new-dark");
+        await _repositoryMock.Received(1).UpdateProfileAsync(profile);
+    }
+
+    [Fact]
+    public async Task CreateProfileWithDetailsAsync_HandlesNullCollections()
+    {
+        // Arrange
+        var request = new CreateResumeRequest
+        {
+            Name = "A", Title = "B", Intro = "C",
+            Links = null,
+            WorkExperiences = null
+        };
+
+        // Act
+        var result = await _service.CreateProfileWithDetailsAsync(request);
+
+        // Assert
+        result.ShouldNotBeNull();
+        await _repositoryMock.Received(1).AddProfileAsync(Arg.Any<ResumeProfile>());
+        await _repositoryMock.DidNotReceive().AddProfileLinkAsync(Arg.Any<ResumeProfileLink>());
+        await _repositoryMock.DidNotReceive().AddWorkExperienceAsync(Arg.Any<WorkExperience>());
+        await _repositoryMock.Received(1).SaveChangesAsync();
+    }
+
+    [Fact]
+    public async Task UpdateProfileWithDetailsAsync_HandlesNullCollections()
+    {
+        // Arrange
+        var id = Guid.NewGuid();
+        var profile = new ResumeProfile { Id = id };
+        _repositoryMock.GetProfileByIdAsync(id).Returns(profile);
+
+        var request = new UpdateResumeRequest
+        {
+            Name = "A", Title = "B", Intro = "C",
+            Links = null,
+            WorkExperiences = null
+        };
+
+        // Act
+        await _service.UpdateProfileWithDetailsAsync(id, request);
+
+        // Assert
+        await _repositoryMock.Received(1).UpdateProfileAsync(profile);
+        await _repositoryMock.Received(1).RemoveLinksByProfileIdAsync(id);
+        await _repositoryMock.Received(1).RemoveWorkExperiencesByProfileIdAsync(id);
+        await _repositoryMock.DidNotReceive().AddProfileLinkAsync(Arg.Any<ResumeProfileLink>());
+        await _repositoryMock.DidNotReceive().AddWorkExperienceAsync(Arg.Any<WorkExperience>());
+        await _repositoryMock.Received(1).SaveChangesAsync();
+    }
+
+    [Fact]
+    public async Task CreateProfileWithDetailsAsync_HandlesEmptyHighlightsAndNullSkillIds()
+    {
+        // Arrange
+        var request = new CreateResumeRequest
+        {
+            Name = "A", Title = "B", Intro = "C",
+            WorkExperiences = new List<WorkExperienceDto>
+            {
+                new()
+                {
+                    Company = "Google", Role = "SWE", Period = "2020",
+                    Highlights = new List<string>(), // Empty highlights
+                    SkillIds = null // Null skills
+                }
+            }
+        };
+
+        // Act
+        var result = await _service.CreateProfileWithDetailsAsync(request);
+
+        // Assert
+        await _repositoryMock.Received(1).AddWorkExperienceAsync(Arg.Any<WorkExperience>());
+        await _repositoryMock.DidNotReceive().AddExperienceHighlightAsync(Arg.Any<ExperienceHighlight>());
+        await _repositoryMock.DidNotReceive().AddWorkExperienceSkillAsync(Arg.Any<WorkExperienceSkill>());
+        await _repositoryMock.Received(1).SaveChangesAsync();
+    }
+
+    [Fact]
+    public async Task UpdateProfileWithDetailsAsync_HandlesEmptyHighlightsAndNullSkillIds()
+    {
+        // Arrange
+        var id = Guid.NewGuid();
+        var profile = new ResumeProfile { Id = id };
+        _repositoryMock.GetProfileByIdAsync(id).Returns(profile);
+
+        var request = new UpdateResumeRequest
+        {
+            Name = "A", Title = "B", Intro = "C",
+            WorkExperiences = new List<WorkExperienceDto>
+            {
+                new()
+                {
+                    Company = "Google", Role = "SWE", Period = "2020",
+                    Highlights = new List<string>(), // Empty highlights
+                    SkillIds = null // Null skills
+                }
+            }
+        };
+
+        // Act
+        await _service.UpdateProfileWithDetailsAsync(id, request);
+
+        // Assert
+        await _repositoryMock.Received(1).AddWorkExperienceAsync(Arg.Any<WorkExperience>());
+        await _repositoryMock.DidNotReceive().AddExperienceHighlightAsync(Arg.Any<ExperienceHighlight>());
+        await _repositoryMock.DidNotReceive().AddWorkExperienceSkillAsync(Arg.Any<WorkExperienceSkill>());
+        await _repositoryMock.Received(1).SaveChangesAsync();
+    }
 }
