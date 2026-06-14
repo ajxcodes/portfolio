@@ -105,7 +105,7 @@ export function useAiChat() {
             chunk = JSON.parse(msg.data).text;
           } catch (e) {
             console.error('Failed to parse SSE JSON chunk:', e);
-            return;
+            throw new Error('Invalid JSON stream format from server');
           }
           setMessages((prev) =>
             prev.map((m) =>

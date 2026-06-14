@@ -105,7 +105,7 @@ export function useTerminalShell(blogPosts: BlogPost[], resume: ResumeData) {
             chunk = JSON.parse(msg.data).text;
           } catch (e) {
             console.error('Failed to parse SSE JSON chunk:', e);
-            return;
+            throw new Error('Invalid JSON stream format from server');
           }
           setHistory(prev => prev.map(item => 
             item.id === msgId ? { ...item, text: item.text + chunk } : item

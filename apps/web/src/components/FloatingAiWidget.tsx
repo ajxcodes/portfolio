@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePathname } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
+import rehypeSanitize from 'rehype-sanitize';
 import { BotIcon, MessageCircleIcon, TerminalIcon } from './icons';
 import { useAiChat } from '@/hooks/useAiChat';
 import { BlogPost, ResumeData } from '@/lib/data';
@@ -173,7 +174,7 @@ export function FloatingAiWidget({ blogPosts = [], resume }: FloatingAiWidgetPro
                         ) : (
                           <>
                             <div className="prose prose-sm dark:prose-invert max-w-none break-words">
-                              <ReactMarkdown>
+                              <ReactMarkdown rehypePlugins={[rehypeSanitize]}>
                                 {msg.content}
                               </ReactMarkdown>
                             </div>

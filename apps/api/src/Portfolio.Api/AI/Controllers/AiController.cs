@@ -31,6 +31,14 @@ public class AiController(
             return;
         }
 
+        var acceptHeader = Request.Headers.Accept.ToString();
+        if (!string.IsNullOrEmpty(acceptHeader) && !acceptHeader.Contains("text/event-stream"))
+        {
+            Response.StatusCode = StatusCodes.Status406NotAcceptable;
+            await Response.WriteAsync("Client must accept text/event-stream.", cancellationToken);
+            return;
+        }
+
         // Log the query
         var queryLog = new AiQueryLog
         {

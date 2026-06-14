@@ -11,7 +11,8 @@ const customJestConfig = {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
     '^react-markdown$': '<rootDir>/__mocks__/react-markdown.tsx',
-    '^remark-gfm$': '<rootDir>/__mocks__/remark-gfm.tsx'
+    '^remark-gfm$': '<rootDir>/__mocks__/remark-gfm.tsx',
+    '^rehype-sanitize$': '<rootDir>/__mocks__/rehype-sanitize.tsx'
   },
   modulePathIgnorePatterns: ['<rootDir>/stryker-tmp/', '<rootDir>/e2e/'],
   coverageThreshold: {
