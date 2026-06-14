@@ -121,16 +121,16 @@ public class ResumePdfGeneratorTests
     }
 
     [Theory]
-    [InlineData("email", "mailto:test@example.com", "test@example.com")]
-    [InlineData("Email", "mailto:test@example.com", "test@example.com")]
-    [InlineData("phone", "123-456-7890", "123-456-7890")]
-    [InlineData("linkedin", "https://www.linkedin.com/in/aj", "linkedin.com/in/aj")]
-    [InlineData("github", "http://github.com/aj", "github.com/aj")]
-    [InlineData("website", "https://mywebsite.com/", "mywebsite.com")]
-    [InlineData("unknown", "https://unknown.com", "https://unknown.com")]
-    [InlineData("email", null, null)]
-    [InlineData("email", " ", " ")]
-    public void GeneratePdf_FormatsContactUrlsCorrectly(string linkType, string inputUrl, string expectedUrl)
+    [InlineData("email", "mailto:test@example.com")]
+    [InlineData("Email", "mailto:test@example.com")]
+    [InlineData("phone", "123-456-7890")]
+    [InlineData("linkedin", "https://www.linkedin.com/in/aj")]
+    [InlineData("github", "http://github.com/aj")]
+    [InlineData("website", "https://mywebsite.com/")]
+    [InlineData("unknown", "https://unknown.com")]
+    [InlineData("email", null)]
+    [InlineData("email", " ")]
+    public void GeneratePdf_FormatsContactUrlsCorrectly(string linkType, string? inputUrl)
     {
         // Arrange
         var profile = new ResumeProfile
@@ -143,7 +143,7 @@ public class ResumePdfGeneratorTests
                 new()
                 {
                     Id = Guid.NewGuid(),
-                    Url = inputUrl,
+                    Url = inputUrl!,
                     LinkType = new ResumeProfileLinkType { KeyIdentifier = linkType, Name = linkType }
                 }
             },

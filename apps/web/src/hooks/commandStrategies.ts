@@ -4,6 +4,9 @@ import { toSlug } from '@/lib/slugUtils';
 export interface TerminalHistoryItem {
   type: 'input' | 'output';
   text: string;
+  prompt?: string;
+  id?: string;
+  isMarkdown?: boolean;
 }
 
 export interface CommandContext {
@@ -25,6 +28,8 @@ export const helpHandler: CommandHandler = {
       { type: 'output', text: '  ls [dir]             List records inside a folder (e.g. ls blog, ls experience)' },
       { type: 'output', text: '  cat [file/path]      Display record details (e.g. cat contact, cat blog/setting-up-pi-hole)' },
       { type: 'output', text: '  open blog/[slug]     Open article page directly in current tab' },
+      { type: 'output', text: '  ask                  Enter interactive AI assistant mode' },
+      { type: 'output', text: '  ask [question]       Ask the AI a single question directly (e.g. ask what is your tech stack?)' },
       { type: 'output', text: '  clear                Clear terminal output history' },
       { type: 'output', text: '  help                 Show this help manual' }
     ];

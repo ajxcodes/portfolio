@@ -39,6 +39,10 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       DB_HOST: db
+      AI_PROVIDER: ${AI_PROVIDER:-Ollama}
+      OLLAMA_ENDPOINT: ${OLLAMA_ENDPOINT:-http://ollama:11434}
+      AI_TEMPERATURE: ${AI_TEMPERATURE:-0.1}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       DB_NAME: portfolio
       DB_USER: user
       DB_PASSWORD: e2e_test_password
@@ -65,5 +69,17 @@ services:
     volumes:
       - minio_data:/data
 
+  ollama:
+    image: ollama/ollama:rocm
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    devices:
+      - "/dev/kfd:/dev/kfd"
+      - "/dev/dri:/dev/dri"
+    restart: unless-stopped
+
 volumes:
   minio_data:
+  ollama_data:

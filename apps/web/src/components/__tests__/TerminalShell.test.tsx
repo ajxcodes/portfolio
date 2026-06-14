@@ -21,10 +21,11 @@ describe('TerminalShell Component', () => {
   ];
 
   const mockResume: ResumeData = {
-    profile: { id: 'p1', name: 'Alvin', title: 'Dev', intro: '', photoUrlLight: '', photoUrlDark: '' },
+    summary: { lead: 'test', highlights: [] },
+    downloadUrl: '',
     experience: [],
     previousExperience: [],
-    contact: { email: 'test@test.com' },
+    contact: { links: [{ type: 'email', url: 'test@test.com' }] },
     skills: [],
     projects: [],
     education: []

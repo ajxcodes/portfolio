@@ -1,7 +1,17 @@
 export default function ResumeLoading() {
   return (
-    <div className="max-w-6xl mx-auto terminal-card p-8 rounded-2xl shadow-xl border border-primary/10 font-mono animate-pulse">
-      {/* Hero Section Skeleton */}
+    <div className="max-w-6xl mx-auto terminal-card rounded-2xl shadow-xl border border-primary/10 font-mono overflow-hidden">
+      {/* Title Bar Skeleton */}
+      <div className="bg-primary/5 border-b border-primary/20 px-4 py-2.5 flex items-center select-none">
+        <div className="flex items-center gap-1.5 opacity-50">
+          <div className="w-3 h-3 rounded-full bg-red-500/80"></div>
+          <div className="w-3 h-3 rounded-full bg-yellow-500/80"></div>
+          <div className="w-3 h-3 rounded-full bg-green-500/80"></div>
+        </div>
+      </div>
+
+      <div className="p-8 animate-pulse">
+        {/* Hero Section Skeleton */}
       <section className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center border-b border-primary/20 pb-8 mb-8">
         <div className="md:col-span-1 flex justify-center md:justify-start">
           {/* Avatar Skeleton */}
@@ -62,6 +72,7 @@ export default function ResumeLoading() {
               </div>
             ))}
           </div>
+        </div>
         </div>
       </div>
     </div>

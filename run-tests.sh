@@ -7,6 +7,8 @@ PROJECT_ROOT="$(pwd)"
 
 RUN_BE=false
 RUN_FE=false
+RUN_BE_MUTATIONS=false
+RUN_FE_MUTATIONS=false
 RUN_E2E=false
 SILENT=false
 
@@ -21,14 +23,17 @@ for arg in "$@"; do
   case $arg in
     --be) RUN_BE=true ;;
     --fe) RUN_FE=true ;;
+    --be-mutations) RUN_BE_MUTATIONS=true ;;
+    --fe-mutations) RUN_FE_MUTATIONS=true ;;
     --e2e) RUN_E2E=true ;;
     --all) RUN_BE=true; RUN_FE=true; RUN_E2E=true ;;
+    --all-mutations) RUN_BE_MUTATIONS=true; RUN_FE_MUTATIONS=true ;;
     --silent|-s) SILENT=true ;;
     *) echo "Unknown argument: $arg"; exit 1 ;;
   esac
 done
 
-if [ "$RUN_BE" = false ] && [ "$RUN_FE" = false ] && [ "$RUN_E2E" = false ]; then
+if [ "$RUN_BE" = false ] && [ "$RUN_FE" = false ] && [ "$RUN_E2E" = false ] && [ "$RUN_BE_MUTATIONS" = false ] && [ "$RUN_FE_MUTATIONS" = false ]; then
   RUN_BE=true
   RUN_FE=true
   RUN_E2E=true
@@ -54,11 +59,14 @@ if [ "$RUN_BE" = true ]; then
     echo "=== Backend Tests Failed ==="
     TEST_RESULT=1
   fi
-  
-  echo "=== Running Mutation Tests ==="
+  cd "$PROJECT_ROOT"
+fi
+
+if [ "$RUN_BE_MUTATIONS" = true ]; then
+  echo "=== Running Backend Mutation Tests ==="
+  cd "$PROJECT_ROOT/apps/api/src/Portfolio.Tests"
   run_cmd dotnet tool restore
   run_cmd dotnet stryker || echo "Warning: Mutation tests failed or encountered an error."
-
   cd "$PROJECT_ROOT"
 fi
 
@@ -71,10 +79,13 @@ if [ "$RUN_FE" = true ]; then
     echo "=== Frontend Tests Failed ==="
     TEST_RESULT=1
   fi
-  
-  echo "=== Running Frontend Mutation Tests ==="
-  run_cmd pnpm exec stryker run || echo "Warning: Frontend Mutation tests failed or encountered an error."
+  cd "$PROJECT_ROOT"
+fi
 
+if [ "$RUN_FE_MUTATIONS" = true ]; then
+  echo "=== Running Frontend Mutation Tests ==="
+  cd "$PROJECT_ROOT/apps/web"
+  run_cmd pnpm exec stryker run || echo "Warning: Frontend Mutation tests failed or encountered an error."
   cd "$PROJECT_ROOT"
 fi
 

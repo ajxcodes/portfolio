@@ -14,15 +14,11 @@ You can run the entire application on your local machine using Docker and Docker
 
 **Instructions:**
 1. Clone the repository to your local machine.
-2. Create a `.env` file in the root of the project and add the following environment variables:
-
-```env
-ASPNETCORE_ENVIRONMENT=Development
-DB_HOST=db
-DB_NAME=portfolio
-DB_USER=user
-DB_PASSWORD=password
+```bash
+cp .env.template .env
 ```
+
+Review and adjust the AI provider (`Ollama` or `Gemini`), Database, and Supabase keys as needed.
 
 3. Run the following command from the root of the project to build and start the containers:
 
@@ -46,6 +42,10 @@ This project is built with the following technologies:
 * **Framework:** .NET 10 Web API
 * **Language:** C#
 * **Database:** PostgreSQL with EF Core
+* **AI Integration:** Drop-in `IAiChatService` architecture supporting both local **Ollama** and cloud **Google Gemini**.
+* **Real-time Streaming:** Server-Sent Events (SSE) implemented via raw `HttpClient` chunk parsing.
+* **Analytics & GDPR:** Custom data migrations that scrub PII (hashing IPs) into secure `VisitorSessionId` tokens for Page Views, Link Clicks, and AI Queries.
+* **Security:** `Microsoft.AspNetCore.RateLimiting` sliding window policies to prevent API abuse.
 * **PDF Compilation:** QuestPDF (ATS-compliant layouts)
 * **Cloud Storage:** S3-compatible object storage via AWS SDK
 * **API Documentation:** OpenAPI / Swagger
@@ -62,7 +62,12 @@ This project serves as a practical demonstration of my skills and experience as 
 Key features include:
 1. **Interactive Bash Terminal CLI**: A retro-themed interactive CLI shell on the homepage supporting commands like `ls`, `cat [dir]`, `open blog/[slug]`, and `clear`.
 2. **Dynamic PDF Resumes**: An integrated PDF compiler using QuestPDF that generates a professional, ATS-friendly PDF download in real-time.
-3. **Supabase-Authenticated Admin Panel**: A secure management portal (`/admin`) to update experience logs, link profiles, view traffic analytics, upload media files directly to cloud storage, and view application audit trails.
+3. **Resume AI Chatbot (RAG)**: A highly defensive AI Assistant that dynamically pulls the active Resume Profile from the database and injects it into a strict system prompt. 
+    - Supports hot-swapping between **Ollama** (e.g. `gemma4:e2b` for local testing) and **Google Gemini** in production.
+    - Uses Server-Sent Events (SSE) to stream responses chunk-by-chunk to the frontend UI.
+    - Locked down with IP-based rate limiting (5 requests per minute).
+4. **GDPR-Compliant Analytics Tracker**: A robust analytics engine that tracks page views, link clicks, and AI queries. To protect user privacy, it uses custom SQL migrations to securely hash the user's IP Address and User Agent into an anonymous `VisitorSessionId`. 
+5. **Supabase-Authenticated Admin Panel**: A secure management portal (`/admin`) to update experience logs, link profiles, view traffic analytics, upload media files directly to cloud storage, and view application audit trails.
 
 All resume data, images, and posts are managed dynamically through our REST API rather than checked-in JSON or markdown files.
 
