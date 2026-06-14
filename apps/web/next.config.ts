@@ -45,6 +45,19 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async rewrites() {
+    const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5808";
+    return [
+      {
+        source: "/api/ai/:path*",
+        destination: `${apiBaseUrl}/api/ai/:path*`,
+      },
+      {
+        source: "/api/visitors/:path*",
+        destination: `${apiBaseUrl}/api/visitors/:path*`,
+      }
+    ];
+  },
 };
 
 export default nextConfig;
