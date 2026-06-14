@@ -7,9 +7,11 @@ import ReactMarkdown from 'react-markdown';
 interface TerminalShellProps {
   blogPosts: BlogPost[];
   resume: ResumeData;
+  hideTitleBar?: boolean;
+  heightClass?: string;
 }
 
-export function TerminalShell({ blogPosts, resume }: TerminalShellProps) {
+export function TerminalShell({ blogPosts, resume, hideTitleBar = false, heightClass = "h-[260px]" }: TerminalShellProps) {
   const {
     input,
     setInput,
@@ -23,18 +25,26 @@ export function TerminalShell({ blogPosts, resume }: TerminalShellProps) {
   } = useTerminalShell(blogPosts, resume);
 
   return (
-    <div className="w-full h-full terminal-card rounded-xl shadow-xl border border-primary/20 bg-card/45 flex flex-col relative overflow-hidden pt-12">
+    <div 
+      className={`w-full h-full terminal-card rounded-xl shadow-xl border border-primary/20 bg-card/45 flex flex-col relative overflow-hidden ${hideTitleBar ? '' : 'pt-12'}`}
+      onClick={() => document.getElementById('terminal-input')?.focus()}
+    >
       {/* Title Bar */}
-      <div className="absolute top-0 left-0 right-0 bg-primary/5 border-b border-primary/20 px-4 py-2.5 flex items-center gap-1.5 select-none">
-        <div className="w-3 h-3 rounded-full bg-red-500/80"></div>
-        <div className="w-3 h-3 rounded-full bg-yellow-500/80"></div>
-        <div className="w-3 h-3 rounded-full bg-green-500/80"></div>
-        <span className="text-xs font-mono text-primary/60 ml-2">bash - interactive_shell.sh</span>
-        {isAiMode && <span className="ml-auto text-xs font-mono text-primary animate-pulse">AI Connected</span>}
-      </div>
+      {!hideTitleBar && (
+        <div className="absolute top-0 left-0 right-0 bg-primary/5 border-b border-primary/20 px-4 py-2.5 flex items-center gap-1.5 select-none">
+          <div className="w-3 h-3 rounded-full bg-red-500/80"></div>
+          <div className="w-3 h-3 rounded-full bg-yellow-500/80"></div>
+          <div className="w-3 h-3 rounded-full bg-green-500/80"></div>
+          <span className="text-xs font-mono text-primary/60 ml-2">bash - interactive_shell.sh</span>
+          {isAiMode && <span className="ml-auto text-xs font-mono text-primary animate-pulse">AI Connected</span>}
+        </div>
+      )}
 
       {/* Console Logs */}
-      <div className="p-6 font-mono text-xs md:text-sm text-left h-[260px] overflow-y-auto space-y-2 select-text">
+      <div 
+        className={`p-6 font-mono text-xs md:text-sm text-left ${heightClass} overflow-y-auto space-y-2 select-text cursor-default`}
+        onClick={(e) => e.stopPropagation()}
+      >
         {history.map((item, idx) => (
           <div key={idx} className="whitespace-pre-wrap leading-relaxed text-foreground/80">
             {item.type === 'input' ? (
@@ -64,12 +74,13 @@ export function TerminalShell({ blogPosts, resume }: TerminalShellProps) {
       </div>
 
       {/* Input line */}
-      <div className="border-t border-primary/25 p-4 bg-primary/5/10">
+      <div className="border-t border-primary/25 p-4 bg-primary/5/10 cursor-text">
         <form onSubmit={handleCommandSubmit} className="flex items-center font-mono text-xs md:text-sm">
           <span className="text-primary mr-2 select-none">
             {isAiMode ? 'ai@portfolio:~$' : 'guest@ajx-terminal:~$' }
           </span>
           <input
+            id="terminal-input"
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
