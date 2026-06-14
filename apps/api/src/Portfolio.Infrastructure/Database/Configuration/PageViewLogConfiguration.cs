@@ -18,10 +18,7 @@ public class PageViewLogConfiguration : IEntityTypeConfiguration<PageViewLog>
             .IsRequired()
             .HasDefaultValueSql("CURRENT_TIMESTAMP");
             
-        builder.Property(pv => pv.IpAddress)
-            .HasMaxLength(45);
-            
-        builder.Property(pv => pv.UserAgent);
+
         
         builder.Property(pv => pv.Country)
             .HasMaxLength(100);

@@ -60,6 +60,37 @@ public class AnalyticsServiceTests
     }
 
     [Fact]
+    public async Task LogAiQueryAsync_SavesRecord()
+    {
+        // Arrange
+        var log = new AiQueryLog { Id = Guid.NewGuid(), QueryText = "Hello" };
+
+        // Act
+        await _service.LogAiQueryAsync(log);
+
+        // Assert
+        await _repositoryMock.Received(1).LogAiQueryAsync(log);
+        await _repositoryMock.Received(1).SaveChangesAsync();
+    }
+
+    [Fact]
+    public async Task GetOrCreateVisitorSessionAsync_CallsRepositoryAndSaves()
+    {
+        // Arrange
+        var trackingId = "test_hash";
+        var expectedSession = new VisitorSession { Id = Guid.NewGuid(), TrackingId = trackingId };
+        _repositoryMock.GetOrCreateVisitorSessionAsync(trackingId).Returns(expectedSession);
+
+        // Act
+        var result = await _service.GetOrCreateVisitorSessionAsync(trackingId);
+
+        // Assert
+        result.ShouldBe(expectedSession);
+        await _repositoryMock.Received(1).GetOrCreateVisitorSessionAsync(trackingId);
+        await _repositoryMock.Received(1).SaveChangesAsync();
+    }
+
+    [Fact]
     public async Task GetSummaryAsync_CalculatesAndReturnsAggregateDto()
     {
         // Arrange
@@ -102,7 +133,7 @@ public class AnalyticsServiceTests
         _loggerMock.Received(1).Log(
             LogLevel.Warning,
             Arg.Any<EventId>(),
-            Arg.Is<object>(o => o.ToString().Contains("Link click received for missing LinkId")),
+            Arg.Is<object>(o => o != null && o.ToString()!.Contains("Link click received for missing LinkId")),
             null,
             Arg.Any<Func<object, Exception, string>>()!);
         
@@ -157,8 +188,8 @@ public class AnalyticsServiceTests
         var mockLink = new Portfolio.Domain.Resume.ResumeProfileLink 
         { 
             Id = linkId, 
-            Url = null, 
-            LinkType = null 
+            Url = null!, 
+            LinkType = null! 
         };
         _resumeRepositoryMock.GetLinkByIdAsync(linkId).Returns(mockLink);
 

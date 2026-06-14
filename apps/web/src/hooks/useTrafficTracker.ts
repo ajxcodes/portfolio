@@ -92,7 +92,17 @@ export function useTrafficTracker() {
           signal: controller.signal,
           keepalive: true
         })
-          .then(() => clearTimeout(timeoutId))
+          .then(async (res) => {
+            clearTimeout(timeoutId);
+            if (res.ok) {
+              try {
+                const data = await res.json();
+                if (data?.visitorSessionId) {
+                  sessionStorage.setItem("visitor_session_id", data.visitorSessionId);
+                }
+              } catch (e) {}
+            }
+          })
           .catch(err => {
             clearTimeout(timeoutId);
             console.error("Failed to log page view telemetry:", err);

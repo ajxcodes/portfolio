@@ -2,6 +2,7 @@
 
 import { BlogPost, ResumeData } from '@/lib/data';
 import { useTerminalShell } from '@/hooks/useTerminalShell';
+import ReactMarkdown from 'react-markdown';
 
 interface TerminalShellProps {
   blogPosts: BlogPost[];
@@ -14,7 +15,11 @@ export function TerminalShell({ blogPosts, resume }: TerminalShellProps) {
     setInput,
     history,
     terminalEndRef,
-    handleCommandSubmit
+    handleCommandSubmit,
+    handleKeyDown,
+    isAiMode,
+    isAiTyping,
+    isWarmingUp
   } = useTerminalShell(blogPosts, resume);
 
   return (
@@ -25,6 +30,7 @@ export function TerminalShell({ blogPosts, resume }: TerminalShellProps) {
         <div className="w-3 h-3 rounded-full bg-yellow-500/80"></div>
         <div className="w-3 h-3 rounded-full bg-green-500/80"></div>
         <span className="text-xs font-mono text-primary/60 ml-2">bash - interactive_shell.sh</span>
+        {isAiMode && <span className="ml-auto text-xs font-mono text-primary animate-pulse">AI Connected</span>}
       </div>
 
       {/* Console Logs */}
@@ -33,27 +39,43 @@ export function TerminalShell({ blogPosts, resume }: TerminalShellProps) {
           <div key={idx} className="whitespace-pre-wrap leading-relaxed text-foreground/80">
             {item.type === 'input' ? (
               <div className="flex">
-                <span className="text-primary mr-2 select-none">guest@ajx-terminal:~$</span>
+                <span className="text-primary mr-2 select-none">{item.prompt || 'guest@ajx-terminal:~$'}</span>
                 <span className="text-foreground">{item.text}</span>
+              </div>
+            ) : item.isMarkdown ? (
+              <div className="prose prose-sm prose-invert max-w-none ai-markdown">
+                <ReactMarkdown>{item.text}</ReactMarkdown>
               </div>
             ) : (
               <div>{item.text}</div>
             )}
           </div>
         ))}
+        {isAiTyping && (
+          <div className="flex flex-col text-primary mt-2">
+            <div className="flex items-center">
+              <span className="mr-2">ai@portfolio:~$</span>
+              <span className="animate-pulse">_</span>
+            </div>
+            {isWarmingUp && <span className="text-[10px] text-muted-foreground italic mt-1">Waking up backend server (can take up to 50s)...</span>}
+          </div>
+        )}
         <div ref={terminalEndRef} />
       </div>
 
       {/* Input line */}
       <div className="border-t border-primary/25 p-4 bg-primary/5/10">
         <form onSubmit={handleCommandSubmit} className="flex items-center font-mono text-xs md:text-sm">
-          <span className="text-primary mr-2 select-none">guest@ajx-terminal:~$</span>
+          <span className="text-primary mr-2 select-none">
+            {isAiMode ? 'ai@portfolio:~$' : 'guest@ajx-terminal:~$' }
+          </span>
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
             className="flex-1 bg-transparent border-none outline-none focus:ring-0 p-0 text-foreground font-mono"
-            placeholder='Type "help" to start...'
+            placeholder={isAiMode ? 'Type your question to AI...' : 'Type "help" to start...'}
             autoComplete="off"
             autoCorrect="off"
             autoCapitalize="off"

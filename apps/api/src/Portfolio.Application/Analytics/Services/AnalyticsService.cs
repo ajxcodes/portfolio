@@ -10,6 +10,8 @@ public interface IAnalyticsService
 {
     Task LogPageViewAsync(PageViewLog log);
     Task LogLinkClickAsync(LinkClickLog log);
+    Task LogAiQueryAsync(AiQueryLog log);
+    Task<VisitorSession> GetOrCreateVisitorSessionAsync(string trackingId);
     Task<AnalyticsSummaryDto> GetSummaryAsync(int limit);
 }
 
@@ -45,15 +47,31 @@ public class AnalyticsService(
         await repository.SaveChangesAsync();
     }
 
+    public async Task LogAiQueryAsync(AiQueryLog log)
+    {
+        await repository.LogAiQueryAsync(log);
+        await repository.SaveChangesAsync();
+    }
+
+    public async Task<VisitorSession> GetOrCreateVisitorSessionAsync(string trackingId)
+    {
+        var session = await repository.GetOrCreateVisitorSessionAsync(trackingId);
+        await repository.SaveChangesAsync();
+        return session;
+    }
+
     public async Task<AnalyticsSummaryDto> GetSummaryAsync(int limit)
     {
         var totalPageViews = await repository.GetTotalPageViewsCountAsync();
         var uniquePageViews = await repository.GetUniquePageViewsCountAsync();
         var totalLinkClicks = await repository.GetTotalLinkClicksCountAsync();
         var uniqueLinkClicks = await repository.GetUniqueLinkClicksCountAsync();
+        var totalAiQueries = await repository.GetTotalAiQueriesCountAsync();
+        var uniqueAiQueries = await repository.GetUniqueAiQueriesCountAsync();
 
         var recentPageViews = await repository.GetPageViewsAsync(limit);
         var recentLinkClicks = await repository.GetLinkClicksAsync(limit);
+        var recentAiQueries = await repository.GetAiQueriesAsync(limit);
 
         return new AnalyticsSummaryDto
         {
@@ -61,8 +79,11 @@ public class AnalyticsService(
             UniquePageViews = uniquePageViews,
             TotalLinkClicks = totalLinkClicks,
             UniqueLinkClicks = uniqueLinkClicks,
+            TotalAiQueries = totalAiQueries,
+            UniqueAiQueries = uniqueAiQueries,
             RecentPageViews = recentPageViews,
-            RecentLinkClicks = recentLinkClicks
+            RecentLinkClicks = recentLinkClicks,
+            RecentAiQueries = recentAiQueries
         };
     }
 }
@@ -73,6 +94,9 @@ public class AnalyticsSummaryDto
     public int UniquePageViews { get; set; }
     public int TotalLinkClicks { get; set; }
     public int UniqueLinkClicks { get; set; }
+    public int TotalAiQueries { get; set; }
+    public int UniqueAiQueries { get; set; }
     public List<PageViewLog> RecentPageViews { get; set; } = new();
     public List<LinkClickLog> RecentLinkClicks { get; set; } = new();
+    public List<AiQueryLog> RecentAiQueries { get; set; } = new();
 }

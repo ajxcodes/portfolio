@@ -15,7 +15,12 @@ interface ExperienceItemProps {
 export const ExperienceItem = ({ experience: exp, isHighlighted, isDimmed, matchingSkills }: ExperienceItemProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isSkillsExpanded, setIsSkillsExpanded] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   const tenure = calculateTenure(exp.period);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
     if (matchingSkills.length > 0) {
@@ -48,7 +53,7 @@ export const ExperienceItem = ({ experience: exp, isHighlighted, isDimmed, match
             <p className="font-semibold text-foreground/85 font-mono text-sm">{exp.company}</p>
             <div className="flex items-center gap-2 text-xs text-foreground/70 flex-wrap font-mono mt-1.5">
               <span className="bg-primary/5 px-2 py-0.5 rounded border border-primary/10">{exp.period}</span>
-              {tenure && (
+              {isMounted && tenure && (
                 <>
                   <span className="text-foreground/40">&middot;</span>
                   <span className="bg-primary/5 px-2 py-0.5 rounded border border-primary/10">{tenure}</span>

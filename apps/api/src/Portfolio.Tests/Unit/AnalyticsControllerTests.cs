@@ -26,6 +26,9 @@ public class AnalyticsControllerTests
         {
             HttpContext = httpContext
         };
+        
+        _serviceMock.GetOrCreateVisitorSessionAsync(Arg.Any<string>())
+            .Returns(new VisitorSession { Id = Guid.NewGuid() });
     }
 
     [Fact]
@@ -73,43 +76,5 @@ public class AnalyticsControllerTests
         okResult.Value.ShouldBe(summary);
     }
 
-    [Fact]
-    public async Task LogPageViewAsync_UsesForwardedForHeader_WhenPresent()
-    {
-        // Arrange
-        var request = new PageViewRequest { ReferrerSource = "Google" };
-        var httpContext = new DefaultHttpContext();
-        httpContext.Request.Headers["X-Forwarded-For"] = "192.168.1.1, 10.0.0.1";
-        var controller = new AnalyticsController(_serviceMock)
-        {
-            ControllerContext = new ControllerContext { HttpContext = httpContext }
-        };
 
-        // Act
-        var result = await controller.LogPageViewAsync(request);
-
-        // Assert
-        result.ShouldBeOfType<OkObjectResult>();
-        await _serviceMock.Received(1).LogPageViewAsync(Arg.Is<PageViewLog>(l => l.IpAddress == "192.168.1.1"));
-    }
-
-    [Fact]
-    public async Task LogPageViewAsync_UsesRealIpHeader_WhenPresent()
-    {
-        // Arrange
-        var request = new PageViewRequest { ReferrerSource = "Google" };
-        var httpContext = new DefaultHttpContext();
-        httpContext.Request.Headers["X-Real-IP"] = "192.168.1.254";
-        var controller = new AnalyticsController(_serviceMock)
-        {
-            ControllerContext = new ControllerContext { HttpContext = httpContext }
-        };
-
-        // Act
-        var result = await controller.LogPageViewAsync(request);
-
-        // Assert
-        result.ShouldBeOfType<OkObjectResult>();
-        await _serviceMock.Received(1).LogPageViewAsync(Arg.Is<PageViewLog>(l => l.IpAddress == "192.168.1.254"));
-    }
 }

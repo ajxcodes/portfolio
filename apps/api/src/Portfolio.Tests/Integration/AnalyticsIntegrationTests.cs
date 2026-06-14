@@ -94,4 +94,45 @@ public class AnalyticsIntegrationTests
         cleanContext.ResumeProfiles.Remove(profile);
         await cleanContext.SaveChangesAsync();
     }
+
+    [Fact]
+    public async Task AiQueryLogs_AreSuccessfullySavedToDatabase()
+    {
+        // Arrange
+        using var scope = _fixture.Factory.Services.CreateScope();
+        var analyticsService = scope.ServiceProvider.GetRequiredService<IAnalyticsService>();
+        var context = scope.ServiceProvider.GetRequiredService<PortfolioDbContext>();
+
+        var session = new Portfolio.Domain.Analytics.VisitorSession
+        {
+            Id = Guid.NewGuid(),
+            TrackingId = "testhash",
+            StartedAt = DateTime.UtcNow
+        };
+        context.VisitorSessions.Add(session);
+        await context.SaveChangesAsync();
+
+        var queryLog = new Portfolio.Domain.Analytics.AiQueryLog
+        {
+            Id = Guid.NewGuid(),
+            VisitorSessionId = session.Id,
+            QueryText = "Tell me about your experience.",
+            Provider = "IntegrationTestProvider",
+            QueriedAt = DateTime.UtcNow
+        };
+
+        // Act
+        await analyticsService.LogAiQueryAsync(queryLog);
+
+        // Assert
+        var savedLog = await context.AiQueryLogs.FirstOrDefaultAsync(l => l.Id == queryLog.Id);
+        savedLog.ShouldNotBeNull();
+        savedLog.QueryText.ShouldBe("Tell me about your experience.");
+        savedLog.Provider.ShouldBe("IntegrationTestProvider");
+
+        // Clean up
+        context.AiQueryLogs.Remove(savedLog);
+        context.VisitorSessions.Remove(session);
+        await context.SaveChangesAsync();
+    }
 }

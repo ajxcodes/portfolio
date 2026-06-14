@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Portfolio.Application.Blog.Services;
 using Portfolio.Application.Resume.Services;
 using Portfolio.Application.Analytics.Services;
+using Portfolio.Application.AI.Services;
 
 namespace Portfolio.Application.Extensions;
 
@@ -14,6 +15,7 @@ public static class ServiceExtensions
             .AddScoped<IPostService, PostService>()
             .AddScoped<IResumeService, ResumeService>()
             .AddScoped<IAnalyticsService, AnalyticsService>()
+            .AddScoped<IAiPromptService, AiPromptService>()
             .AddSingleton<IResumePdfGenerator, ResumePdfGenerator>();
     }
 }

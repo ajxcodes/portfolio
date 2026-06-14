@@ -22,6 +22,8 @@ public class PortfolioDbContext(DbContextOptions options, IHttpContextAccessor? 
     public DbSet<ResumeProfileLink> ResumeProfileLinks { get; set; } = null!;
     public DbSet<LinkClickLog> LinkClickLogs { get; set; } = null!;
     public DbSet<PageViewLog> PageViewLogs { get; set; } = null!;
+    public DbSet<VisitorSession> VisitorSessions { get; set; } = null!;
+    public DbSet<AiQueryLog> AiQueryLogs { get; set; } = null!;
     public DbSet<SkillCategory> SkillCategories { get; set; } = null!;
     public DbSet<Skill> Skills { get; set; } = null!;
     public DbSet<WorkExperience> WorkExperiences { get; set; } = null!;
