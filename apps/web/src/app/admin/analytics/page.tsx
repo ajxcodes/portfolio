@@ -10,10 +10,34 @@ import {
   MousePointerClick, 
   TrendingUp, 
   Globe, 
-  AlertCircle 
+  AlertCircle,
+  Bot
 } from "lucide-react";
 import { AdminSkeleton } from "@/components/admin/AdminSkeleton";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
+
+interface TimelineEvent {
+  id: string;
+  type: 'page_view' | 'link_click' | 'ai_query';
+  timestamp: string;
+  dateStr: string;
+  timeStr: string;
+  details: {
+    referrer?: string;
+    location?: string;
+    linkName?: string;
+    url?: string;
+    queryText?: string;
+  }
+}
+
+interface VisitorJourney {
+  sessionId: string;
+  location: string;
+  referrer: string;
+  events: TimelineEvent[];
+  lastActiveAt: string;
+}
 
 interface AnalyticsSummary {
   totalPageViews: number;
@@ -26,6 +50,7 @@ interface AnalyticsSummary {
     country: string | null;
     city: string | null;
     ipAddress: string | null;
+    visitorSessionId?: string | null;
   }>;
   recentLinkClicks: Array<{
     id: string;
@@ -40,6 +65,15 @@ interface AnalyticsSummary {
     } | null;
     country: string | null;
     city: string | null;
+    visitorSessionId?: string | null;
+  }>;
+  totalAiQueries: number;
+  uniqueAiQueries: number;
+  recentAiQueries: Array<{
+    id: string;
+    queriedAt: string;
+    queryText: string;
+    visitorSessionId?: string | null;
   }>;
 }
 
@@ -54,6 +88,7 @@ export default function AnalyticsPage() {
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
   const [showTotalViews, setShowTotalViews] = useState(false);
+  const [activeTab, setActiveTab] = useState<'trends' | 'demographics' | 'journeys'>('trends');
 
   const toggleViews = useCallback(() => setShowTotalViews(prev => !prev), []);
 
@@ -72,7 +107,6 @@ export default function AnalyticsPage() {
       [...summary.recentPageViews].reverse().forEach(view => {
         const date = new Date(view.viewedAt).toLocaleDateString([], { month: 'short', day: 'numeric' });
         if (!counts[date]) counts[date] = new Set<string>();
-        // Fallback to ID if no IP is present to still count it as unique (though it shouldn't happen)
         counts[date].add(view.ipAddress || view.id);
       });
       return Object.entries(counts).map(([date, set]) => ({ date, count: set.size }));
@@ -107,6 +141,89 @@ export default function AnalyticsPage() {
       counts[ref] = (counts[ref] || 0) + 1;
     });
     return Object.entries(counts).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count).slice(0, 5);
+  }, [summary]);
+
+  const queriesByDate = useMemo(() => {
+    if (!summary || !summary.recentAiQueries) return [];
+    const counts: Record<string, number> = {};
+    [...summary.recentAiQueries].reverse().forEach(query => {
+      const date = new Date(query.queriedAt).toLocaleDateString([], { month: 'short', day: 'numeric' });
+      counts[date] = (counts[date] || 0) + 1;
+    });
+    return Object.entries(counts).map(([date, count]) => ({ date, count }));
+  }, [summary]);
+
+  const visitorJourneys = useMemo(() => {
+    if (!summary) return [];
+    
+    const journeys = new Map<string, VisitorJourney>();
+    
+    const getOrCreateJourney = (sessionId: string, fallbackId: string) => {
+      const id = sessionId || `anonymous-${fallbackId}`;
+      if (!journeys.has(id)) {
+        journeys.set(id, {
+          sessionId: id,
+          location: 'Unknown',
+          referrer: 'Direct',
+          events: [],
+          lastActiveAt: ''
+        });
+      }
+      return journeys.get(id)!;
+    };
+
+    summary.recentPageViews.forEach(view => {
+      const journey = getOrCreateJourney(view.visitorSessionId || '', view.id);
+      if (journey.location === 'Unknown' && view.country) {
+         journey.location = view.city ? `${view.city}, ${view.country}` : view.country;
+      }
+      if (journey.referrer === 'Direct' && view.referrerSource) {
+         journey.referrer = view.referrerSource;
+      }
+      journey.events.push({
+        id: view.id,
+        type: 'page_view',
+        timestamp: view.viewedAt,
+        dateStr: new Date(view.viewedAt).toLocaleDateString(),
+        timeStr: new Date(view.viewedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        details: { referrer: view.referrerSource, location: view.city && view.country ? `${view.city}, ${view.country}` : view.country || "Unknown" }
+      });
+    });
+
+    summary.recentLinkClicks.forEach(click => {
+      const journey = getOrCreateJourney(click.visitorSessionId || '', click.id);
+      journey.events.push({
+        id: click.id,
+        type: 'link_click',
+        timestamp: click.clickedAt,
+        dateStr: new Date(click.clickedAt).toLocaleDateString(),
+        timeStr: new Date(click.clickedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        details: { 
+          linkName: click.link?.linkType?.name || click.linkTypeName || "Unknown Link",
+          url: click.link?.url
+        }
+      });
+    });
+
+    if (summary.recentAiQueries) {
+      summary.recentAiQueries.forEach(query => {
+        const journey = getOrCreateJourney(query.visitorSessionId || '', query.id);
+        journey.events.push({
+          id: query.id,
+          type: 'ai_query',
+          timestamp: query.queriedAt,
+          dateStr: new Date(query.queriedAt).toLocaleDateString(),
+          timeStr: new Date(query.queriedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          details: { queryText: query.queryText }
+        });
+      });
+    }
+
+    return Array.from(journeys.values()).map(journey => {
+      journey.events.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      journey.lastActiveAt = journey.events[0]?.timestamp || '';
+      return journey;
+    }).sort((a, b) => new Date(b.lastActiveAt).getTime() - new Date(a.lastActiveAt).getTime());
   }, [summary]);
 
   const fetchAuthHeaders = async () => {
@@ -180,7 +297,7 @@ export default function AnalyticsPage() {
       {summary && (
         <div className="space-y-8">
           {/* Metrics Overview grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-6 mb-8">
             <div className="terminal-card p-6 rounded-xl flex items-center gap-4">
               <div className="p-3 bg-primary/15 rounded text-primary">
                 <Eye className="w-5 h-5" />
@@ -210,219 +327,276 @@ export default function AnalyticsPage() {
                 <p className="text-2xl font-bold text-foreground mt-0.5">{summary.recentLinkClicks.length}</p>
               </div>
             </div>
-          </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-            {/* Page Views Chart */}
-            <div className="terminal-card p-6 rounded-xl space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="font-bold text-sm text-foreground/90 flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4 text-primary" />
-                  Views Over Time
-                </h3>
-                <button
-                  type="button"
-                  onClick={toggleViews}
-                  className="px-2.5 py-1 text-[10px] font-bold rounded-md bg-primary/10 border border-primary/20 hover:bg-primary/20 text-primary transition-colors uppercase tracking-wider flex items-center gap-1.5"
-                >
-                  <Eye className="w-3 h-3" />
-                  {showTotalViews ? "Showing: Total Views" : "Showing: Unique Visitors"}
-                </button>
+            <div className="terminal-card p-6 rounded-xl flex items-center gap-4">
+              <div className="p-3 bg-blue-500/15 rounded text-blue-500">
+                <Bot className="w-5 h-5" />
               </div>
-              {!showTotalViews && (
-                <p className="text-[10px] text-muted-foreground italic flex items-center gap-1 mt-2">
-                  <AlertCircle className="w-3 h-3" />
-                  Fallback IDs are used if IP address is missing.
-                </p>
-              )}
-              <div className="h-64 w-full mt-4">
-                {viewsByDate.length > 0 ? (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={viewsByDate}>
-                      <XAxis dataKey="date" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                      <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value}`} />
-                      <Tooltip 
-                        contentStyle={TOOLTIP_CONTENT_STYLE} 
-                        itemStyle={TOOLTIP_ITEM_STYLE}
-                      />
-                      <Line type="monotone" dataKey="count" stroke="hsl(var(--primary))" strokeWidth={3} dot={{ r: 4, fill: 'hsl(var(--primary))' }} activeDot={{ r: 6 }} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="flex items-center justify-center h-full text-muted-foreground text-xs italic">Not enough data to display chart</div>
-                )}
-              </div>
-            </div>
-
-            {/* Link Clicks Chart */}
-            <div className="terminal-card p-6 rounded-xl space-y-4">
-              <h3 className="font-bold text-sm text-foreground/90 flex items-center gap-2">
-                <MousePointerClick className="w-4 h-4 text-primary" />
-                Clicks by Link
-              </h3>
-              <div className="h-64 w-full mt-4">
-                {clicksByLink.length > 0 ? (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={clicksByLink}>
-                      <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                      <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} allowDecimals={false} />
-                      <Tooltip 
-                        cursor={{ fill: 'hsl(var(--primary)/0.1)' }}
-                        contentStyle={TOOLTIP_CONTENT_STYLE} 
-                        itemStyle={TOOLTIP_ITEM_STYLE}
-                      />
-                      <Bar dataKey="count" fill="hsl(var(--primary)/0.8)" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="flex items-center justify-center h-full text-muted-foreground text-xs italic">Not enough data to display chart</div>
-                )}
+              <div>
+                <span className="text-[10px] text-muted-foreground font-bold uppercase">AI Queries</span>
+                <p className="text-2xl font-bold text-foreground mt-0.5">{summary.totalAiQueries || 0}</p>
               </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-            {/* Traffic by Referrer Chart */}
-            <div className="terminal-card p-6 rounded-xl space-y-4">
-              <h3 className="font-bold text-sm text-foreground/90 flex items-center gap-2">
-                <Globe className="w-4 h-4 text-primary" />
-                Traffic by Referrer
-              </h3>
-              <div className="h-64 w-full mt-4">
-                {viewsByReferrer.length > 0 ? (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={viewsByReferrer}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={60}
-                        outerRadius={80}
-                        paddingAngle={5}
-                        dataKey="count"
+          {/* Tabs Navigation */}
+          <div className="flex flex-wrap gap-2 mb-6 border-b border-primary/20 pb-4">
+            <button 
+              onClick={() => setActiveTab('trends')} 
+              className={`px-4 py-2 text-sm font-bold font-mono rounded-lg transition-colors flex items-center gap-2 ${activeTab === 'trends' ? 'bg-primary text-primary-foreground' : 'bg-primary/5 text-primary hover:bg-primary/10'}`}
+            >
+              <TrendingUp className="w-4 h-4" /> Traffic Trends
+            </button>
+            <button 
+              onClick={() => setActiveTab('demographics')} 
+              className={`px-4 py-2 text-sm font-bold font-mono rounded-lg transition-colors flex items-center gap-2 ${activeTab === 'demographics' ? 'bg-primary text-primary-foreground' : 'bg-primary/5 text-primary hover:bg-primary/10'}`}
+            >
+              <Globe className="w-4 h-4" /> Demographics
+            </button>
+            <button 
+              onClick={() => setActiveTab('journeys')} 
+              className={`px-4 py-2 text-sm font-bold font-mono rounded-lg transition-colors flex items-center gap-2 ${activeTab === 'journeys' ? 'bg-primary text-primary-foreground' : 'bg-primary/5 text-primary hover:bg-primary/10'}`}
+            >
+              <Bot className="w-4 h-4" /> Visitor Journeys
+            </button>
+          </div>
+
+          <div className="mt-6">
+            {activeTab === 'trends' && (
+              <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                  {/* Page Views Chart */}
+                  <div className="terminal-card p-6 rounded-xl space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-bold text-sm text-foreground/90 flex items-center gap-2">
+                        <TrendingUp className="w-4 h-4 text-primary" />
+                        Views Over Time
+                      </h3>
+                      <button
+                        type="button"
+                        onClick={toggleViews}
+                        className="px-2.5 py-1 text-[10px] font-bold rounded-md bg-primary/10 border border-primary/20 hover:bg-primary/20 text-primary transition-colors uppercase tracking-wider flex items-center gap-1.5"
                       >
-                        {viewsByReferrer.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip 
-                        contentStyle={TOOLTIP_CONTENT_STYLE} 
-                        itemStyle={TOOLTIP_ITEM_STYLE}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="flex items-center justify-center h-full text-muted-foreground text-xs italic">Not enough data to display chart</div>
-                )}
-              </div>
-            </div>
+                        <Eye className="w-3 h-3" />
+                        {showTotalViews ? "Showing: Total Views" : "Showing: Unique Visitors"}
+                      </button>
+                    </div>
+                    {!showTotalViews && (
+                      <p className="text-[10px] text-muted-foreground italic flex items-center gap-1 mt-2">
+                        <AlertCircle className="w-3 h-3" />
+                        Fallback IDs are used if IP address is missing.
+                      </p>
+                    )}
+                    <div className="h-64 w-full mt-4">
+                      {viewsByDate.length > 0 ? (
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart data={viewsByDate}>
+                            <XAxis dataKey="date" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                            <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value}`} />
+                            <Tooltip 
+                              contentStyle={TOOLTIP_CONTENT_STYLE} 
+                              itemStyle={TOOLTIP_ITEM_STYLE}
+                            />
+                            <Line type="monotone" dataKey="count" stroke="hsl(var(--primary))" strokeWidth={3} dot={{ r: 4, fill: 'hsl(var(--primary))' }} activeDot={{ r: 6 }} />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      ) : (
+                        <div className="flex items-center justify-center h-full text-muted-foreground text-xs italic">Not enough data to display chart</div>
+                      )}
+                    </div>
+                  </div>
 
-            {/* Traffic by Location Chart */}
-            <div className="terminal-card p-6 rounded-xl space-y-4">
-              <h3 className="font-bold text-sm text-foreground/90 flex items-center gap-2">
-                <Globe className="w-4 h-4 text-primary" />
-                Traffic by Location (Country)
-              </h3>
-              <div className="h-64 w-full mt-4">
-                {viewsByLocation.length > 0 ? (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={viewsByLocation} layout="vertical" margin={{ left: 20 }}>
-                      <XAxis type="number" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} allowDecimals={false} />
-                      <YAxis dataKey="name" type="category" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} width={80} />
-                      <Tooltip 
-                        cursor={{ fill: 'hsl(var(--primary)/0.1)' }}
-                        contentStyle={TOOLTIP_CONTENT_STYLE} 
-                        itemStyle={TOOLTIP_ITEM_STYLE}
-                      />
-                      <Bar dataKey="count" fill="hsl(var(--primary)/0.6)" radius={[0, 4, 4, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="flex items-center justify-center h-full text-muted-foreground text-xs italic">Not enough data to display chart</div>
-                )}
-              </div>
-            </div>
-          </div>
+                  {/* Link Clicks Chart */}
+                  <div className="terminal-card p-6 rounded-xl space-y-4">
+                    <h3 className="font-bold text-sm text-foreground/90 flex items-center gap-2">
+                      <MousePointerClick className="w-4 h-4 text-primary" />
+                      Clicks by Link
+                    </h3>
+                    <div className="h-64 w-full mt-4">
+                      {clicksByLink.length > 0 ? (
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={clicksByLink}>
+                            <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                            <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} allowDecimals={false} />
+                            <Tooltip 
+                              cursor={{ fill: 'hsl(var(--primary)/0.1)' }}
+                              contentStyle={TOOLTIP_CONTENT_STYLE} 
+                              itemStyle={TOOLTIP_ITEM_STYLE}
+                            />
+                            <Bar dataKey="count" fill="hsl(var(--primary)/0.8)" radius={[4, 4, 0, 0]} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      ) : (
+                        <div className="flex items-center justify-center h-full text-muted-foreground text-xs italic">Not enough data to display chart</div>
+                      )}
+                    </div>
+                  </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Recent Page Views */}
-            <div className="terminal-card p-6 rounded-xl space-y-4">
-              <h3 className="font-bold text-sm text-foreground/90 flex items-center gap-2">
-                <Globe className="w-4 h-4 text-primary" />
-                Recent Inbound Traffic
-              </h3>
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs text-left border-collapse">
-                  <thead>
-                    <tr className="border-b border-primary/10 text-muted-foreground text-[10px] uppercase font-bold">
-                      <th className="py-2.5">Time</th>
-                      <th className="py-2.5">Referrer</th>
-                      <th className="py-2.5">Location</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-primary/5">
-                    {summary.recentPageViews.map((view) => (
-                      <tr key={view.id} className="hover:bg-primary/5 transition-colors">
-                        <td className="py-3 text-muted-foreground font-medium">
-                          {new Date(view.viewedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} &middot; {new Date(view.viewedAt).toLocaleDateString()}
-                        </td>
-                        <td className="py-3">
-                          <span className="px-2 py-0.5 bg-primary/10 border border-primary/20 text-[10px] font-bold rounded">
-                            {view.referrerSource}
-                          </span>
-                        </td>
-                        <td className="py-3 text-foreground/80 font-medium">
-                          {view.city && view.country ? `${view.city}, ${view.country}` : "Unknown"}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                  {/* AI Queries Chart */}
+                  <div className="terminal-card p-6 rounded-xl space-y-4 lg:col-span-2">
+                    <h3 className="font-bold text-sm text-foreground/90 flex items-center gap-2">
+                      <Bot className="w-4 h-4 text-primary" />
+                      AI Queries Over Time
+                    </h3>
+                    <div className="h-64 w-full mt-4">
+                      {queriesByDate.length > 0 ? (
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart data={queriesByDate}>
+                            <XAxis dataKey="date" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                            <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} allowDecimals={false} />
+                            <Tooltip 
+                              contentStyle={TOOLTIP_CONTENT_STYLE} 
+                              itemStyle={TOOLTIP_ITEM_STYLE}
+                            />
+                            <Line type="monotone" dataKey="count" stroke="hsl(var(--primary))" strokeWidth={3} dot={{ r: 4, fill: 'hsl(var(--primary))' }} activeDot={{ r: 6 }} />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      ) : (
+                        <div className="flex items-center justify-center h-full text-muted-foreground text-xs italic">Not enough data to display chart</div>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
+            
+            {activeTab === 'demographics' && (
+              <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                  {/* Traffic by Referrer Chart */}
+                  <div className="terminal-card p-6 rounded-xl space-y-4">
+                    <h3 className="font-bold text-sm text-foreground/90 flex items-center gap-2">
+                      <Globe className="w-4 h-4 text-primary" />
+                      Traffic by Referrer
+                    </h3>
+                    <div className="h-64 w-full mt-4">
+                      {viewsByReferrer.length > 0 ? (
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={viewsByReferrer}
+                              cx="50%"
+                              cy="50%"
+                              innerRadius={60}
+                              outerRadius={80}
+                              paddingAngle={5}
+                              dataKey="count"
+                            >
+                              {viewsByReferrer.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                              ))}
+                            </Pie>
+                            <Tooltip 
+                              contentStyle={TOOLTIP_CONTENT_STYLE} 
+                              itemStyle={TOOLTIP_ITEM_STYLE}
+                            />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      ) : (
+                        <div className="flex items-center justify-center h-full text-muted-foreground text-xs italic">Not enough data to display chart</div>
+                      )}
+                    </div>
+                  </div>
 
-            {/* Outbound Link Clicks */}
-            <div className="terminal-card p-6 rounded-xl space-y-4">
-              <h3 className="font-bold text-sm text-foreground/90 flex items-center gap-2">
-                <MousePointerClick className="w-4 h-4 text-primary" />
-                Outbound Action Logs
-              </h3>
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs text-left border-collapse">
-                  <thead>
-                    <tr className="border-b border-primary/10 text-muted-foreground text-[10px] uppercase font-bold">
-                      <th className="py-2.5">Time</th>
-                      <th className="py-2.5">Target Link</th>
-                      <th className="py-2.5">Referrer</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-primary/5">
-                    {summary.recentLinkClicks.map((click) => (
-                      <tr key={click.id} className="hover:bg-primary/5 transition-colors">
-                        <td className="py-3 text-muted-foreground font-medium">
-                          {new Date(click.clickedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} &middot; {new Date(click.clickedAt).toLocaleDateString()}
-                        </td>
-                        <td className="py-3">
-                          <div className="flex flex-col">
-                            <span className="font-bold text-[11px] text-foreground/80 leading-none">
-                              {click.link?.linkType?.name || click.linkTypeName || "Unknown Link"}
-                            </span>
-                            <span className="text-[9px] text-muted-foreground truncate max-w-[180px] mt-1">
-                              {click.link?.url || "URL Unavailable"}
-                            </span>
+                  {/* Traffic by Location Chart */}
+                  <div className="terminal-card p-6 rounded-xl space-y-4">
+                    <h3 className="font-bold text-sm text-foreground/90 flex items-center gap-2">
+                      <Globe className="w-4 h-4 text-primary" />
+                      Traffic by Location (Country)
+                    </h3>
+                    <div className="h-64 w-full mt-4">
+                      {viewsByLocation.length > 0 ? (
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={viewsByLocation} layout="vertical" margin={{ left: 20 }}>
+                            <XAxis type="number" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} allowDecimals={false} />
+                            <YAxis dataKey="name" type="category" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} width={80} />
+                            <Tooltip 
+                              cursor={{ fill: 'hsl(var(--primary)/0.1)' }}
+                              contentStyle={TOOLTIP_CONTENT_STYLE} 
+                              itemStyle={TOOLTIP_ITEM_STYLE}
+                            />
+                            <Bar dataKey="count" fill="hsl(var(--primary)/0.6)" radius={[0, 4, 4, 0]} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      ) : (
+                        <div className="flex items-center justify-center h-full text-muted-foreground text-xs italic">Not enough data to display chart</div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {activeTab === 'journeys' && (
+              <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <div className="space-y-6">
+                  {visitorJourneys.length > 0 ? visitorJourneys.map(journey => (
+                    <div key={journey.sessionId} className="terminal-card rounded-xl p-6">
+                      <div className="flex flex-wrap gap-4 items-center justify-between mb-6 pb-4 border-b border-primary/10">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
+                            <Globe className="w-4 h-4" />
                           </div>
-                        </td>
-                        <td className="py-3">
-                          <span className="px-2 py-0.5 bg-primary/10 border border-primary/20 text-[10px] font-bold rounded">
-                            {click.referrerSource || "Direct"}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                          <div>
+                            <div className="font-bold text-sm text-foreground/90">Session: {journey.sessionId.split('-')[0]}...</div>
+                            <div className="text-[10px] text-muted-foreground flex gap-2">
+                              <span>{journey.location}</span>
+                              <span>&middot;</span>
+                              <span>Referrer: {journey.referrer}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-[10px] font-bold px-2 py-1 bg-primary/5 rounded border border-primary/10">
+                          {journey.events.length} Events
+                        </div>
+                      </div>
+
+                      <div className="relative pl-4 space-y-6 before:absolute before:inset-y-0 before:left-[7px] before:w-px before:bg-primary/20">
+                        {journey.events.map((evt) => (
+                          <div key={evt.id} className="relative flex gap-4">
+                            <div className="absolute -left-5 mt-1.5 w-2.5 h-2.5 rounded-full bg-card border-2 border-primary" />
+                            <div className="w-20 pt-0.5 flex-shrink-0 text-[10px] text-muted-foreground font-medium">
+                              <div>{evt.timeStr}</div>
+                              <div className="opacity-70">{evt.dateStr}</div>
+                            </div>
+                            <div className="flex-1 bg-primary/5 border border-primary/10 rounded p-3">
+                              <div className="flex items-center gap-2 mb-1">
+                                {evt.type === 'page_view' && <Eye className="w-3 h-3 text-emerald-500" />}
+                                {evt.type === 'link_click' && <MousePointerClick className="w-3 h-3 text-indigo-500" />}
+                                {evt.type === 'ai_query' && <Bot className="w-3 h-3 text-blue-500" />}
+                                <span className="text-[11px] font-bold uppercase tracking-wider text-foreground/80">
+                                  {evt.type.replace('_', ' ')}
+                               </span>
+                              </div>
+                              {evt.type === 'page_view' && (
+                                <div className="text-xs text-muted-foreground">
+                                  Viewed page from <span className="font-bold text-foreground/80">{evt.details.referrer || 'Direct'}</span>
+                                </div>
+                              )}
+                              {evt.type === 'link_click' && (
+                                <div className="text-xs text-muted-foreground">
+                                  Clicked <span className="font-bold text-foreground/80">{evt.details.linkName}</span>
+                                  {evt.details.url && <div className="text-[10px] opacity-70 mt-0.5 truncate max-w-[300px]">{evt.details.url}</div>}
+                                </div>
+                              )}
+                              {evt.type === 'ai_query' && (
+                                <div className="text-xs text-foreground/90 font-medium italic">
+                                  "{evt.details.queryText}"
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )) : (
+                    <div className="terminal-card rounded-xl p-8 text-center text-muted-foreground text-sm italic">
+                      No visitor journeys recorded yet.
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       )}

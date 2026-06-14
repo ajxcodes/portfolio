@@ -47,19 +47,22 @@ describe('useTrafficTracker Hook', () => {
     
     // Setup window.location mock
     delete (window as any).location;
-    window.location = {
-      ...originalLocation,
-      search: '',
-      href: 'http://localhost:3000/',
-      host: 'localhost:3000'
-    };
+    Object.defineProperty(window, 'location', {
+      value: {
+        ...originalLocation,
+        search: '',
+        href: 'http://localhost:3000/',
+        host: 'localhost:3000'
+      },
+      writable: true
+    });
 
     sessionStorage.clear();
   });
 
   afterAll(() => {
     global.fetch = originalFetch;
-    window.location = originalLocation;
+    Object.defineProperty(window, 'location', { value: originalLocation, writable: true });
   });
 
   it('tracks page view on mount', () => {
@@ -76,7 +79,7 @@ describe('useTrafficTracker Hook', () => {
   });
 
   it('saves and uses ref search query parameter as ReferrerSource', () => {
-    window.location.search = '?ref=Twitter';
+    Object.defineProperty(window, 'location', { value: { ...window.location, search: '?ref=Twitter' }, writable: true });
     render(<TestTrackerComponent />);
 
     expect(sessionStorage.getItem('referrer_source')).toBe('Twitter');
@@ -107,7 +110,7 @@ describe('useTrafficTracker Hook', () => {
 
   it('fetches geo details asynchronously in development mode', async () => {
     const originalEnv = process.env.NODE_ENV;
-    process.env.NODE_ENV = 'development';
+    (process.env as any).NODE_ENV = 'development';
     process.env.NEXT_PUBLIC_GEOIP_SERVICE_URL = 'http://localhost:8080/geo';
     
     // 1st fetch: GeoIP, 2nd fetch: /api/analytics/views
@@ -139,12 +142,12 @@ describe('useTrafficTracker Hook', () => {
     mockUsePathname.mockReturnValue('/another-path');
     rerender(<TestTrackerComponent />);
 
-    process.env.NODE_ENV = originalEnv;
+    (process.env as any).NODE_ENV = originalEnv;
   });
 
   it('handles geo details fetch failure gracefully', async () => {
     const originalEnv = process.env.NODE_ENV;
-    process.env.NODE_ENV = 'development';
+    (process.env as any).NODE_ENV = 'development';
     process.env.NEXT_PUBLIC_GEOIP_SERVICE_URL = 'http://localhost:8080/geo';
     
     (global.fetch as jest.Mock).mockImplementation((url) => {
@@ -168,7 +171,7 @@ describe('useTrafficTracker Hook', () => {
       })
     );
 
-    process.env.NODE_ENV = originalEnv;
+    (process.env as any).NODE_ENV = originalEnv;
   });
 
   it('tracks outbound link clicks only when data-link-id is present', () => {

@@ -6,6 +6,8 @@ using Portfolio.Infrastructure.Database.Extensions;
 
 using Portfolio.Application.Storage.Services;
 using Portfolio.Infrastructure.Storage.Services;
+using Portfolio.Application.AI;
+using Portfolio.Infrastructure.AI;
 
 namespace Portfolio.Infrastructure;
 
@@ -16,6 +18,17 @@ public static class ServiceExtensions
         IConfiguration configuration)
     {
         services.AddScoped<IStorageService, S3StorageService>();
+
+        var aiProvider = configuration["AI_PROVIDER"] ?? "Ollama";
+        if (aiProvider.Equals("Gemini", StringComparison.OrdinalIgnoreCase))
+        {
+            services.AddHttpClient<IAiChatService, GeminiChatService>();
+        }
+        else
+        {
+            services.AddHttpClient<IAiChatService, OllamaChatService>();
+        }
+
         return services.ConfigureDatabase();
     }
 

@@ -10,6 +10,8 @@ const customJestConfig = {
   testPathIgnorePatterns: ['<rootDir>/e2e/', '<rootDir>/.next/', '<rootDir>/node_modules/'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
+    '^react-markdown$': '<rootDir>/__mocks__/react-markdown.tsx',
+    '^remark-gfm$': '<rootDir>/__mocks__/remark-gfm.tsx'
   },
   coverageThreshold: {
     global: {

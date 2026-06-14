@@ -15,7 +15,7 @@ export const ThemeSwitcher = () => {
   if (!mounted) {
     // Render a skeleton placeholder to prevent layout shift and hydration mismatch
     return (
-      <button className="p-2 rounded-full" disabled aria-label="Cycle theme">
+      <button className="p-2 rounded-full" aria-hidden="true" aria-label="Cycle theme">
         <div className="h-6 w-6" />
       </button>
     );

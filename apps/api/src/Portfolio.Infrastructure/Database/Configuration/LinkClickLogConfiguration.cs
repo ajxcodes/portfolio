@@ -14,10 +14,7 @@ public class LinkClickLogConfiguration : IEntityTypeConfiguration<LinkClickLog>
             .IsRequired()
             .HasDefaultValueSql("CURRENT_TIMESTAMP");
             
-        builder.Property(c => c.IpAddress)
-            .HasMaxLength(45);
-            
-        builder.Property(c => c.UserAgent);
+
         
         builder.Property(c => c.ReferrerSource)
             .HasMaxLength(100);

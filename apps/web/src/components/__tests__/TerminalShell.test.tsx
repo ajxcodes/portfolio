@@ -21,10 +21,11 @@ describe('TerminalShell Component', () => {
   ];
 
   const mockResume: ResumeData = {
-    profile: { id: 'p1', name: 'Alvin', title: 'Dev', intro: '', photoUrlLight: '', photoUrlDark: '' },
+    summary: { lead: 'test', highlights: [] },
+    downloadUrl: '',
     experience: [],
     previousExperience: [],
-    contact: { email: 'test@test.com' },
+    contact: { links: [{ type: 'email', url: 'test@test.com' }] },
     skills: [],
     projects: [],
     education: []
@@ -40,7 +41,7 @@ describe('TerminalShell Component', () => {
   it('allows user to type and execute commands', () => {
     render(<TerminalShell blogPosts={mockBlogPosts} resume={mockResume} />);
     
-    const inputEl = screen.getByPlaceholderText('Type "help" to start...');
+    const inputEl = screen.getByPlaceholderText('Type "help" or "ask" to start...');
     expect(inputEl).toBeInTheDocument();
 
     fireEvent.change(inputEl, { target: { value: 'help' } });

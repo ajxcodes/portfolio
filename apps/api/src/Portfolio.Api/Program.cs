@@ -10,6 +10,8 @@ using Portfolio.Api.Authentication;
 using System.Security.Claims;
 using Portfolio.Application.Extensions;
 using Portfolio.Infrastructure;
+using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 // For local development, load the .env file to simulate the container environment.
@@ -73,6 +75,21 @@ builder.Services.AddAuthorization(options =>
 });
 
 builder.Services.AddHttpContextAccessor();
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddPolicy("AiChatPolicy", context =>
+    {
+        var ip = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        return RateLimitPartition.GetFixedWindowLimiter(ip, _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 5,
+            Window = TimeSpan.FromMinutes(1)
+        });
+    });
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+});
+
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
@@ -105,7 +122,10 @@ app.UseSwagger()
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.UseRateLimiter();
+
 app.MapControllers();
+app.MapGet("/health", () => Results.Ok(new { Status = "Healthy", Timestamp = DateTime.UtcNow }));
 await app.Services.RunMigrations();
 app.Run();
 [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]

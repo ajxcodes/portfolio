@@ -22,6 +22,33 @@ namespace Portfolio.Infrastructure.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Portfolio.Domain.Analytics.AiQueryLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Provider")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("QueriedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("QueryText")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("VisitorSessionId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("VisitorSessionId");
+
+                    b.ToTable("AiQueryLogs");
+                });
+
             modelBuilder.Entity("Portfolio.Domain.Analytics.LinkClickLog", b =>
                 {
                     b.Property<Guid>("Id")
@@ -41,10 +68,6 @@ namespace Portfolio.Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
-                    b.Property<string>("IpAddress")
-                        .HasMaxLength(45)
-                        .HasColumnType("character varying(45)");
-
                     b.Property<Guid?>("LinkId")
                         .HasColumnType("uuid");
 
@@ -60,12 +83,14 @@ namespace Portfolio.Infrastructure.Migrations
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)");
 
-                    b.Property<string>("UserAgent")
-                        .HasColumnType("text");
+                    b.Property<Guid?>("VisitorSessionId")
+                        .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
                     b.HasIndex("LinkId");
+
+                    b.HasIndex("VisitorSessionId");
 
                     b.ToTable("LinkClickLogs");
                 });
@@ -84,26 +109,48 @@ namespace Portfolio.Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
-                    b.Property<string>("IpAddress")
-                        .HasMaxLength(45)
-                        .HasColumnType("character varying(45)");
-
                     b.Property<string>("ReferrerSource")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
-
-                    b.Property<string>("UserAgent")
-                        .HasColumnType("text");
 
                     b.Property<DateTime>("ViewedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
+                    b.Property<Guid?>("VisitorSessionId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
 
+                    b.HasIndex("VisitorSessionId");
+
                     b.ToTable("PageViewLogs");
+                });
+
+            modelBuilder.Entity("Portfolio.Domain.Analytics.VisitorSession", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("City")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Country")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("StartedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("TrackingId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("VisitorSessions");
                 });
 
             modelBuilder.Entity("Portfolio.Domain.Audit.AuditLog", b =>
@@ -542,6 +589,15 @@ namespace Portfolio.Infrastructure.Migrations
                     b.ToTable("WorkExperienceSkills");
                 });
 
+            modelBuilder.Entity("Portfolio.Domain.Analytics.AiQueryLog", b =>
+                {
+                    b.HasOne("Portfolio.Domain.Analytics.VisitorSession", "VisitorSession")
+                        .WithMany("AiQueries")
+                        .HasForeignKey("VisitorSessionId");
+
+                    b.Navigation("VisitorSession");
+                });
+
             modelBuilder.Entity("Portfolio.Domain.Analytics.LinkClickLog", b =>
                 {
                     b.HasOne("Portfolio.Domain.Resume.ResumeProfileLink", "Link")
@@ -549,7 +605,22 @@ namespace Portfolio.Infrastructure.Migrations
                         .HasForeignKey("LinkId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("Portfolio.Domain.Analytics.VisitorSession", "VisitorSession")
+                        .WithMany("LinkClicks")
+                        .HasForeignKey("VisitorSessionId");
+
                     b.Navigation("Link");
+
+                    b.Navigation("VisitorSession");
+                });
+
+            modelBuilder.Entity("Portfolio.Domain.Analytics.PageViewLog", b =>
+                {
+                    b.HasOne("Portfolio.Domain.Analytics.VisitorSession", "VisitorSession")
+                        .WithMany("PageViews")
+                        .HasForeignKey("VisitorSessionId");
+
+                    b.Navigation("VisitorSession");
                 });
 
             modelBuilder.Entity("Portfolio.Domain.Blog.PostSyndication", b =>
@@ -659,6 +730,15 @@ namespace Portfolio.Infrastructure.Migrations
                     b.Navigation("Skill");
 
                     b.Navigation("WorkExperience");
+                });
+
+            modelBuilder.Entity("Portfolio.Domain.Analytics.VisitorSession", b =>
+                {
+                    b.Navigation("AiQueries");
+
+                    b.Navigation("LinkClicks");
+
+                    b.Navigation("PageViews");
                 });
 
             modelBuilder.Entity("Portfolio.Domain.Blog.Post", b =>

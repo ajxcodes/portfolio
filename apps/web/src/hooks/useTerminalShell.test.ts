@@ -12,6 +12,12 @@ jest.mock('next/navigation', () => ({
   },
 }));
 
+jest.mock('@microsoft/fetch-event-source', () => ({
+  fetchEventSource: jest.fn()
+}));
+import { fetchEventSource } from '@microsoft/fetch-event-source';
+const mockFetchEventSource = fetchEventSource as jest.Mock;
+
 describe('useTerminalShell Hook and Strategies', () => {
   const mockBlogPosts: BlogPost[] = [
     { slug: 'setting-up-pi-hole', title: 'Pi-hole Setup', summary: 'A guide to block ads.' },
@@ -19,14 +25,11 @@ describe('useTerminalShell Hook and Strategies', () => {
   ];
 
   const mockResume: ResumeData = {
-    profile: {
-      id: 'prof-1',
-      name: 'Alex Jones',
-      title: 'Dev',
-      intro: 'Intro',
-      photoUrlLight: '',
-      photoUrlDark: ''
+    summary: {
+      lead: 'Intro',
+      highlights: []
     },
+    downloadUrl: '',
     experience: [
       {
         company: 'Provision Analytics',
@@ -39,8 +42,8 @@ describe('useTerminalShell Hook and Strategies', () => {
       {
         company: 'Symend',
         role: 'Software Developer',
-        period: '2021 - 2023',
-        results: []
+        location: 'Calgary',
+        period: '2021 - 2023'
       }
     ],
     contact: {
@@ -58,6 +61,8 @@ describe('useTerminalShell Hook and Strategies', () => {
 
   beforeEach(() => {
     mockPush.mockClear();
+    mockFetchEventSource.mockClear();
+    localStorage.clear();
   });
 
   it('should initialize with welcome history lines', () => {
@@ -73,7 +78,8 @@ describe('useTerminalShell Hook and Strategies', () => {
     });
     expect(result.current.history[result.current.history.length - 1]).toEqual({
       type: 'input',
-      text: ''
+      text: '',
+      prompt: 'guest@ajx-terminal:~$'
     });
   });
 
@@ -316,17 +322,20 @@ describe('useTerminalShell Hook and Strategies', () => {
       result.current.executeCommand('testclear');
     });
     
-    expect(result.current.history).toEqual([{ type: 'input', text: 'testclear' }]);
+    expect(result.current.history).toEqual([{ type: 'input', text: 'testclear', prompt: 'guest@ajx-terminal:~$' }]);
     delete CommandRegistry['testclear'];
   });
 
   it('should handle undefined experience and previousExperience gracefully in ls and cat strategies', () => {
     const minimalResume: ResumeData = {
-      profile: mockResume.profile,
+      summary: mockResume.summary,
+      downloadUrl: mockResume.downloadUrl,
       contact: mockResume.contact,
       skills: [],
       projects: [],
-      education: []
+      education: [],
+      experience: undefined as any,
+      previousExperience: undefined as any
     };
     
     const { result } = renderHook(() => useTerminalShell(mockBlogPosts, minimalResume));
@@ -340,5 +349,134 @@ describe('useTerminalShell Hook and Strategies', () => {
       result.current.executeCommand('cat experience/some-company');
     });
     expect(result.current.history[result.current.history.length - 1].text).toBe('cat: experience record not found: some-company');
+  });
+
+  describe('ask strategy', () => {
+    it('should set AI mode and return transition message when no args provided', () => {
+      const { result } = renderHook(() => useTerminalShell(mockBlogPosts, mockResume));
+      act(() => {
+        result.current.executeCommand('ask');
+      });
+      const lastOutput = result.current.history[result.current.history.length - 1];
+      expect(lastOutput.text).toContain('Entered AI mode. Type your questions, or type "exit" to leave.');
+      expect(result.current.isAiMode).toBe(true);
+    });
+
+    it('should output waiting text when given args in non-AI mode', () => {
+      const { result } = renderHook(() => useTerminalShell(mockBlogPosts, mockResume));
+      act(() => {
+        result.current.executeCommand('ask Who are you?');
+      });
+      const historyLength = result.current.history.length;
+      expect(result.current.history[historyLength - 2].text).toBe('Who are you?');
+    });
+  });
+
+  describe('theme strategy', () => {
+    it('should show usage when no arg provided', () => {
+      const { result } = renderHook(() => useTerminalShell(mockBlogPosts, mockResume));
+      act(() => {
+        result.current.executeCommand('theme');
+      });
+      const lastOutput = result.current.history[result.current.history.length - 1];
+      expect(lastOutput.text).toContain('Usage: theme <name>');
+    });
+
+    it('should set data-theme attribute and confirm when arg provided', () => {
+      const { result } = renderHook(() => useTerminalShell(mockBlogPosts, mockResume));
+      act(() => {
+        result.current.executeCommand('theme cyberpunk');
+      });
+      expect(document.documentElement.getAttribute('data-theme')).toBe('cyberpunk');
+      const lastOutput = result.current.history[result.current.history.length - 1];
+      expect(lastOutput.text).toBe('Theme set to: cyberpunk');
+    });
+  });
+
+  describe('handleKeyDown', () => {
+    it('should handle Ctrl+C to abort AI typing', async () => {
+      const { result } = renderHook(() => useTerminalShell(mockBlogPosts, mockResume));
+      
+      mockFetchEventSource.mockImplementationOnce(() => new Promise(() => {}));
+
+      await act(async () => {
+        await result.current.executeCommand('ask hello');
+      });
+
+      // Simulate Ctrl+C
+      act(() => {
+        const preventDefault = jest.fn();
+        result.current.handleKeyDown({
+          key: 'c',
+          ctrlKey: true,
+          preventDefault
+        } as unknown as React.KeyboardEvent<HTMLInputElement>);
+      });
+
+      const lastOutput = result.current.history[result.current.history.length - 1];
+      expect(lastOutput.text).toBe('^C (Aborted)');
+      expect(result.current.isAiTyping).toBe(false);
+    });
+
+    it('should handle Ctrl+C when not typing', () => {
+      const { result } = renderHook(() => useTerminalShell(mockBlogPosts, mockResume));
+      act(() => result.current.setInput('ls b'));
+      
+      act(() => {
+        const preventDefault = jest.fn();
+        result.current.handleKeyDown({
+          key: 'c',
+          ctrlKey: true,
+          preventDefault
+        } as unknown as React.KeyboardEvent<HTMLInputElement>);
+      });
+
+      const lastOutput = result.current.history[result.current.history.length - 1];
+      expect(lastOutput.text).toBe('ls b^C');
+      expect(result.current.input).toBe('');
+    });
+
+    it('should navigate history with ArrowUp and ArrowDown', () => {
+      const { result } = renderHook(() => useTerminalShell(mockBlogPosts, mockResume));
+      act(() => {
+        result.current.executeCommand('clear');
+      });
+      act(() => {
+        result.current.executeCommand('ls');
+      });
+
+      // ArrowUp
+      act(() => {
+        result.current.handleKeyDown({ key: 'ArrowUp', preventDefault: jest.fn() } as any);
+      });
+      expect(result.current.input).toBe('ls');
+
+      act(() => {
+        result.current.handleKeyDown({ key: 'ArrowUp', preventDefault: jest.fn() } as any);
+      });
+      expect(result.current.input).toBe('clear');
+
+      // ArrowDown
+      act(() => {
+        result.current.handleKeyDown({ key: 'ArrowDown', preventDefault: jest.fn() } as any);
+      });
+      expect(result.current.input).toBe('ls');
+
+      // ArrowDown to empty
+      act(() => {
+        result.current.handleKeyDown({ key: 'ArrowDown', preventDefault: jest.fn() } as any);
+      });
+      expect(result.current.input).toBe('');
+    });
+
+    it('should handle Tab completion', () => {
+      const { result } = renderHook(() => useTerminalShell(mockBlogPosts, mockResume));
+      act(() => result.current.setInput('cl'));
+      
+      act(() => {
+        result.current.handleKeyDown({ key: 'Tab', preventDefault: jest.fn() } as any);
+      });
+      expect(result.current.input).toBe('clear ');
+    });
   });
 });
