@@ -99,7 +99,14 @@ export function useTerminalShell(blogPosts: BlogPost[], resume: ResumeData) {
             if (persistAiMode) setIsAiMode(true);
             return;
           }
-          const chunk = msg.data.replace(/\\n/g, '\n');
+          // Parse JSON chunk
+          let chunk = '';
+          try {
+            chunk = JSON.parse(msg.data).text;
+          } catch (e) {
+            console.error('Failed to parse SSE JSON chunk:', e);
+            return;
+          }
           setHistory(prev => prev.map(item => 
             item.id === msgId ? { ...item, text: item.text + chunk } : item
           ));

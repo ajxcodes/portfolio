@@ -34,8 +34,8 @@ describe('useAiChat', () => {
     mockFetchEventSource.mockImplementation(async (url, options) => {
       // simulate stream events synchronously to avoid leaking across tests
       if (options.onopen) await options.onopen({ ok: true, status: 200, headers: new Headers({'content-type': 'text/event-stream'}) } as any);
-      if (options.onmessage) options.onmessage({ data: 'Hello' } as any);
-      if (options.onmessage) options.onmessage({ data: ' world' } as any);
+      if (options.onmessage) options.onmessage({ data: JSON.stringify({ text: 'Hello' }) } as any);
+      if (options.onmessage) options.onmessage({ data: JSON.stringify({ text: ' world' }) } as any);
       if (options.onmessage) options.onmessage({ event: 'done', data: '[DONE]' } as any);
       if (options.onclose) options.onclose();
     });
@@ -164,7 +164,7 @@ describe('useAiChat', () => {
     const { result } = renderHook(() => useAiChat());
     mockFetchEventSource.mockImplementation(async (url, options) => {
        if (options.onopen) await options.onopen({ ok: true, status: 200, headers: new Headers({'content-type': 'text/event-stream'}) } as any);
-       if (options.onmessage) options.onmessage({ data: 'Line 1\\nLine 2' } as any);
+       if (options.onmessage) options.onmessage({ data: JSON.stringify({ text: 'Line 1\nLine 2' }) } as any);
        if (options.onmessage) options.onmessage({ event: 'done', data: '[DONE]' } as any);
     });
 

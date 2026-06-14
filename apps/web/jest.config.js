@@ -13,6 +13,7 @@ const customJestConfig = {
     '^react-markdown$': '<rootDir>/__mocks__/react-markdown.tsx',
     '^remark-gfm$': '<rootDir>/__mocks__/remark-gfm.tsx'
   },
+  modulePathIgnorePatterns: ['<rootDir>/stryker-tmp/', '<rootDir>/e2e/'],
   coverageThreshold: {
     global: {
       branches: 80,

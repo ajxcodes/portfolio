@@ -41,7 +41,7 @@ describe('TerminalShell Component', () => {
   it('allows user to type and execute commands', () => {
     render(<TerminalShell blogPosts={mockBlogPosts} resume={mockResume} />);
     
-    const inputEl = screen.getByPlaceholderText('Type "help" or "ask" to start...');
+    const inputEl = screen.getByPlaceholderText('Type "help" to start...');
     expect(inputEl).toBeInTheDocument();
 
     fireEvent.change(inputEl, { target: { value: 'help' } });

@@ -53,9 +53,9 @@ public class AiController(
         {
             await foreach (var chunk in chatService.AskQuestionStreamAsync(systemPrompt, request.Message, cancellationToken))
             {
-                // Format as SSE (Server-Sent Events)
-                var escapedChunk = chunk.Replace("\n", "\\n");
-                await Response.WriteAsync($"data: {escapedChunk}\n\n", cancellationToken);
+                // Format as SSE (Server-Sent Events) with JSON to cleanly escape newlines and quotes
+                var payload = System.Text.Json.JsonSerializer.Serialize(new { text = chunk });
+                await Response.WriteAsync($"data: {payload}\n\n", cancellationToken);
                 await Response.Body.FlushAsync(cancellationToken);
             }
         }

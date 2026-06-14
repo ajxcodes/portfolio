@@ -99,8 +99,14 @@ export function useAiChat() {
             return;
           }
 
-          // Append chunk
-          const chunk = msg.data.replace(/\\n/g, '\n');
+          // Parse JSON chunk
+          let chunk = '';
+          try {
+            chunk = JSON.parse(msg.data).text;
+          } catch (e) {
+            console.error('Failed to parse SSE JSON chunk:', e);
+            return;
+          }
           setMessages((prev) =>
             prev.map((m) =>
               m.id === assistantMessageId ? { ...m, content: m.content + chunk } : m

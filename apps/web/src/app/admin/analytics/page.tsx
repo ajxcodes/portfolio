@@ -121,27 +121,27 @@ export default function AnalyticsPage() {
       counts[name] = (counts[name] || 0) + 1;
     });
     return Object.entries(counts).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count);
-  }, [summary]);
+  }, [summary?.recentLinkClicks]);
 
   const viewsByLocation = useMemo(() => {
-    if (!summary) return [];
+    if (!summary || !summary.recentPageViews) return [];
     const counts: Record<string, number> = {};
     summary.recentPageViews.forEach(view => {
       const loc = (view.country && view.country !== 'Unknown') ? view.country : 'Unknown';
       counts[loc] = (counts[loc] || 0) + 1;
     });
     return Object.entries(counts).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count).slice(0, 5);
-  }, [summary]);
+  }, [summary?.recentPageViews]);
 
   const viewsByReferrer = useMemo(() => {
-    if (!summary) return [];
+    if (!summary || !summary.recentPageViews) return [];
     const counts: Record<string, number> = {};
     summary.recentPageViews.forEach(view => {
       const ref = view.referrerSource || 'Direct';
       counts[ref] = (counts[ref] || 0) + 1;
     });
     return Object.entries(counts).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count).slice(0, 5);
-  }, [summary]);
+  }, [summary?.recentPageViews]);
 
   const queriesByDate = useMemo(() => {
     if (!summary || !summary.recentAiQueries) return [];
@@ -151,7 +151,7 @@ export default function AnalyticsPage() {
       counts[date] = (counts[date] || 0) + 1;
     });
     return Object.entries(counts).map(([date, count]) => ({ date, count }));
-  }, [summary]);
+  }, [summary?.recentAiQueries]);
 
   const visitorJourneys = useMemo(() => {
     if (!summary) return [];
@@ -172,7 +172,7 @@ export default function AnalyticsPage() {
       return journeys.get(id)!;
     };
 
-    summary.recentPageViews.forEach(view => {
+    summary.recentPageViews?.forEach(view => {
       const journey = getOrCreateJourney(view.visitorSessionId || '', view.id);
       if (journey.location === 'Unknown' && view.country) {
          journey.location = view.city ? `${view.city}, ${view.country}` : view.country;
@@ -190,7 +190,7 @@ export default function AnalyticsPage() {
       });
     });
 
-    summary.recentLinkClicks.forEach(click => {
+    summary.recentLinkClicks?.forEach(click => {
       const journey = getOrCreateJourney(click.visitorSessionId || '', click.id);
       journey.events.push({
         id: click.id,
@@ -224,7 +224,7 @@ export default function AnalyticsPage() {
       journey.lastActiveAt = journey.events[0]?.timestamp || '';
       return journey;
     }).sort((a, b) => new Date(b.lastActiveAt).getTime() - new Date(a.lastActiveAt).getTime());
-  }, [summary]);
+  }, [summary?.recentPageViews, summary?.recentLinkClicks, summary?.recentAiQueries]);
 
   const fetchAuthHeaders = async () => {
     const headers: Record<string, string> = {
