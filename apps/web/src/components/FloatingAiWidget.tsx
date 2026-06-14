@@ -60,7 +60,7 @@ export function FloatingAiWidget({ blogPosts = [], resume }: FloatingAiWidgetPro
       if (e.key === 'Escape') {
         setIsOpen(false);
       }
-      if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
+      if ((e.key === 'k' || e.key === '/') && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
         setIsOpen(prev => !prev);
       }

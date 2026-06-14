@@ -249,7 +249,7 @@ export function useTerminalShell(blogPosts: BlogPost[], resume: ResumeData) {
       }
     } else if (e.key === 'l' && e.ctrlKey) {
       e.preventDefault();
-      setHistory([]);
+      setHistory([{ type: 'output', text: 'Terminal cleared.' }]);
       localStorage.removeItem(HISTORY_KEY);
       return;
     }
