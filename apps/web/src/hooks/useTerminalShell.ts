@@ -247,6 +247,11 @@ export function useTerminalShell(blogPosts: BlogPost[], resume: ResumeData) {
       if (matching.length === 1) {
         setInput(matching[0] + ' ');
       }
+    } else if (e.key === 'l' && e.ctrlKey) {
+      e.preventDefault();
+      setHistory([]);
+      localStorage.removeItem(HISTORY_KEY);
+      return;
     }
   };
 

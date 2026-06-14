@@ -162,17 +162,18 @@ describe('FloatingAiWidget', () => {
     expect(screen.getByPlaceholderText(/Type a message\.\.\./i)).toBeInTheDocument();
   });
 
-  it('switches to gui tab if terminal tab is active and route changes to homepage', () => {
+  it('closes widget entirely when route changes', async () => {
     (usePathname as jest.Mock).mockReturnValue('/resume');
     const { rerender } = render(<FloatingAiWidget resume={mockResume} />);
     fireEvent.click(screen.getByRole('button', { name: /Open AI Chat/i }));
-    fireEvent.click(screen.getByText('Shell'));
-    expect(screen.getByText(/ajxcodes Interactive Shell/)).toBeInTheDocument();
+    expect(screen.getByText('Ask me anything about the resume, experience, or projects!')).toBeInTheDocument();
     
     (usePathname as jest.Mock).mockReturnValue('/');
     rerender(<FloatingAiWidget resume={mockResume} />);
-    expect(screen.queryByText(/ajxcodes Interactive Shell/)).not.toBeInTheDocument();
-    expect(screen.getByText('Ask me anything about the resume, experience, or projects!')).toBeInTheDocument();
+    
+    await waitFor(() => {
+      expect(screen.queryByText('Ask me anything about the resume, experience, or projects!')).not.toBeInTheDocument();
+    });
   });
 
   it('scrolls to bottom on new message', () => {

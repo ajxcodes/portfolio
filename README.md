@@ -50,9 +50,10 @@ This project is built with the following technologies:
 * **Cloud Storage:** S3-compatible object storage via AWS SDK
 * **API Documentation:** OpenAPI / Swagger
 
-**DevOps:**
+**DevOps & Automation:**
 * **Containerization:** Docker, Docker Compose
 * **CI/CD:** GitHub Actions running lint, backend tests, and frontend Unit/E2E suites.
+* **Code Review:** Automated AI PR Reviewer via Google Gemini API in GitHub Actions.
 * **Hosting:** Configured for automated continuous deployment to Render.
 
 ### About This Project
@@ -70,6 +71,14 @@ Key features include:
 5. **Supabase-Authenticated Admin Panel**: A secure management portal (`/admin`) to update experience logs, link profiles, view traffic analytics, upload media files directly to cloud storage, and view application audit trails.
 
 All resume data, images, and posts are managed dynamically through our REST API rather than checked-in JSON or markdown files.
+
+### Development Phases Completed
+
+This project was built iteratively across several milestone phases:
+- **Phase 1 (Setup & Architecture):** Established the containerized monorepo, .NET API with Entity Framework, Next.js frontend, and Supabase auth integration.
+- **Phase 2 (Interactive Resumes & CLI):** Built the homepage bash terminal and integrated QuestPDF for on-the-fly, ATS-compliant PDF resume generation.
+- **Phase 3 (GDPR Analytics & Webhooks):** Implemented strict privacy-first analytics using hashed IP/UA sessions (`VisitorSessionId`) for tracking traffic and clicks.
+- **Phase 4 (AI Chatbot & Admin Panel):** Integrated the interactive RAG AI assistant (supporting Ollama and Gemini with SSE streaming) and built the authenticated Admin portal for data management.
 
 ### Render Continuous Deployment Configuration
 

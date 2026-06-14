@@ -55,9 +55,29 @@ export function FloatingAiWidget({ blogPosts = [], resume }: FloatingAiWidgetPro
         if (textarea) textarea.focus();
       }, 100);
     };
+
+    const handleGlobalKeydown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsOpen(false);
+      }
+      if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        setIsOpen(prev => !prev);
+      }
+    };
+
     window.addEventListener('openAiWidget', handleOpenWidget);
-    return () => window.removeEventListener('openAiWidget', handleOpenWidget);
+    window.addEventListener('keydown', handleGlobalKeydown);
+    return () => {
+      window.removeEventListener('openAiWidget', handleOpenWidget);
+      window.removeEventListener('keydown', handleGlobalKeydown);
+    };
   }, [isOpen]);
+
+  // Close widget on route change
+  useEffect(() => {
+    setIsOpen(false);
+  }, [pathname]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -137,8 +157,8 @@ export function FloatingAiWidget({ blogPosts = [], resume }: FloatingAiWidgetPro
 
             {/* Chat Area */}
             {activeTab === 'terminal' && resume ? (
-              <div className="flex-1 overflow-hidden p-0 relative">
-                <TerminalShell blogPosts={blogPosts} resume={resume}  />
+              <div className="flex-1 overflow-hidden p-0 relative h-full">
+                <TerminalShell blogPosts={blogPosts} resume={resume} hideTitleBar={true} heightClass="flex-1" />
               </div>
             ) : (
               <>
