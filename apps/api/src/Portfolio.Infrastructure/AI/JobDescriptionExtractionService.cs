@@ -73,14 +73,29 @@ public class JobDescriptionExtractionService(HttpClient httpClient, Microsoft.Ex
     private async Task<string> ExtractFromFileAsync(Stream fileStream, string fileName)
     {
         var extension = Path.GetExtension(fileName).ToLowerInvariant();
+        
+        // Magic byte validation
+        var magicBytes = new byte[5];
+        var bytesRead = await fileStream.ReadAsync(magicBytes, 0, 5);
+        fileStream.Position = 0; // Reset stream position
 
         if (extension == ".pdf")
         {
+            // PDF starts with %PDF- (25 50 44 46 2D)
+            if (bytesRead < 5 || magicBytes[0] != 0x25 || magicBytes[1] != 0x50 || magicBytes[2] != 0x44 || magicBytes[3] != 0x46 || magicBytes[4] != 0x2D)
+            {
+                throw new ArgumentException("Invalid file content. File does not appear to be a valid PDF.");
+            }
             return ExtractFromPdf(fileStream);
         }
         
         if (extension == ".docx")
         {
+            // DOCX (ZIP) starts with PK\x03\x04 (50 4B 03 04)
+            if (bytesRead < 4 || magicBytes[0] != 0x50 || magicBytes[1] != 0x4B || magicBytes[2] != 0x03 || magicBytes[3] != 0x04)
+            {
+                throw new ArgumentException("Invalid file content. File does not appear to be a valid DOCX.");
+            }
             return ExtractFromDocx(fileStream);
         }
 
@@ -129,8 +144,10 @@ public class JobDescriptionExtractionService(HttpClient httpClient, Microsoft.Ex
 
     private string ExtractFromDocx(Stream stream)
     {
-        using var wordDocument = WordprocessingDocument.Open(stream, false);
-        var body = wordDocument.MainDocumentPart?.Document.Body;
-        return body?.InnerText ?? string.Empty;
+        using (var wordDocument = WordprocessingDocument.Open(stream, false))
+        {
+            var body = wordDocument.MainDocumentPart?.Document.Body;
+            return body?.InnerText ?? string.Empty;
+        }
     }
 }
