@@ -3,8 +3,10 @@ import { useJobFit } from '../useJobFit';
 
 describe('useJobFit Hook', () => {
   const originalFetch = global.fetch;
+  const originalEnv = process.env;
 
   beforeEach(() => {
+    process.env = { ...originalEnv, NEXT_PUBLIC_API_BASE_URL: 'http://localhost:5808' };
     jest.clearAllMocks();
     sessionStorage.clear();
     global.fetch = jest.fn().mockResolvedValue({
@@ -17,6 +19,10 @@ describe('useJobFit Hook', () => {
         actionChips: []
       })
     });
+  });
+
+  afterEach(() => {
+    process.env = originalEnv;
   });
 
   afterAll(() => {

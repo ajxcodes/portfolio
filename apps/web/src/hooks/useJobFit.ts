@@ -28,6 +28,10 @@ export function useJobFit() {
       if (visitorSessionId) formData.append('VisitorSessionId', visitorSessionId);
 
       const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+      if (!apiBaseUrl) {
+        throw new Error("NEXT_PUBLIC_API_BASE_URL environment variable is not defined. Job Fit analysis cannot proceed.");
+      }
+      
       const response = await fetch(`${apiBaseUrl}/api/ai/job-fit/analyze`, {
         method: 'POST',
         body: formData,

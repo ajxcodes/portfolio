@@ -87,12 +87,19 @@ public class JobDescriptionExtractionService(HttpClient httpClient) : IJobDescri
     private string ExtractFromPdf(Stream stream)
     {
         var sb = new StringBuilder();
-        using (var document = PdfDocument.Open(stream))
+        try
         {
-            foreach (var page in document.GetPages())
+            using (var document = PdfDocument.Open(stream))
             {
-                sb.AppendLine(page.Text);
+                foreach (var page in document.GetPages())
+                {
+                    sb.AppendLine(page.Text);
+                }
             }
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Failed to parse PDF document. It may be malformed or corrupted: {ex.Message}", ex);
         }
         return sb.ToString();
     }
