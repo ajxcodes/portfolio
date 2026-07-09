@@ -34,7 +34,7 @@ export default async function RootLayout({
             photoUrlLight={data.resume.photoUrlLight}
             photoUrlDark={data.resume.photoUrlDark}
           />
-          <main className="container mx-auto px-4 py-8 pb-24">{children}</main>
+          <main className="container mx-auto px-4 pt-4 pb-28 md:py-8 md:pb-24">{children}</main>
           <Footer />
           <FloatingAiWidget blogPosts={data.blogPosts} resume={data.resume} />
         </ThemeProvider>

@@ -88,4 +88,60 @@ public class OllamaChatServiceTests
             return Task.FromResult(response);
         }
     }
+
+    [Fact]
+    public async Task AskQuestionAsync_ShouldReturnContent()
+    {
+        // Arrange
+        var configuration = Substitute.For<IConfiguration>();
+        configuration["OLLAMA_ENDPOINT"].Returns("http://localhost:11434");
+
+        var jsonResponse = "{\"model\":\"gemma2:2b\",\"message\":{\"role\":\"assistant\",\"content\":\"Hello World\"},\"done\":true}";
+        var mockHandler = new MockHttpMessageHandler(jsonResponse, HttpStatusCode.OK);
+        var httpClient = new HttpClient(mockHandler);
+
+        var service = new OllamaChatService(httpClient, configuration);
+
+        // Act
+        var result = await service.AskQuestionAsync("system", "user");
+
+        // Assert
+        result.ShouldBe("Hello World");
+    }
+
+    [Fact]
+    public async Task AskQuestionAsync_EmptyResponse_ShouldReturnEmptyString()
+    {
+        // Arrange
+        var configuration = Substitute.For<IConfiguration>();
+        configuration["OLLAMA_ENDPOINT"].Returns("http://localhost:11434");
+
+        var jsonResponse = "{\"model\":\"gemma2:2b\",\"message\":{},\"done\":true}";
+        var mockHandler = new MockHttpMessageHandler(jsonResponse, HttpStatusCode.OK);
+        var httpClient = new HttpClient(mockHandler);
+
+        var service = new OllamaChatService(httpClient, configuration);
+
+        // Act
+        var result = await service.AskQuestionAsync("system", "user");
+
+        // Assert
+        result.ShouldBe(string.Empty);
+    }
+
+    [Fact]
+    public async Task AskQuestionAsync_ShouldThrowOnFailedStatusCode()
+    {
+        // Arrange
+        var configuration = Substitute.For<IConfiguration>();
+        configuration["OLLAMA_ENDPOINT"].Returns("http://localhost:11434");
+
+        var mockHandler = new MockHttpMessageHandler("", HttpStatusCode.InternalServerError);
+        var httpClient = new HttpClient(mockHandler);
+
+        var service = new OllamaChatService(httpClient, configuration);
+
+        // Act & Assert
+        await Should.ThrowAsync<HttpRequestException>(() => service.AskQuestionAsync("system", "user"));
+    }
 }

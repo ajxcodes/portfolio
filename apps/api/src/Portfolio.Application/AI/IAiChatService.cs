@@ -1,6 +1,3 @@
-using System.Collections.Generic;
-using System.Threading;
-
 namespace Portfolio.Application.AI;
 
 /// <summary>
@@ -17,4 +14,5 @@ public interface IAiChatService
     /// <param name="cancellationToken">Cancellation token to abort the stream mid-flight.</param>
     /// <returns>An asynchronous stream of text chunks.</returns>
     IAsyncEnumerable<string> AskQuestionStreamAsync(string systemPrompt, string userMessage, CancellationToken cancellationToken = default);
+    Task<string> AskQuestionAsync(string systemPrompt, string userMessage, CancellationToken cancellationToken = default);
 }

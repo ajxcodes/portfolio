@@ -42,7 +42,7 @@ export default function AdminLayout({
             </div>
             <div>
               <h2 className="font-bold text-base font-mono leading-tight text-primary">admin_control</h2>
-              <span className="text-[10px] font-mono text-muted-foreground/60">CMS v1.0.0</span>
+              <span className="text-[10px] font-mono text-muted-foreground/60">CMS</span>
             </div>
           </div>
 

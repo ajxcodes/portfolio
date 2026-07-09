@@ -27,7 +27,7 @@ export const Section = ({ title, children, className, id, defaultOpen = false }:
       animate={isInView ? { opacity: 1, y: 0 } : {}}
       transition={{ duration: 0.5, ease: "easeOut" }}
     >
-      <div className="py-8">
+      <div className="py-4 sm:py-8">
         <div
           onClick={() => setIsExpanded(prev => !prev)}
           onKeyDown={(e) => {
@@ -58,7 +58,7 @@ export const Section = ({ title, children, className, id, defaultOpen = false }:
               transition={{ duration: 0.4, ease: [0.04, 0.62, 0.23, 0.98] }}
               className="overflow-hidden"
             >
-              <div className="pt-6">{children}</div>
+              <div className="pt-4 sm:pt-6">{children}</div>
             </motion.div>
           )}
         </AnimatePresence>

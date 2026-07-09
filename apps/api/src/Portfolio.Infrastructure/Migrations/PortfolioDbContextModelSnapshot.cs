@@ -109,6 +109,9 @@ namespace Portfolio.Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<string>("PagePath")
+                        .HasColumnType("text");
+
                     b.Property<string>("ReferrerSource")
                         .IsRequired()
                         .HasMaxLength(100)

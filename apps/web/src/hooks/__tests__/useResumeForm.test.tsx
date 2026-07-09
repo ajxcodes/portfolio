@@ -442,6 +442,39 @@ describe("useResumeForm Hook", () => {
     );
   });
 
+  it("should format period correctly when current", async () => {
+    mockGet.mockReturnValue("new");
+    (adminService.saveProfile as jest.Mock).mockResolvedValueOnce({});
+
+    const { result } = await renderAndResolveHook();
+
+    act(() => {
+      result.current.addExperience();
+      result.current.updateExperience(0, {
+        startMonth: "Jan",
+        startYear: "2020",
+        isCurrent: true,
+      });
+    });
+
+    const mockEvent = { preventDefault: jest.fn() } as unknown as React.FormEvent;
+
+    await act(async () => {
+      await result.current.handleSubmit(mockEvent);
+    });
+
+    expect(adminService.saveProfile).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        workExperiences: expect.arrayContaining([
+          expect.objectContaining({
+            period: "Jan 2020 - Present"
+          })
+        ])
+      })
+    );
+  });
+
   it("should handle saveProfile error properly", async () => {
     mockGet.mockReturnValue("new");
     (adminService.saveProfile as jest.Mock).mockRejectedValueOnce(new Error("Save Error"));
@@ -476,4 +509,236 @@ describe("useResumeForm Hook", () => {
     expect(result.current.experiences[0].skillIds).not.toContain("skill-x");
   });
 
+  it("should move experience up and down", async () => {
+    const { result } = await renderAndResolveHook();
+
+    act(() => {
+      result.current.addExperience();
+      result.current.addExperience();
+      result.current.updateExperience(0, { company: "First" });
+      result.current.updateExperience(1, { company: "Second" });
+    });
+
+    expect(result.current.experiences[0].company).toBe("First");
+
+    act(() => {
+      result.current.moveExperience(1, "up");
+    });
+    expect(result.current.experiences[0].company).toBe("Second");
+
+    act(() => {
+      result.current.moveExperience(0, "down");
+    });
+    expect(result.current.experiences[0].company).toBe("First");
+  });
+
+  it("should remove an experience", async () => {
+    const { result } = await renderAndResolveHook();
+
+    act(() => {
+      result.current.addExperience();
+      result.current.addExperience();
+      result.current.updateExperience(0, { company: "First" });
+    });
+
+    // The hook initial load might add an empty experience? No, mockGet returns 'new', experiences should be 0, but addExperience is called twice, so length is 2.
+    expect(result.current.experiences.length).toBe(2);
+
+    act(() => {
+      result.current.removeExperience(0);
+    });
+    expect(result.current.experiences.length).toBe(1);
+    expect(result.current.experiences[0].company).not.toBe("First");
+  });
+
+  it("should handle inline skill creation", async () => {
+    (adminService.createSkillInline as jest.Mock).mockResolvedValueOnce({ id: "new-skill-1", name: "React" });
+
+    const { result } = await renderAndResolveHook();
+
+    act(() => {
+      result.current.addExperience();
+    });
+
+    await act(async () => {
+      await result.current.handleCreateSkillInline(0);
+    });
+
+    // It resets new skill names map, so we only check if the function doesn't crash and works
+    expect(adminService.createSkillInline).not.toHaveBeenCalled(); // Because the name is empty
+
+    act(() => {
+      result.current.setNewSkillNameMap({ 0: "React" });
+      result.current.setNewSkillCatMap({ 0: "cat-1" });
+    });
+
+    await act(async () => {
+      await result.current.handleCreateSkillInline(0);
+    });
+
+    expect(adminService.createSkillInline).toHaveBeenCalledWith("cat-1", "React");
+    expect(result.current.experiences[0].skillIds).toContain("new-skill-1");
+    expect(result.current.newSkillNameMap[0]).toBe("");
+  });
+
+  it("should load link values correctly including fallback to name", async () => {
+    (adminService.fetchProfile as jest.Mock).mockResolvedValueOnce({
+      name: "Link Test User",
+      links: [
+        { linkType: { keyIdentifier: "email" }, url: "test@example.com", displayInHeader: true },
+        { linkType: { name: "Phone" }, url: "123-456", displayInHeader: false },
+        { linkType: { keyIdentifier: "unknown" }, url: "ignore" },
+        { linkType: { keyIdentifier: "github" } } // missing url
+      ],
+      experiences: []
+    });
+    mockGet.mockReturnValue("123");
+
+    const { result } = await renderAndResolveHook();
+
+    expect(result.current.name).toBe("Link Test User");
+    expect(result.current.email).toBe("test@example.com");
+    expect(result.current.emailHeader).toBe(true);
+    expect(result.current.phone).toBe("123-456");
+    expect(result.current.phoneHeader).toBe(false);
+    expect(result.current.githubVal).toBe("");
+  });
+  it("should handle session sync", async () => {
+    (adminService.fetchProfile as jest.Mock).mockResolvedValueOnce({ name: "Test" });
+    const { supabase } = require("@/lib/supabaseBrowser");
+    (supabase.auth.getUser as jest.Mock).mockResolvedValueOnce({ data: { user: null } });
+    
+    const { result } = await renderAndResolveHook();
+
+    await act(async () => {
+      await result.current.handleSessionSync();
+    });
+
+    expect(result.current.errorMsg).toContain("No active user session found");
+  });
+
+  it("should handle file upload", async () => {
+    (adminService.fetchProfile as jest.Mock).mockResolvedValueOnce({ name: "Test" });
+    const { result } = await renderAndResolveHook();
+
+    const file = new File(["dummy content"], "test.png", { type: "image/png" });
+    const event = {
+      target: { files: [file] }
+    } as unknown as React.ChangeEvent<HTMLInputElement>;
+
+    (adminService.uploadAvatar as jest.Mock).mockResolvedValueOnce({ url: "https://example.com/test.png" });
+
+    await act(async () => {
+      await result.current.handleFileUpload(event, "light");
+    });
+
+    expect(result.current.photoUrlLight).toBe("https://example.com/test.png");
+  });
+
+  it("should handle file upload error", async () => {
+    (adminService.fetchProfile as jest.Mock).mockResolvedValueOnce({ name: "Test" });
+    const { result } = await renderAndResolveHook();
+
+    const file = new File(["dummy content"], "test.png", { type: "image/png" });
+    const event = {
+      target: { files: [file] }
+    } as unknown as React.ChangeEvent<HTMLInputElement>;
+
+    (adminService.uploadAvatar as jest.Mock).mockRejectedValueOnce(new Error("Upload Error"));
+
+    await act(async () => {
+      await result.current.handleFileUpload(event, "light");
+    });
+
+    expect(result.current.errorMsg).toBe("Upload Error");
+  });
+  it("should handle file upload for dark theme", async () => {
+    (adminService.fetchProfile as jest.Mock).mockResolvedValueOnce({ name: "Test" });
+    const { supabase } = require("@/lib/supabaseBrowser");
+    (supabase.auth.getUser as jest.Mock).mockResolvedValueOnce({ data: { user: null } });
+    const { result } = await renderAndResolveHook();
+
+    const file = new File(["dummy content"], "test.png", { type: "image/png" });
+    const event = {
+      target: { files: [file] }
+    } as unknown as React.ChangeEvent<HTMLInputElement>;
+
+    (adminService.uploadAvatar as jest.Mock).mockResolvedValueOnce({ url: "https://example.com/dark.png" });
+
+    await act(async () => {
+      await result.current.handleFileUpload(event, "dark");
+    });
+
+    expect(result.current.photoUrlDark).toBe("https://example.com/dark.png");
+  });
+
+  it("should handle save profile and redirect", async () => {
+    jest.useFakeTimers();
+    (adminService.fetchProfile as jest.Mock).mockResolvedValueOnce({ name: "Test" });
+    const { supabase } = require("@/lib/supabaseBrowser");
+    (supabase.auth.getUser as jest.Mock).mockResolvedValueOnce({ data: { user: null } });
+    const { result } = await renderAndResolveHook();
+
+    (adminService.saveProfile as jest.Mock).mockResolvedValueOnce({});
+    const { useRouter } = require("next/navigation");
+    const pushMock = useRouter().push;
+
+    await act(async () => {
+      await result.current.handleSubmit({ preventDefault: jest.fn() } as unknown as React.FormEvent);
+    });
+
+    expect(result.current.successMsg).toBe("Profile details saved successfully!");
+    
+    act(() => {
+      jest.advanceTimersByTime(1500);
+    });
+    jest.useRealTimers();
+  });
+
+  it("should handle highlight actions", async () => {
+    (adminService.fetchProfile as jest.Mock).mockResolvedValueOnce({ name: "Test" });
+    const { supabase } = require("@/lib/supabaseBrowser");
+    (supabase.auth.getUser as jest.Mock).mockResolvedValueOnce({ data: { user: null } });
+    const { result } = await renderAndResolveHook();
+
+    await act(async () => {
+      result.current.addExperience();
+    });
+    
+    await act(async () => {
+      result.current.addHighlight(0);
+    });
+
+    expect(result.current.experiences[0].highlights.length).toBe(1);
+
+    await act(async () => {
+      result.current.updateHighlight(0, 0, "test highlight");
+    });
+
+    expect(result.current.experiences[0].highlights[0]).toBe("test highlight");
+
+    await act(async () => {
+      result.current.removeHighlight(0, 0);
+    });
+
+    expect(result.current.experiences[0].highlights.length).toBe(0);
+  });
+
+  it("should handle github sync", async () => {
+    (adminService.fetchProfile as jest.Mock).mockResolvedValueOnce({ name: "Test" });
+    const { supabase } = require("@/lib/supabaseBrowser");
+    (supabase.auth.getUser as jest.Mock).mockResolvedValueOnce({ data: { user: null } });
+    const { result } = await renderAndResolveHook();
+
+    await act(async () => {
+      result.current.setGithubUser("testuser");
+    });
+    
+    (adminService.fetchGitHubUser as jest.Mock).mockResolvedValueOnce({ avatar_url: "https://example.com/avatar.png" });
+    await act(async () => {
+      await result.current.handleGithubSync();
+    });
+
+    expect(result.current.successMsg).toBe("Synced avatar picture from GitHub successfully!");
+  });
 });

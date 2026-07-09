@@ -33,7 +33,8 @@ public class AnalyticsIntegrationTests
         {
             ReferrerSource = "github_readme",
             Country = "Canada",
-            City = "Toronto"
+            City = "Toronto",
+            PagePath = "/resume"
         };
         var viewResponse = await _client.PostAsJsonAsync("/api/analytics/views", viewReq);
         await viewResponse.EnsureSuccessOrReportErrorAsync();
@@ -62,6 +63,17 @@ public class AnalyticsIntegrationTests
         var clickResponse = await _client.PostAsJsonAsync("/api/analytics/clicks", clickReq);
         await clickResponse.EnsureSuccessOrReportErrorAsync();
 
+        // 3.5. Seed an AI Query
+        var aiQueryLog = new Portfolio.Domain.Analytics.AiQueryLog
+        {
+            Id = Guid.CreateVersion7(),
+            QueryText = "Test Query",
+            Provider = "Integration",
+            QueriedAt = DateTime.UtcNow
+        };
+        context.AiQueryLogs.Add(aiQueryLog);
+        await context.SaveChangesAsync();
+
         // 4. Query the summary endpoint
         var summaryResponse = await _client.GetFromJsonOrReportErrorAsync<AnalyticsSummaryDto>("/api/analytics/summary");
 
@@ -75,10 +87,15 @@ public class AnalyticsIntegrationTests
         var recentView = summaryResponse.RecentPageViews.FirstOrDefault(v => v.ReferrerSource == "github_readme");
         recentView.ShouldNotBeNull();
         recentView.Country.ShouldBe("Canada");
+        recentView.PagePath.ShouldBe("/resume");
 
         var recentClick = summaryResponse.RecentLinkClicks.FirstOrDefault(c => c.LinkId == link.Id);
         recentClick.ShouldNotBeNull();
         recentClick.ReferrerSource.ShouldBe("linkedin_inbox");
+        
+        var recentAiQuery = summaryResponse.RecentAiQueries.FirstOrDefault(q => q.Id == aiQueryLog.Id);
+        recentAiQuery.ShouldNotBeNull();
+        recentAiQuery.QueryText.ShouldBe("Test Query");
 
         // Clean up
         using var cleanScope = _fixture.Factory.Services.CreateScope();
@@ -89,6 +106,7 @@ public class AnalyticsIntegrationTests
         
         cleanContext.PageViewLogs.RemoveRange(addedViews);
         cleanContext.LinkClickLogs.RemoveRange(addedClicks);
+        cleanContext.AiQueryLogs.Remove(aiQueryLog);
         cleanContext.ResumeProfileLinks.Remove(link);
         cleanContext.ResumeProfileLinkTypes.Remove(linkType);
         cleanContext.ResumeProfiles.Remove(profile);

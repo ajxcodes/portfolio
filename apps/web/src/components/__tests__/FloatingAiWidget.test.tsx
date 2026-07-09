@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
-import { FloatingAiWidget } from '../FloatingAiWidget';
+import { FloatingAiWidget, resolveActionLink } from '../FloatingAiWidget';
 import { useAiChat } from '@/hooks/useAiChat';
 import { usePathname } from 'next/navigation';
 
@@ -28,6 +28,39 @@ jest.mock('react-markdown', () => {
   return function MockReactMarkdown({ children }: any) {
     return <div data-testid="react-markdown">{children}</div>;
   };
+});
+
+describe('resolveActionLink', () => {
+  const mockLinks = [
+    { type: 'email', url: 'test@ajx.codes', name: 'Email' },
+    { type: 'github', url: 'github.com/ajx', name: 'GitHub' },
+    { type: 'linkedin', url: 'https://linkedin.com/in/ajx', name: 'LinkedIn' },
+    { type: 'calendar', url: 'cal.com/ajx', name: 'Calendar' }
+  ];
+
+  it('resolves email action', () => {
+    expect(resolveActionLink('Send Email', mockLinks)).toBe('mailto:test@ajx.codes');
+  });
+
+  it('resolves github action', () => {
+    expect(resolveActionLink('View Github', mockLinks)).toBe('https://github.com/ajx');
+  });
+
+  it('resolves linkedin action', () => {
+    expect(resolveActionLink('LinkedIn Profile', mockLinks)).toBe('https://linkedin.com/in/ajx');
+  });
+
+  it('resolves interview action', () => {
+    expect(resolveActionLink('Schedule Interview', mockLinks)).toBe('https://cal.com/ajx');
+  });
+
+  it('returns null for unknown action', () => {
+    expect(resolveActionLink('Unknown Action', mockLinks)).toBeNull();
+  });
+
+  it('handles missing links gracefully', () => {
+    expect(resolveActionLink('Send Email', undefined)).toBe('mailto:me@ajx.codes');
+  });
 });
 
 describe('FloatingAiWidget', () => {
@@ -127,6 +160,36 @@ describe('FloatingAiWidget', () => {
     expect(mockStopStreaming).toHaveBeenCalled();
   });
 
+  it('renders and interacts with action chips', () => {
+    (useAiChat as jest.Mock).mockReturnValue({
+      messages: [
+        { 
+          id: '1', 
+          role: 'assistant', 
+          content: 'Here are some links',
+          actionChips: ['Visit Website', 'Send Email', 'Normal Action']
+        }
+      ],
+      isTyping: false,
+      sendMessage: mockSendMessage,
+      stopStreaming: mockStopStreaming,
+      clearChat: mockClearChat
+    });
+
+    render(<FloatingAiWidget />);
+    fireEvent.click(screen.getByRole('button', { name: /Open AI Chat/i }));
+
+    // Visit Website chip
+    const websiteLink = screen.getByText('Visit Website');
+    expect(websiteLink).toBeInTheDocument();
+    
+    // Normal Action chip
+    const actionBtn = screen.getByText('Normal Action');
+    expect(actionBtn).toBeInTheDocument();
+    fireEvent.click(actionBtn);
+    expect(mockSendMessage).toHaveBeenCalledWith('Normal Action');
+  });
+
   it('disables terminal tab on homepage', () => {
     (usePathname as jest.Mock).mockReturnValue('/');
     
@@ -177,7 +240,7 @@ describe('FloatingAiWidget', () => {
   });
 
   it('scrolls to bottom on new message', () => {
-    const scrollIntoViewSpy = jest.spyOn(window.HTMLElement.prototype, 'scrollIntoView');
+    const scrollToSpy = jest.spyOn(window.Element.prototype, 'scrollTo');
     
     (useAiChat as jest.Mock).mockReturnValue({
       messages: [{ id: '1', role: 'user', content: 'Hello' }],
@@ -189,7 +252,7 @@ describe('FloatingAiWidget', () => {
 
     render(<FloatingAiWidget />);
     fireEvent.click(screen.getByRole('button', { name: /Open AI Chat/i }));
-    expect(scrollIntoViewSpy).toHaveBeenCalledWith({ behavior: 'smooth' });
+    expect(scrollToSpy).toHaveBeenCalledWith(expect.objectContaining({ behavior: 'smooth' }));
   });
 
   it('submits on Enter without shift key', () => {
@@ -248,11 +311,12 @@ describe('FloatingAiWidget', () => {
     fireEvent.click(screen.getByRole('button', { name: /Open AI Chat/i }));
     expect(screen.getByPlaceholderText(/Type a message\.\.\./i)).toBeInTheDocument();
 
-    const closeBtn = screen.getByLabelText('Close widget');
+    const closeBtn = screen.getAllByLabelText(/Close widget/i)[0];
     fireEvent.click(closeBtn);
-
+    
     await waitFor(() => {
       expect(screen.queryByPlaceholderText(/Type a message\.\.\./i)).not.toBeInTheDocument();
     });
   });
+
 });

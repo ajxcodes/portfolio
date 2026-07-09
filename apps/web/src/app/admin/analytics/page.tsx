@@ -35,9 +35,17 @@ interface VisitorJourney {
   sessionId: string;
   location: string;
   referrer: string;
+  isBot: boolean;
   events: TimelineEvent[];
   lastActiveAt: string;
 }
+
+const isLikelyBot = (userAgent?: string | null) => {
+  if (!userAgent) return false;
+  const lowerUA = userAgent.toLowerCase();
+  const botKeywords = ['bot', 'crawler', 'spider', 'headless', 'lighthouse', 'curl', 'python', 'http'];
+  return botKeywords.some(kw => lowerUA.includes(kw));
+};
 
 interface AnalyticsSummary {
   totalPageViews: number;
@@ -50,6 +58,7 @@ interface AnalyticsSummary {
     country: string | null;
     city: string | null;
     ipAddress: string | null;
+    pagePath?: string | null;
     visitorSessionId?: string | null;
   }>;
   recentLinkClicks: Array<{
@@ -88,30 +97,37 @@ export default function AnalyticsPage() {
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
   const [showTotalViews, setShowTotalViews] = useState(false);
-  const [activeTab, setActiveTab] = useState<'trends' | 'demographics' | 'journeys'>('trends');
+  const [showAdminViews, setShowAdminViews] = useState(false);
+  const [activeTab, setActiveTab] = useState<'trends' | 'demographics' | 'journeys' | 'ai-queries'>('trends');
 
   const toggleViews = useCallback(() => setShowTotalViews(prev => !prev), []);
+  const toggleAdminViews = useCallback(() => setShowAdminViews(prev => !prev), []);
+
+  const filteredPageViews = useMemo(() => {
+    if (!summary?.recentPageViews) return [];
+    return summary.recentPageViews.filter(view => showAdminViews || !view.pagePath?.startsWith('/admin'));
+  }, [summary?.recentPageViews, showAdminViews]);
 
   const viewsByDate = useMemo(() => {
-    if (!summary) return [];
+    if (!filteredPageViews.length) return [];
     
     if (showTotalViews) {
       const counts: Record<string, number> = {};
-      [...summary.recentPageViews].reverse().forEach(view => {
+      [...filteredPageViews].reverse().forEach(view => {
         const date = new Date(view.viewedAt).toLocaleDateString([], { month: 'short', day: 'numeric' });
         counts[date] = (counts[date] || 0) + 1;
       });
       return Object.entries(counts).map(([date, count]) => ({ date, count }));
     } else {
       const counts: Record<string, Set<string>> = {};
-      [...summary.recentPageViews].reverse().forEach(view => {
+      [...filteredPageViews].reverse().forEach(view => {
         const date = new Date(view.viewedAt).toLocaleDateString([], { month: 'short', day: 'numeric' });
         if (!counts[date]) counts[date] = new Set<string>();
         counts[date].add(view.ipAddress || view.id);
       });
       return Object.entries(counts).map(([date, set]) => ({ date, count: set.size }));
     }
-  }, [summary, showTotalViews]);
+  }, [filteredPageViews, showTotalViews]);
 
   const clicksByLink = useMemo(() => {
     if (!summary) return [];
@@ -124,24 +140,24 @@ export default function AnalyticsPage() {
   }, [summary?.recentLinkClicks]);
 
   const viewsByLocation = useMemo(() => {
-    if (!summary || !summary.recentPageViews) return [];
+    if (!filteredPageViews.length) return [];
     const counts: Record<string, number> = {};
-    summary.recentPageViews.forEach(view => {
+    filteredPageViews.forEach(view => {
       const loc = (view.country && view.country !== 'Unknown') ? view.country : 'Unknown';
       counts[loc] = (counts[loc] || 0) + 1;
     });
     return Object.entries(counts).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count).slice(0, 5);
-  }, [summary?.recentPageViews]);
+  }, [filteredPageViews]);
 
   const viewsByReferrer = useMemo(() => {
-    if (!summary || !summary.recentPageViews) return [];
+    if (!filteredPageViews.length) return [];
     const counts: Record<string, number> = {};
-    summary.recentPageViews.forEach(view => {
+    filteredPageViews.forEach(view => {
       const ref = view.referrerSource || 'Direct';
       counts[ref] = (counts[ref] || 0) + 1;
     });
     return Object.entries(counts).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count).slice(0, 5);
-  }, [summary?.recentPageViews]);
+  }, [filteredPageViews]);
 
   const queriesByDate = useMemo(() => {
     if (!summary || !summary.recentAiQueries) return [];
@@ -165,6 +181,7 @@ export default function AnalyticsPage() {
           sessionId: id,
           location: 'Unknown',
           referrer: 'Direct',
+          isBot: false,
           events: [],
           lastActiveAt: ''
         });
@@ -172,7 +189,7 @@ export default function AnalyticsPage() {
       return journeys.get(id)!;
     };
 
-    summary.recentPageViews?.forEach(view => {
+    filteredPageViews.forEach(view => {
       const journey = getOrCreateJourney(view.visitorSessionId || '', view.id);
       if (journey.location === 'Unknown' && view.country) {
          journey.location = view.city ? `${view.city}, ${view.country}` : view.country;
@@ -180,13 +197,20 @@ export default function AnalyticsPage() {
       if (journey.referrer === 'Direct' && view.referrerSource) {
          journey.referrer = view.referrerSource;
       }
+      if (!journey.isBot && isLikelyBot(view.userAgent)) {
+         journey.isBot = true;
+      }
       journey.events.push({
         id: view.id,
         type: 'page_view',
         timestamp: view.viewedAt,
         dateStr: new Date(view.viewedAt).toLocaleDateString(),
         timeStr: new Date(view.viewedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        details: { referrer: view.referrerSource, location: view.city && view.country ? `${view.city}, ${view.country}` : view.country || "Unknown" }
+        details: { 
+          referrer: view.referrerSource, 
+          location: view.city && view.country ? `${view.city}, ${view.country}` : view.country || "Unknown",
+          url: view.pagePath || undefined
+        }
       });
     });
 
@@ -224,7 +248,7 @@ export default function AnalyticsPage() {
       journey.lastActiveAt = journey.events[0]?.timestamp || '';
       return journey;
     }).sort((a, b) => new Date(b.lastActiveAt).getTime() - new Date(a.lastActiveAt).getTime());
-  }, [summary?.recentPageViews, summary?.recentLinkClicks, summary?.recentAiQueries]);
+  }, [filteredPageViews, summary?.recentLinkClicks, summary?.recentAiQueries]);
 
   const fetchAuthHeaders = async () => {
     const headers: Record<string, string> = {
@@ -304,7 +328,7 @@ export default function AnalyticsPage() {
               </div>
               <div>
                 <span className="text-[10px] text-muted-foreground font-bold uppercase">Total Views</span>
-                <p className="text-2xl font-bold text-foreground mt-0.5">{summary.totalPageViews}</p>
+                <p className="text-2xl font-bold text-foreground mt-0.5">{summary.totalPageViews} <span className="text-xs text-muted-foreground font-normal">({filteredPageViews.length} filtered)</span></p>
               </div>
             </div>
 
@@ -340,25 +364,45 @@ export default function AnalyticsPage() {
           </div>
 
           {/* Tabs Navigation */}
-          <div className="flex flex-wrap gap-2 mb-6 border-b border-primary/20 pb-4">
-            <button 
-              onClick={() => setActiveTab('trends')} 
-              className={`px-4 py-2 text-sm font-bold font-mono rounded-lg transition-colors flex items-center gap-2 ${activeTab === 'trends' ? 'bg-primary text-primary-foreground' : 'bg-primary/5 text-primary hover:bg-primary/10'}`}
-            >
-              <TrendingUp className="w-4 h-4" /> Traffic Trends
-            </button>
-            <button 
-              onClick={() => setActiveTab('demographics')} 
-              className={`px-4 py-2 text-sm font-bold font-mono rounded-lg transition-colors flex items-center gap-2 ${activeTab === 'demographics' ? 'bg-primary text-primary-foreground' : 'bg-primary/5 text-primary hover:bg-primary/10'}`}
-            >
-              <Globe className="w-4 h-4" /> Demographics
-            </button>
-            <button 
-              onClick={() => setActiveTab('journeys')} 
-              className={`px-4 py-2 text-sm font-bold font-mono rounded-lg transition-colors flex items-center gap-2 ${activeTab === 'journeys' ? 'bg-primary text-primary-foreground' : 'bg-primary/5 text-primary hover:bg-primary/10'}`}
-            >
-              <Bot className="w-4 h-4" /> Visitor Journeys
-            </button>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 border-b border-primary/20 pb-4">
+            <div className="flex flex-wrap gap-2">
+              <button 
+                onClick={() => setActiveTab('trends')} 
+                className={`px-4 py-2 text-sm font-bold font-mono rounded-lg transition-colors flex items-center gap-2 ${activeTab === 'trends' ? 'bg-primary text-primary-foreground' : 'bg-primary/5 text-primary hover:bg-primary/10'}`}
+              >
+                <TrendingUp className="w-4 h-4" /> Traffic Trends
+              </button>
+              <button 
+                onClick={() => setActiveTab('demographics')} 
+                className={`px-4 py-2 text-sm font-bold font-mono rounded-lg transition-colors flex items-center gap-2 ${activeTab === 'demographics' ? 'bg-primary text-primary-foreground' : 'bg-primary/5 text-primary hover:bg-primary/10'}`}
+              >
+                <Globe className="w-4 h-4" /> Demographics
+              </button>
+              <button 
+                onClick={() => setActiveTab('journeys')} 
+                className={`px-4 py-2 text-sm font-bold font-mono rounded-lg transition-colors flex items-center gap-2 ${activeTab === 'journeys' ? 'bg-primary text-primary-foreground' : 'bg-primary/5 text-primary hover:bg-primary/10'}`}
+              >
+                <Eye className="w-4 h-4" /> Visitor Journeys
+              </button>
+              <button 
+                onClick={() => setActiveTab('ai-queries')} 
+                className={`px-4 py-2 text-sm font-bold font-mono rounded-lg transition-colors flex items-center gap-2 ${activeTab === 'ai-queries' ? 'bg-primary text-primary-foreground' : 'bg-primary/5 text-primary hover:bg-primary/10'}`}
+              >
+                <Bot className="w-4 h-4" /> AI Queries
+              </button>
+            </div>
+            
+            <div className="flex items-center gap-2 shrink-0">
+              <label className="flex items-center gap-2 text-xs text-muted-foreground font-medium cursor-pointer hover:text-foreground transition-colors select-none">
+                <input 
+                  type="checkbox" 
+                  checked={showAdminViews} 
+                  onChange={toggleAdminViews}
+                  className="rounded border-primary/30 bg-primary/5 text-primary focus:ring-primary/20"
+                />
+                Show /admin views
+              </label>
+            </div>
           </div>
 
           <div className="mt-6">
@@ -538,7 +582,14 @@ export default function AnalyticsPage() {
                             <Globe className="w-4 h-4" />
                           </div>
                           <div>
-                            <div className="font-bold text-sm text-foreground/90">Session: {journey.sessionId.split('-')[0]}...</div>
+                            <div className="font-bold text-sm text-foreground/90 flex items-center gap-2">
+                              Session: {journey.sessionId.split('-')[0]}...
+                              {journey.isBot && (
+                                <span className="px-1.5 py-0.5 rounded-sm bg-destructive/10 border border-destructive/20 text-[10px] text-destructive uppercase tracking-wider font-bold flex items-center gap-1">
+                                  <Bot className="w-3 h-3" /> BOT
+                                </span>
+                              )}
+                            </div>
                             <div className="text-[10px] text-muted-foreground flex gap-2">
                               <span>{journey.location}</span>
                               <span>&middot;</span>
@@ -570,7 +621,7 @@ export default function AnalyticsPage() {
                               </div>
                               {evt.type === 'page_view' && (
                                 <div className="text-xs text-muted-foreground">
-                                  Viewed page from <span className="font-bold text-foreground/80">{evt.details.referrer || 'Direct'}</span>
+                                  Viewed page <span className="font-bold text-foreground/80">{evt.details.url || 'Unknown'}</span> from <span className="font-bold text-foreground/80">{evt.details.referrer || 'Direct'}</span>
                                 </div>
                               )}
                               {evt.type === 'link_click' && (
@@ -592,6 +643,39 @@ export default function AnalyticsPage() {
                   )) : (
                     <div className="terminal-card rounded-xl p-8 text-center text-muted-foreground text-sm italic">
                       No visitor journeys recorded yet.
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+            
+            {activeTab === 'ai-queries' && (
+              <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <div className="space-y-4">
+                  {summary.recentAiQueries && summary.recentAiQueries.length > 0 ? summary.recentAiQueries.map(query => (
+                    <div key={query.id} className="terminal-card rounded-xl p-5 flex gap-4">
+                      <div className="w-8 h-8 rounded-full bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-500 flex-shrink-0">
+                        <Bot className="w-4 h-4" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <span className="text-[11px] font-bold text-muted-foreground">
+                            {new Date(query.queriedAt).toLocaleDateString()} {new Date(query.queriedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                          {query.visitorSessionId && (
+                            <span className="text-[10px] bg-primary/10 border border-primary/20 text-primary px-1.5 py-0.5 rounded">
+                              Session: {query.visitorSessionId.split('-')[0]}
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-sm text-foreground/90 font-medium">
+                          {query.queryText}
+                        </div>
+                      </div>
+                    </div>
+                  )) : (
+                    <div className="terminal-card rounded-xl p-8 text-center text-muted-foreground text-sm italic">
+                      No AI queries recorded yet.
                     </div>
                   )}
                 </div>

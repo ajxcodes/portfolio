@@ -73,7 +73,7 @@ describe('useTrafficTracker Hook', () => {
       expect.stringContaining('/api/analytics/views'),
       expect.objectContaining({
         method: 'POST',
-        body: expect.stringContaining('"ReferrerSource":"Direct"')
+        body: expect.stringMatching(/"ReferrerSource":"Direct".*"PagePath":"\/"/)
       })
     );
   });
@@ -106,6 +106,13 @@ describe('useTrafficTracker Hook', () => {
     mockUsePathname.mockReturnValue('/resume');
     rerender(<TestTrackerComponent />);
     expect(global.fetch).toHaveBeenCalledTimes(2);
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/api/analytics/views'),
+      expect.objectContaining({
+        method: 'POST',
+        body: expect.stringMatching(/"PagePath":"\/resume"/)
+      })
+    );
   });
 
   it('fetches geo details asynchronously in development mode', async () => {

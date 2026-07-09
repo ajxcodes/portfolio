@@ -193,4 +193,51 @@ describe('useAiChat', () => {
 
     expect(result.current.messages[1].content).toContain('Connection Error');
   });
+  it('can append assistant message directly', () => {
+    const { result } = renderHook(() => useAiChat());
+    
+    act(() => {
+      result.current.appendAssistantMessage('Test Message', ['chip1']);
+    });
+
+    expect(result.current.messages.length).toBe(1);
+    expect(result.current.messages[0].content).toBe('Test Message');
+    expect(result.current.messages[0].actionChips).toEqual(['chip1']);
+  });
+
+  it('handles corrupted local storage data', () => {
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    jest.spyOn(Storage.prototype, 'getItem').mockReturnValue('invalid-json');
+    
+    const { result } = renderHook(() => useAiChat());
+    
+    expect(result.current.messages).toEqual([]);
+    expect(consoleSpy).toHaveBeenCalledWith('Failed to parse saved chat history', expect.any(Error));
+    consoleSpy.mockRestore();
+  });
+
+  it('handles SSE chunk parse error', async () => {
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const { result } = renderHook(() => useAiChat());
+
+    mockFetchEventSource.mockImplementation(async (url, options) => {
+      if (options.onopen) await options.onopen({ ok: true, status: 200, headers: new Headers({'content-type': 'text/event-stream'}) } as any);
+      if (options.onmessage) {
+        try {
+          options.onmessage({ data: 'invalid-json' } as any);
+        } catch (e) {
+          if (options.onerror) {
+            try { options.onerror(e); } catch(err) {}
+          }
+        }
+      }
+    });
+
+    await act(async () => {
+      await result.current.sendMessage('Hi');
+    });
+
+    expect(consoleSpy).toHaveBeenCalledWith('Failed to parse SSE JSON chunk:', expect.any(Error));
+    consoleSpy.mockRestore();
+  });
 });

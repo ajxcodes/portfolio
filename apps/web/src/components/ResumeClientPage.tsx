@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from 'framer-motion';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { ResumeHeaderPhoto } from "@/components/ResumeHeaderPhoto";
 import { XCircleIcon } from '@/components/icons';
 import { ContactLinks } from '@/components/ContactLinks';
@@ -59,9 +59,37 @@ interface ResumeClientPageProps {
 export const ResumeClientPage = ({ resume, personalInfo }: ResumeClientPageProps) => {
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [isMounted, setIsMounted] = useState(false);
+  const ctaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!ctaRef.current) return;
+    
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        window.dispatchEvent(
+          new CustomEvent('ctaVisibilityChange', {
+            detail: { isVisible: entry.isIntersecting }
+          })
+        );
+      },
+      { threshold: 0 }
+    );
+    
+    observer.observe(ctaRef.current);
+    
+    return () => {
+      observer.disconnect();
+      // Ensure we reset when unmounting
+      window.dispatchEvent(
+        new CustomEvent('ctaVisibilityChange', {
+          detail: { isVisible: false }
+        })
+      );
+    };
   }, []);
 
   const totalExperience = useMemo(
@@ -129,16 +157,18 @@ export const ResumeClientPage = ({ resume, personalInfo }: ResumeClientPageProps
         </div>
       </div>
 
-      <div className="p-8">
+      <div className="p-4 sm:p-8">
         {/* Hero Section */}
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center border-b border-primary/20 pb-8 mb-8">
+      <section className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 items-center border-b border-primary/20 pb-6 mb-6 sm:pb-8 sm:mb-8">
         <div className="md:col-span-1 flex justify-center md:justify-start">
-          <ResumeHeaderPhoto 
-            size={200} 
-            altText={personalInfo.name} 
-            photoUrlLight={resume.photoUrlLight}
-            photoUrlDark={resume.photoUrlDark}
-          />
+          <div className="w-[140px] h-[140px] md:w-[200px] md:h-[200px] [&_div]:!w-full [&_div]:!h-full [&_img]:!w-full [&_img]:!h-full">
+            <ResumeHeaderPhoto 
+              size={200} 
+              altText={personalInfo.name} 
+              photoUrlLight={resume.photoUrlLight}
+              photoUrlDark={resume.photoUrlDark}
+            />
+          </div>
         </div>
         <div className="md:col-span-2 text-center md:text-left">
           <h1 id="page-title" className="text-4xl font-bold font-mono text-primary flex items-center justify-center md:justify-start gap-2">
@@ -157,23 +187,22 @@ export const ResumeClientPage = ({ resume, personalInfo }: ResumeClientPageProps
           <div className="mt-4 text-lg">
             <p className="text-balance">{personalInfo.intro}</p>
           </div>
-          <div id="contact-links-section" className="mt-6">
-            <ContactLinks contact={resume.contact} downloadUrl={resume.downloadUrl} />
-          </div>
-          <div className="mt-8 flex justify-center md:justify-start">
+          
+          {/* CTA Button is now ABOVE contact links */}
+          <div ref={ctaRef} className="mt-6 flex justify-center md:justify-start">
             <div className="relative inline-flex group">
               {/* Glowing background effect tied to button size */}
-              <div className="absolute inset-0 bg-primary blur-xl rounded-xl opacity-40 group-hover:opacity-60 transition-opacity duration-500 animate-pulse" style={{ animationDuration: '3s' }} />
+              <div className="absolute inset-0 bg-white blur-xl rounded-xl opacity-40 group-hover:opacity-60 transition-opacity duration-500 animate-pulse" style={{ animationDuration: '3s' }} />
               
               <button
                 onClick={() => window.dispatchEvent(new CustomEvent('openAiWidget'))}
-                className="relative inline-flex items-center gap-3 px-6 py-3.5 font-semibold text-primary-foreground bg-primary rounded-xl overflow-hidden shadow-[0_0_20px_hsl(var(--primary)/0.4)] hover:shadow-[0_0_30px_hsl(var(--primary)/0.6)] transition-all duration-300 hover:-translate-y-1"
+                className="relative inline-flex items-center gap-3 px-6 py-3.5 font-semibold text-black bg-white rounded-xl overflow-hidden shadow-[0_0_20px_rgba(255,255,255,0.4)] hover:shadow-[0_0_30px_rgba(255,255,255,0.6)] transition-all duration-300 hover:-translate-y-1"
               >
                 {/* Shimmer effect on hover */}
-                <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent group-hover:animate-[shimmer_1.5s_infinite]" />
+                <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-black/10 to-transparent group-hover:animate-[shimmer_1.5s_infinite]" />
                 
-                <div className="relative z-10 bg-primary-foreground/10 p-1.5 rounded-lg">
-                  <BotIcon className="w-5 h-5 animate-pulse" style={{ animationDuration: '2s' }} />
+                <div className="relative z-10 bg-black/5 p-1.5 rounded-lg">
+                  <BotIcon className="w-5 h-5 animate-pulse text-black" style={{ animationDuration: '2s' }} />
                 </div>
                 
                 <TypewriterText />
@@ -181,18 +210,22 @@ export const ResumeClientPage = ({ resume, personalInfo }: ResumeClientPageProps
 
               {/* Notification dot placed OUTSIDE the overflow-hidden button */}
               <span className="absolute -top-1.5 -right-1.5 flex h-3.5 w-3.5 pointer-events-none transition-transform duration-300 group-hover:-translate-y-1">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-foreground opacity-75" style={{ animationDuration: '2s' }}></span>
-                <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-primary-foreground shadow-[0_0_8px_hsl(var(--primary-foreground))]"></span>
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" style={{ animationDuration: '2s' }}></span>
+                <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-white shadow-[0_0_8px_white]"></span>
               </span>
             </div>
+          </div>
+
+          <div id="contact-links-section" className="mt-6">
+            <ContactLinks contact={resume.contact} downloadUrl={resume.downloadUrl} className="justify-start" />
           </div>
         </div>
       </section>
 
       {/* Two-column Layout on Desktop */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 mt-6 sm:mt-8 items-start">
         {/* Main Column: Professional Experience, Previous Experience, Projects, Education */}
-        <div className="lg:col-span-2 space-y-8">
+        <div className="lg:col-span-2 space-y-6 sm:space-y-8">
           {/* Experience Section (Vertical Timeline Style) */}
           <Section
             defaultOpen

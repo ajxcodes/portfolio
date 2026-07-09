@@ -73,4 +73,89 @@ public class AiControllerTests
             
         _controller.HttpContext.Response.ContentType.ShouldBe("text/event-stream");
     }
+    [Fact]
+    public async Task ChatAsync_EmptyMessage_ReturnsBadRequest()
+    {
+        // Arrange
+        var request = new AiChatRequest { Message = "" };
+
+        // Act
+        await _controller.ChatAsync(request, CancellationToken.None);
+
+        // Assert
+        _controller.HttpContext.Response.StatusCode.ShouldBe(StatusCodes.Status400BadRequest);
+    }
+
+    [Fact]
+    public async Task ChatAsync_InvalidAcceptHeader_ReturnsNotAcceptable()
+    {
+        // Arrange
+        var request = new AiChatRequest { Message = "Hello" };
+        _controller.HttpContext.Request.Headers.Accept = "application/json";
+
+        // Act
+        await _controller.ChatAsync(request, CancellationToken.None);
+
+        // Assert
+        _controller.HttpContext.Response.StatusCode.ShouldBe(StatusCodes.Status406NotAcceptable);
+    }
+
+    [Fact]
+    public async Task ChatAsync_OperationCanceledException_GracefullyHandles()
+    {
+        // Arrange
+        var request = new AiChatRequest { Message = "Hello" };
+        _controller.HttpContext.Request.Headers.Accept = "text/event-stream";
+        _promptServiceMock.BuildResumeSystemPromptAsync().Returns("System Prompt");
+
+        async IAsyncEnumerable<string> MockStream()
+        {
+            yield return "Chunk";
+            throw new OperationCanceledException();
+        }
+
+        _chatServiceMock.AskQuestionStreamAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(MockStream());
+
+        // Act
+        await _controller.ChatAsync(request, CancellationToken.None);
+
+        // Assert
+        // Re-read stream to ensure "event: done" was written
+        _controller.HttpContext.Response.Body.Position = 0;
+        using var reader = new StreamReader(_controller.HttpContext.Response.Body);
+        var responseBody = await reader.ReadToEndAsync();
+        
+        responseBody.ShouldContain("event: done");
+    }
+
+    [Fact]
+    public async Task ChatAsync_GenericException_WritesErrorEvent()
+    {
+        // Arrange
+        var request = new AiChatRequest { Message = "Hello" };
+        _controller.HttpContext.Request.Headers.Accept = "text/event-stream";
+        _promptServiceMock.BuildResumeSystemPromptAsync().Returns("System Prompt");
+
+        async IAsyncEnumerable<string> MockStream()
+        {
+            yield return "Chunk";
+            throw new Exception("Test Exception");
+        }
+
+        _chatServiceMock.AskQuestionStreamAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(MockStream());
+
+        // Act
+        await _controller.ChatAsync(request, CancellationToken.None);
+
+        // Assert
+        _controller.HttpContext.Response.Body.Position = 0;
+        using var reader = new StreamReader(_controller.HttpContext.Response.Body);
+        var responseBody = await reader.ReadToEndAsync();
+        
+        responseBody.ShouldContain("event: error");
+        responseBody.ShouldContain("Test Exception");
+        responseBody.ShouldContain("event: done");
+    }
 }

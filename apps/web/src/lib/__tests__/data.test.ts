@@ -131,6 +131,16 @@ describe('data access API fetch handlers', () => {
     expect(data.personalInfo.name).toBe('Alvin Jorrel Pascual');
   });
 
+  it('handles json parse errors gracefully', async () => {
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      json: () => Promise.reject(new Error('Parse Error'))
+    });
+
+    const data = await getPortfolioData();
+    expect(data.personalInfo.name).toBe('Alvin Jorrel Pascual'); // Fallback properties used
+  });
+
   it('retrieves single blog post by slug from API successfully', async () => {
     const mockPosts = [
       { slug: 'post-1', title: 'Post One', summary: 'Summary One', content: 'Content One' },

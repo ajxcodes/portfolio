@@ -1,6 +1,4 @@
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using Portfolio.Application.AI.Constants;
 using Portfolio.Application.Resume.Services;
 
@@ -10,9 +8,21 @@ public class AiPromptService(IResumeService resumeService) : IAiPromptService
 {
     public async Task<string> BuildResumeSystemPromptAsync()
     {
+        var resumeContext = await BuildResumeContextStringAsync();
+        return string.Format(AiPrompts.ResumeAssistantSystemPrompt, resumeContext);
+    }
+
+    public async Task<string> BuildJobFitSystemPromptAsync(string jobDescription)
+    {
+        var resumeContext = await BuildResumeContextStringAsync();
+        return string.Format(AiPrompts.JobFitAnalyzerSystemPrompt, resumeContext, jobDescription);
+    }
+
+    private async Task<string> BuildResumeContextStringAsync()
+    {
         var profile = await resumeService.GetActiveProfileAsync();
-        
         var resumeContext = new StringBuilder();
+
         if (profile != null)
         {
             resumeContext.AppendLine($"Name: {profile.Name}");
@@ -63,6 +73,6 @@ public class AiPromptService(IResumeService resumeService) : IAiPromptService
             resumeContext.AppendLine("No active resume profile found.");
         }
 
-        return string.Format(AiPrompts.ResumeAssistantSystemPrompt, resumeContext.ToString());
+        return resumeContext.ToString();
     }
 }

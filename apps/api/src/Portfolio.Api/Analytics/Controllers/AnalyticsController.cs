@@ -26,7 +26,8 @@ public class AnalyticsController(IAnalyticsService service) : ControllerBase
             ReferrerSource = request.ReferrerSource ?? "Direct",
             ViewedAt = DateTime.UtcNow,
             Country = request.Country,
-            City = request.City
+            City = request.City,
+            PagePath = request.PagePath
         };
 
         await service.LogPageViewAsync(log);
@@ -103,6 +104,7 @@ public class PageViewRequest
     public string? Country { get; set; }
     public string? City { get; set; }
     public string? UserAgent { get; set; }
+    public string? PagePath { get; set; }
 }
 
 public class LinkClickRequest

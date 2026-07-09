@@ -11,11 +11,14 @@ public static class ServiceExtensions
 {
     public static IServiceCollection ConfigureApplication(this IServiceCollection services)
     {
-        return services
+        services
             .AddScoped<IPostService, PostService>()
             .AddScoped<IResumeService, ResumeService>()
             .AddScoped<IAnalyticsService, AnalyticsService>()
             .AddScoped<IAiPromptService, AiPromptService>()
+            .AddScoped<IJobFitService, JobFitService>()
             .AddSingleton<IResumePdfGenerator, ResumePdfGenerator>();
+        
+        return services;
     }
 }

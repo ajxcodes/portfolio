@@ -63,6 +63,28 @@ test.describe("Traffic Attribution Analytics", () => {
 
     expect(viewRequestPayload).not.toBeNull();
     expect(viewRequestPayload.ReferrerSource).toBe("test_github_campaign");
+    expect(viewRequestPayload.PagePath).toBe("/");
+  });
+
+  test("should track new page view with correct PagePath when navigating", async ({ page }) => {
+    let viewRequestPayload: any = null;
+    await page.route("**/api/analytics/views", async (route) => {
+      viewRequestPayload = JSON.parse(route.request().postData() || "{}");
+      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ success: true }) });
+    });
+
+    await page.goto("/");
+    // wait for first view
+    await page.waitForResponse("**/api/analytics/views");
+    
+    const viewResponsePromise = page.waitForResponse("**/api/analytics/views");
+    
+    // navigate to resume page
+    await page.click('a[href="/resume"]');
+    
+    await viewResponsePromise;
+    expect(viewRequestPayload).not.toBeNull();
+    expect(viewRequestPayload.PagePath).toBe("/resume");
   });
 
   test("should post click analytics on external link clicks with correct referrer", async ({ page }) => {

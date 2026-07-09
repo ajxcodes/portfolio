@@ -10,4 +10,5 @@ public class PageViewLog
     
     public string? Country { get; set; }
     public string? City { get; set; }
+    public string? PagePath { get; set; }
 }

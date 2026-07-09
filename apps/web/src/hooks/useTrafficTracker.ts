@@ -87,7 +87,8 @@ export function useTrafficTracker() {
             ReferrerSource: referrerSource,
             UserAgent: navigator.userAgent,
             Country: geo.Country,
-            City: geo.City
+            City: geo.City,
+            PagePath: pathname
           }),
           signal: controller.signal,
           keepalive: true
