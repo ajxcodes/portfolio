@@ -125,23 +125,23 @@ export function FloatingAiWidget({ blogPosts = [], resume }: FloatingAiWidgetPro
   }, [messages, isTyping, isOpen]);
 
   // Expose global open method for CTA buttons
-  useEffect(() => {
-    const handleOpenWidget = () => {
-      if (isOpen) {
-        setIsHighlighting(true);
-        setTimeout(() => setIsHighlighting(false), 800);
-      } else {
-        setIsOpen(true);
+  const handleOpenWidget = useCallback(() => {
+    if (isOpen) {
+      setIsHighlighting(true);
+      setTimeout(() => setIsHighlighting(false), 800);
+    } else {
+      setIsOpen(true);
+    }
+    setActiveTab('gui');
+    setTimeout(() => {
+      if (window.innerWidth > 640) {
+        const textarea = document.querySelector('textarea');
+        if (textarea) textarea.focus();
       }
-      setActiveTab('gui');
-      setTimeout(() => {
-        if (window.innerWidth > 640) {
-          const textarea = document.querySelector('textarea');
-          if (textarea) textarea.focus();
-        }
-      }, 100);
-    };
+    }, 100);
+  }, [isOpen]);
 
+  useEffect(() => {
     const handleGlobalKeydown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setIsOpen(false);
@@ -158,7 +158,7 @@ export function FloatingAiWidget({ blogPosts = [], resume }: FloatingAiWidgetPro
       window.removeEventListener('openAiWidget', handleOpenWidget);
       window.removeEventListener('keydown', handleGlobalKeydown);
     };
-  }, [isOpen]);
+  }, [handleOpenWidget]);
 
   // Close widget on route change
   useEffect(() => {

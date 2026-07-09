@@ -3,10 +3,10 @@ using DocumentFormat.OpenXml.Packaging;
 using Portfolio.Application.AI.Models;
 using Portfolio.Application.AI.Services;
 using UglyToad.PdfPig;
-
+using Microsoft.Extensions.Configuration;
 namespace Portfolio.Infrastructure.AI;
 
-public class JobDescriptionExtractionService(HttpClient httpClient) : IJobDescriptionExtractionService
+public class JobDescriptionExtractionService(HttpClient httpClient, Microsoft.Extensions.Configuration.IConfiguration configuration) : IJobDescriptionExtractionService
 {
     public async Task<string> ExtractJobDescriptionAsync(JobFitUploadRequest request)
     {
@@ -86,6 +86,12 @@ public class JobDescriptionExtractionService(HttpClient httpClient) : IJobDescri
 
     private string ExtractFromPdf(Stream stream)
     {
+        var maxFileSize = configuration.GetValue<long>("MAX_JOB_FIT_FILE_SIZE", 5 * 1024 * 1024);
+        if (stream.Length > maxFileSize)
+        {
+            throw new ArgumentException($"PDF file size exceeds the maximum allowed limit of {maxFileSize / (1024 * 1024)}MB.");
+        }
+        
         var sb = new StringBuilder();
         try
         {
