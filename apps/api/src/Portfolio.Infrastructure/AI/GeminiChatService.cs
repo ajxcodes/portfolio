@@ -1,12 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Net.Http;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Portfolio.Application.AI;
@@ -135,5 +129,59 @@ public class GeminiChatService : IAiChatService
                 yield return extractedText;
             }
         }
+    }
+
+    public async Task<string> AskQuestionAsync(
+        string systemPrompt, 
+        string userMessage, 
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrEmpty(_apiKey))
+        {
+            throw new InvalidOperationException("GEMINI_API_KEY is not configured in the environment variables.");
+        }
+
+        var url = $"https://generativelanguage.googleapis.com/v1beta/models/{_model}:generateContent?key={_apiKey}";
+
+        var requestBody = new
+        {
+            system_instruction = new
+            {
+                parts = new[] { new { text = systemPrompt } }
+            },
+            contents = new[]
+            {
+                new { role = "user", parts = new[] { new { text = userMessage } } }
+            },
+            generationConfig = new
+            {
+                temperature = _temperature
+            }
+        };
+
+        var jsonContent = new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json");
+        using var request = new HttpRequestMessage(HttpMethod.Post, url) { Content = jsonContent };
+
+        var response = await _httpClient.SendAsync(request, cancellationToken);
+        response.EnsureSuccessStatusCode();
+
+        var jsonString = await response.Content.ReadAsStringAsync(cancellationToken);
+        using var doc = JsonDocument.Parse(jsonString);
+        
+        if (doc.RootElement.TryGetProperty("candidates", out var candidates) && candidates.GetArrayLength() > 0)
+        {
+            var firstCandidate = candidates[0];
+            if (firstCandidate.TryGetProperty("content", out var content) &&
+                content.TryGetProperty("parts", out var parts) && parts.GetArrayLength() > 0)
+            {
+                var textPart = parts[0];
+                if (textPart.TryGetProperty("text", out var textToken))
+                {
+                    return textToken.GetString() ?? string.Empty;
+                }
+            }
+        }
+        
+        return string.Empty;
     }
 }

@@ -3,6 +3,7 @@
 import { BlogPost, ResumeData } from '@/lib/data';
 import { useTerminalShell } from '@/hooks/useTerminalShell';
 import ReactMarkdown from 'react-markdown';
+import { BotIcon } from './icons';
 
 interface TerminalShellProps {
   blogPosts: BlogPost[];
@@ -63,11 +64,12 @@ export function TerminalShell({ blogPosts, resume, hideTitleBar = false, heightC
         ))}
         {isAiTyping && (
           <div className="flex flex-col text-primary mt-2">
-            <div className="flex items-center">
-              <span className="mr-2">ai@portfolio:~$</span>
-              <span className="animate-pulse">_</span>
+            <div className="flex items-center gap-2 font-mono">
+              <BotIcon className="w-3.5 h-3.5 text-primary animate-bounce mt-0.5" />
+              <span className="opacity-80 tracking-wide">
+                {isWarmingUp ? "waking up backend server..." : "thinking..."}
+              </span>
             </div>
-            {isWarmingUp && <span className="text-[10px] text-muted-foreground italic mt-1">Waking up backend server (can take up to 50s)...</span>}
           </div>
         )}
         <div ref={terminalEndRef} />

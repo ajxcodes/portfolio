@@ -24,7 +24,7 @@ export function HomeClientPage({ personalInfo, blogPosts, resume }: HomeClientPa
           <span className="text-xs font-mono text-primary/60 ml-2">bash - portfolio.sh</span>
         </div>
 
-        <div className="mb-8 mt-2">
+        <div className="mb-6 md:mb-8 mt-2 w-[140px] h-[140px] md:w-[200px] md:h-[200px] [&_img]:!w-full [&_img]:!h-full [&_div]:!w-full [&_div]:!h-full">
           <Avatar 
             size={200} 
             altText={personalInfo.name} 

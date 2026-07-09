@@ -18,6 +18,7 @@ interface ContactLinksProps {
   contact: ContactInfo;
   showText?: boolean;
   downloadUrl?: string;
+  className?: string;
 }
 
 const iconMap: Record<string, React.ComponentType<{ className: string }>> = {
@@ -50,7 +51,7 @@ const formatHref = (type: string, url: string) => {
   return url.startsWith('http') || url.startsWith('mailto:') ? url : `https://${url}`;
 };
 
-export const ContactLinks = ({ contact, showText = true, downloadUrl }: ContactLinksProps) => {
+export const ContactLinks = ({ contact, showText = true, downloadUrl, className = "justify-center" }: ContactLinksProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Defensive check
@@ -97,7 +98,7 @@ export const ContactLinks = ({ contact, showText = true, downloadUrl }: ContactL
 
   return (
     <>
-      <div className="flex justify-center items-center gap-x-6 gap-y-2 flex-wrap text-lg">
+      <div className={`flex items-center gap-x-6 gap-y-2 flex-wrap text-lg ${className}`}>
         {items.map(({ href, Icon, text, label, download, onClick, linkId }) => {
           const isExternal = href.startsWith('http');
           return (

@@ -210,8 +210,8 @@ export function useResumeForm() {
   const addExperience = () => {
     const defaultStartMonth = "Jan";
     const defaultStartYear = String(new Date().getFullYear());
-    setExperiences([
-      ...experiences,
+    setExperiences(prev => [
+      ...prev,
       {
         clientId: Math.random().toString(36).substring(2, 9),
         company: "",
@@ -219,7 +219,7 @@ export function useResumeForm() {
         period: `${defaultStartMonth} ${defaultStartYear} - Present`,
         location: "",
         isPrevious: false,
-        displayOrder: experiences.length,
+        displayOrder: prev.length,
         highlights: [],
         startMonth: defaultStartMonth,
         startYear: defaultStartYear,

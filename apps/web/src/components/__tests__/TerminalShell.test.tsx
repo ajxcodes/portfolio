@@ -35,7 +35,7 @@ describe('TerminalShell Component', () => {
     render(<TerminalShell blogPosts={mockBlogPosts} resume={mockResume} />);
     
     expect(screen.getByText('bash - interactive_shell.sh')).toBeInTheDocument();
-    expect(screen.getByText('ajxcodes Interactive Shell [Version 1.0.0]')).toBeInTheDocument();
+    expect(screen.getByText('ajxcodes Interactive Shell')).toBeInTheDocument();
   });
 
   it('allows user to type and execute commands', () => {

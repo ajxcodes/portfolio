@@ -29,6 +29,8 @@ public static class ServiceExtensions
             services.AddHttpClient<IAiChatService, OllamaChatService>();
         }
 
+        services.AddHttpClient<Application.AI.Services.IJobDescriptionExtractionService, JobDescriptionExtractionService>();
+
         return services.ConfigureDatabase();
     }
 

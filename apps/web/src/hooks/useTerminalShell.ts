@@ -36,8 +36,8 @@ export function useTerminalShell(blogPosts: BlogPost[], resume: ResumeData) {
       } catch (e) {}
     }
     setHistory([
-      { type: 'output', text: 'ajxcodes Interactive Shell [Version 1.0.0]' },
-      { type: 'output', text: 'Status: Connected to live API' },
+      { type: 'output', text: 'ajxcodes Interactive Shell' },
+      { type: 'output', text: '(c) ajxcodes. All rights reserved.' },
       { type: 'output', text: 'Type "help" to list available commands.' },
       { type: 'output', text: '' },
     ]);
@@ -51,7 +51,10 @@ export function useTerminalShell(blogPosts: BlogPost[], resume: ResumeData) {
   }, [history]);
 
   useEffect(() => {
-    terminalEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (terminalEndRef.current && terminalEndRef.current.parentElement) {
+      const parent = terminalEndRef.current.parentElement;
+      parent.scrollTo({ top: parent.scrollHeight, behavior: 'smooth' });
+    }
   }, [history, isAiTyping, input]);
 
   const addToHistory = (items: TerminalHistoryItem[]) => {

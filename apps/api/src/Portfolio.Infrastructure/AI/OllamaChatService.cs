@@ -93,4 +93,47 @@ public class OllamaChatService : IAiChatService
             }
         }
     }
+
+    public async Task<string> AskQuestionAsync(
+        string systemPrompt, 
+        string userMessage, 
+        CancellationToken cancellationToken = default)
+    {
+        var requestUri = $"{_endpoint.TrimEnd('/')}/api/chat";
+
+        var payload = new
+        {
+            model = _model,
+            messages = new[]
+            {
+                new { role = "system", content = systemPrompt },
+                new { role = "user", content = userMessage }
+            },
+            stream = false,
+            options = new
+            {
+                temperature = _temperature
+            }
+        };
+
+        var jsonPayload = JsonSerializer.Serialize(payload);
+        using var request = new HttpRequestMessage(HttpMethod.Post, requestUri)
+        {
+            Content = new StringContent(jsonPayload, Encoding.UTF8, "application/json")
+        };
+
+        using var response = await _httpClient.SendAsync(request, cancellationToken);
+        response.EnsureSuccessStatusCode();
+
+        var jsonString = await response.Content.ReadAsStringAsync(cancellationToken);
+        using var document = JsonDocument.Parse(jsonString);
+        
+        if (document.RootElement.TryGetProperty("message", out var messageElement) && 
+            messageElement.TryGetProperty("content", out var contentElement))
+        {
+            return contentElement.GetString() ?? string.Empty;
+        }
+
+        return string.Empty;
+    }
 }

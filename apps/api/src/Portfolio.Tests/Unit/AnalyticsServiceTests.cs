@@ -98,12 +98,16 @@ public class AnalyticsServiceTests
         _repositoryMock.GetUniquePageViewsCountAsync().Returns(5);
         _repositoryMock.GetTotalLinkClicksCountAsync().Returns(20);
         _repositoryMock.GetUniqueLinkClicksCountAsync().Returns(8);
+        _repositoryMock.GetTotalAiQueriesCountAsync().Returns(15);
+        _repositoryMock.GetUniqueAiQueriesCountAsync().Returns(7);
 
-        var recentViews = new List<PageViewLog> { new() { Id = Guid.NewGuid(), ReferrerSource = "A" } };
+        var recentViews = new List<PageViewLog> { new() { Id = Guid.NewGuid(), ReferrerSource = "A", PagePath = "/resume" } };
         var recentClicks = new List<LinkClickLog> { new() { Id = Guid.NewGuid(), ReferrerSource = "B" } };
+        var recentAiQueries = new List<AiQueryLog> { new() { Id = Guid.NewGuid(), QueryText = "Q" } };
 
         _repositoryMock.GetPageViewsAsync(5).Returns(recentViews);
         _repositoryMock.GetLinkClicksAsync(5).Returns(recentClicks);
+        _repositoryMock.GetAiQueriesAsync(5).Returns(recentAiQueries);
 
         // Act
         var summary = await _service.GetSummaryAsync(5);
@@ -114,8 +118,12 @@ public class AnalyticsServiceTests
         summary.UniquePageViews.ShouldBe(5);
         summary.TotalLinkClicks.ShouldBe(20);
         summary.UniqueLinkClicks.ShouldBe(8);
+        summary.TotalAiQueries.ShouldBe(15);
+        summary.UniqueAiQueries.ShouldBe(7);
         summary.RecentPageViews.Count.ShouldBe(1);
+        summary.RecentPageViews[0].PagePath.ShouldBe("/resume");
         summary.RecentLinkClicks.Count.ShouldBe(1);
+        summary.RecentAiQueries.Count.ShouldBe(1);
     }
 
     [Fact]

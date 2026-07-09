@@ -7,6 +7,13 @@ export interface AiMessage {
   content: string;
   isStreaming?: boolean;
   error?: boolean;
+  actionChips?: string[];
+  jobFitData?: {
+    matchScore: number;
+    company: string;
+    role: string;
+    growthOpportunities: string[];
+  };
 }
 
 export function useAiChat() {
@@ -141,6 +148,20 @@ export function useAiChat() {
     }
   }, [isTyping]);
 
+  const appendAssistantMessage = useCallback((content: string, actionChips?: string[], jobFitData?: any) => {
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: crypto.randomUUID(),
+        role: 'assistant',
+        content,
+        actionChips,
+        jobFitData,
+        isStreaming: false
+      }
+    ]);
+  }, []);
+
   const stopStreaming = useCallback(() => {
     if (warmupTimerRef.current) clearTimeout(warmupTimerRef.current);
     setIsWarmingUp(false);
@@ -165,6 +186,7 @@ export function useAiChat() {
     isTyping,
     isWarmingUp,
     sendMessage,
+    appendAssistantMessage,
     stopStreaming,
     clearChat
   };

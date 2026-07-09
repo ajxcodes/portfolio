@@ -34,12 +34,12 @@ public class AnalyticsControllerTests
     [Fact]
     public async Task LogPageViewAsync_ReturnsOk_AndLogsView()
     {
-        var request = new PageViewRequest { ReferrerSource = "Google" };
+        var request = new PageViewRequest { ReferrerSource = "Google", PagePath = "/resume" };
 
         var result = await _controller.LogPageViewAsync(request);
 
         result.ShouldBeOfType<OkObjectResult>();
-        await _serviceMock.Received(1).LogPageViewAsync(Arg.Is<PageViewLog>(l => l.ReferrerSource == "Google"));
+        await _serviceMock.Received(1).LogPageViewAsync(Arg.Is<PageViewLog>(l => l.ReferrerSource == "Google" && l.PagePath == "/resume"));
     }
 
     [Fact]

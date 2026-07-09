@@ -25,6 +25,9 @@
       <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
       <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
       <PackageReference Include="AWSSDK.S3" />
+      <PackageReference Include="DocumentFormat.OpenXml" />
+      <PackageReference Include="HtmlAgilityPack" />
+      <PackageReference Include="UglyToad.PdfPig" />
     </ItemGroup>
 
     <ItemGroup>

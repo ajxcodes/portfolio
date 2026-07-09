@@ -35,6 +35,8 @@ export async function POST(request: Request) {
     const country = sanitizeString(rawCountry, 100);
     const city = sanitizeString(rawCity, 100);
 
+    const pagePath = sanitizeString(body.PagePath, 500);
+
     const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || process.env.API_BASE_URL || "http://localhost:5808";
 
     const controller = new AbortController();
@@ -48,7 +50,8 @@ export async function POST(request: Request) {
           ReferrerSource: referrerSource,
           UserAgent: userAgent,
           Country: country,
-          City: city
+          City: city,
+          PagePath: pagePath
         }),
         signal: controller.signal
       });

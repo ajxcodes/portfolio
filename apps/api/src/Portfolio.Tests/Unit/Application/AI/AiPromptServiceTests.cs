@@ -114,4 +114,25 @@ public class AiPromptServiceTests
         // Assert
         prompt.ShouldContain("No active resume profile found.");
     }
+
+    [Fact]
+    public async Task BuildJobFitSystemPromptAsync_IncludesJobDescriptionAndResumeContext()
+    {
+        // Arrange
+        var profile = new ResumeProfile { Name = "John Doe" };
+        _resumeServiceMock.GetActiveProfileAsync().Returns(profile);
+        _resumeServiceMock.ListSkillsAsync().Returns(new System.Collections.Generic.List<SkillCategory>());
+
+        var jobDescription = "Looking for a Senior Software Engineer with C# experience.";
+
+        // Act
+        var prompt = await _service.BuildJobFitSystemPromptAsync(jobDescription);
+
+        // Assert
+        prompt.ShouldContain("John Doe");
+        prompt.ShouldContain(jobDescription);
+        prompt.ShouldContain("MatchScore");
+        prompt.ShouldContain("GrowthOpportunities");
+        prompt.ShouldContain("ActionChips");
+    }
 }
