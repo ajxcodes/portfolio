@@ -30,6 +30,26 @@ public class JobDescriptionExtractionService(HttpClient httpClient) : IJobDescri
 
     private async Task<string> ExtractFromUrlAsync(string url)
     {
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri) || 
+            (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
+        {
+            throw new ArgumentException("Invalid URL provided. Only HTTP and HTTPS schemes are allowed.");
+        }
+
+#if !DEBUG
+        if (uri.IsLoopback || 
+            uri.HostNameType == UriHostNameType.IPv4 && (
+                uri.Host.StartsWith("127.") || 
+                uri.Host.StartsWith("10.") || 
+                uri.Host.StartsWith("192.168.") || 
+                uri.Host.StartsWith("172.")
+            ) || 
+            uri.Host.Equals("localhost", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new ArgumentException("URL must not point to a local or private network.");
+        }
+#endif
+
         try
         {
             return await httpClient.GetStringAsync(url);

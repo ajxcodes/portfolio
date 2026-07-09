@@ -30,6 +30,15 @@ public class JobFitController(IJobFitService jobFitService, IAnalyticsService an
             return BadRequest("A job description must be provided via RawText, Url, or File.");
         }
 
+        if (request.File != null)
+        {
+            var maxFileSize = configuration.GetValue<long>("MAX_JOB_FIT_FILE_SIZE", 5 * 1024 * 1024);
+            if (request.File.Length > maxFileSize)
+            {
+                return BadRequest($"File size exceeds the allowed limit of {maxFileSize / (1024 * 1024)}MB.");
+            }
+        }
+
         try
         {
             var appRequest = new JobFitUploadRequest
