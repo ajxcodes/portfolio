@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useId } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePathname } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
@@ -47,6 +47,7 @@ interface FloatingAiWidgetProps {
 }
 
 export function FloatingAiWidget({ blogPosts = [], resume }: FloatingAiWidgetProps) {
+  const widgetId = useId();
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [isHighlighting, setIsHighlighting] = useState(false);
@@ -199,7 +200,7 @@ export function FloatingAiWidget({ blogPosts = [], resume }: FloatingAiWidgetPro
                     <button 
                       onClick={() => setIsOpen(false)}
                       className="w-3 h-3 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center transition-colors"
-                      aria-label="Close widget"
+                      aria-label={`Close widget ${widgetId}`}
                     >
                       <svg className="w-2 h-2 opacity-0 group-hover/win:opacity-100 text-black/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" />
@@ -214,7 +215,7 @@ export function FloatingAiWidget({ blogPosts = [], resume }: FloatingAiWidgetPro
                 <button
                   onClick={() => setIsOpen(false)}
                   className="p-1 text-primary/60 hover:text-primary hover:bg-primary/10 rounded-md transition-all sm:hidden"
-                  aria-label="Close widget"
+                  aria-label={`Close widget ${widgetId}`}
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>

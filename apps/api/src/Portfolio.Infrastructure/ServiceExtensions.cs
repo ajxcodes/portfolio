@@ -29,7 +29,11 @@ public static class ServiceExtensions
             services.AddHttpClient<IAiChatService, OllamaChatService>();
         }
 
-        services.AddHttpClient<Application.AI.Services.IJobDescriptionExtractionService, JobDescriptionExtractionService>();
+        services.AddHttpClient<Application.AI.Services.IJobDescriptionExtractionService, JobDescriptionExtractionService>(client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(10);
+            client.DefaultRequestHeaders.Clear();
+        });
 
         return services.ConfigureDatabase();
     }

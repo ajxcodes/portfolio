@@ -311,7 +311,7 @@ describe('FloatingAiWidget', () => {
     fireEvent.click(screen.getByRole('button', { name: /Open AI Chat/i }));
     expect(screen.getByPlaceholderText(/Type a message\.\.\./i)).toBeInTheDocument();
 
-    const closeBtn = screen.getAllByLabelText('Close widget')[0];
+    const closeBtn = screen.getAllByLabelText(/Close widget/i)[0];
     fireEvent.click(closeBtn);
     
     await waitFor(() => {
