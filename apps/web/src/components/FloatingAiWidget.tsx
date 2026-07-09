@@ -265,11 +265,13 @@ export function FloatingAiWidget({ blogPosts = [], resume }: FloatingAiWidgetPro
                         onAnalysisComplete={(result) => {
                           setIsJobFitOpen(false);
                           
-                          appendAssistantMessage("Here is the analysis for this role:", result.actionChips, {
+                          const sanitize = (str: string) => str.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                          
+                          appendAssistantMessage("Here is the analysis for this role:", result.actionChips.map(sanitize), {
                             matchScore: result.matchScore,
-                            company: result.company,
-                            role: result.role,
-                            growthOpportunities: result.growthOpportunities
+                            company: sanitize(result.company),
+                            role: sanitize(result.role),
+                            growthOpportunities: result.growthOpportunities.map(sanitize)
                           });
                         }}
                       />
