@@ -52,7 +52,8 @@ public class JobDescriptionExtractionService(HttpClient httpClient) : IJobDescri
 
         try
         {
-            return await httpClient.GetStringAsync(url);
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            return await httpClient.GetStringAsync(url, cts.Token);
         }
         catch (Exception ex)
         {

@@ -56,6 +56,13 @@ export function FloatingAiWidget({ blogPosts = [], resume }: FloatingAiWidgetPro
   const [isJobFitOpen, setIsJobFitOpen] = useState(false);
   const [showIdleJobFitBtn, setShowIdleJobFitBtn] = useState(false);
   const [hasDismissedJobFitBtn, setHasDismissedJobFitBtn] = useState(false);
+  
+  useEffect(() => {
+    if (localStorage.getItem('jobFitBtnDismissed') === 'true') {
+      setHasDismissedJobFitBtn(true);
+    }
+  }, []);
+
   const idleTimerRef = useRef<NodeJS.Timeout | null>(null);
   const jobFitRef = useRef<HTMLDivElement>(null);
   
@@ -435,6 +442,7 @@ export function FloatingAiWidget({ blogPosts = [], resume }: FloatingAiWidgetPro
                             onClick={(e) => {
                               e.stopPropagation();
                               setHasDismissedJobFitBtn(true);
+                              localStorage.setItem('jobFitBtnDismissed', 'true');
                             }}
                             className="absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full flex items-center justify-center text-primary-foreground/60 hover:text-primary-foreground hover:bg-primary-foreground/20 transition-colors"
                             aria-label="Dismiss"
