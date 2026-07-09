@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePathname } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
@@ -64,15 +64,15 @@ export function FloatingAiWidget({ blogPosts = [], resume }: FloatingAiWidgetPro
   
   const [isMainCtaVisible, setIsMainCtaVisible] = useState(false);
 
+  const handleCtaVisibility = useCallback((e: Event) => {
+    const customEvent = e as CustomEvent<{ isVisible: boolean }>;
+    setIsMainCtaVisible(customEvent.detail.isVisible);
+  }, []);
+
   useEffect(() => {
-    const handleCtaVisibility = (e: Event) => {
-      const customEvent = e as CustomEvent<{ isVisible: boolean }>;
-      setIsMainCtaVisible(customEvent.detail.isVisible);
-    };
-    
     window.addEventListener('ctaVisibilityChange', handleCtaVisibility);
     return () => window.removeEventListener('ctaVisibilityChange', handleCtaVisibility);
-  }, []);
+  }, [handleCtaVisibility]);
 
   // If we're on the homepage, the shell is already visible, so we don't need the terminal tab
   const isHomePage = pathname === '/';

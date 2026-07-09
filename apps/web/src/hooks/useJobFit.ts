@@ -27,7 +27,7 @@ export function useJobFit() {
       const visitorSessionId = sessionStorage.getItem('visitor_session_id');
       if (visitorSessionId) formData.append('VisitorSessionId', visitorSessionId);
 
-      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5808';
+      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
       const response = await fetch(`${apiBaseUrl}/api/ai/job-fit/analyze`, {
         method: 'POST',
         body: formData,
