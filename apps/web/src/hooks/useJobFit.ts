@@ -21,7 +21,13 @@ export function useJobFit() {
     try {
       const formData = new FormData();
       if (data.rawText) formData.append('RawText', data.rawText);
-      if (data.url) formData.append('Url', data.url);
+      if (data.url) {
+        const urlLower = data.url.toLowerCase();
+        if (!urlLower.startsWith('http://') && !urlLower.startsWith('https://')) {
+          throw new Error("URL must start with http:// or https://");
+        }
+        formData.append('Url', data.url);
+      }
       if (data.file) formData.append('File', data.file);
       
       const visitorSessionId = sessionStorage.getItem('visitor_session_id');

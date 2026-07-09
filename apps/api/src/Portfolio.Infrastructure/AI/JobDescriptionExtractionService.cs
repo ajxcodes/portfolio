@@ -103,6 +103,14 @@ public class JobDescriptionExtractionService(HttpClient httpClient, Microsoft.Ex
                 }
             }
         }
+        catch (OutOfMemoryException ex)
+        {
+            throw new Exception("The PDF file is too complex and caused a memory error.", ex);
+        }
+        catch (StackOverflowException ex)
+        {
+            throw new Exception("The PDF file is too complex and caused a stack overflow.", ex);
+        }
         catch (Exception ex)
         {
             throw new Exception($"Failed to parse PDF document. It may be malformed or corrupted: {ex.Message}", ex);
