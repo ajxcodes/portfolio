@@ -76,5 +76,47 @@ public class AnalyticsControllerTests
         okResult.Value.ShouldBe(summary);
     }
 
+    [Fact]
+    public async Task GetClientIpAddress_UsesXForwardedFor_WhenPresent()
+    {
+        var httpContext = new DefaultHttpContext();
+        httpContext.Request.Headers["X-Forwarded-For"] = "192.168.1.1, 10.0.0.1";
+        httpContext.Connection.RemoteIpAddress = System.Net.IPAddress.Parse("127.0.0.1");
+        
+        var controller = new AnalyticsController(_serviceMock)
+        {
+            ControllerContext = new ControllerContext()
+            {
+                HttpContext = httpContext
+            }
+        };
 
+        var request = new PageViewRequest { ReferrerSource = "Google", PagePath = "/resume" };
+        await controller.LogPageViewAsync(request);
+
+        // Can't directly assert tracking ID generation since it's private and hashed, 
+        // but this ensures the X-Forwarded-For branch executes without error.
+        await _serviceMock.Received(1).LogPageViewAsync(Arg.Any<PageViewLog>());
+    }
+
+    [Fact]
+    public async Task GetClientIpAddress_UsesXRealIp_WhenPresent()
+    {
+        var httpContext = new DefaultHttpContext();
+        httpContext.Request.Headers["X-Real-IP"] = "192.168.1.2";
+        httpContext.Connection.RemoteIpAddress = System.Net.IPAddress.Parse("127.0.0.1");
+        
+        var controller = new AnalyticsController(_serviceMock)
+        {
+            ControllerContext = new ControllerContext()
+            {
+                HttpContext = httpContext
+            }
+        };
+
+        var request = new PageViewRequest { ReferrerSource = "Google", PagePath = "/resume" };
+        await controller.LogPageViewAsync(request);
+
+        await _serviceMock.Received(1).LogPageViewAsync(Arg.Any<PageViewLog>());
+    }
 }

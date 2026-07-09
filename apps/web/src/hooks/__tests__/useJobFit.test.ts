@@ -165,4 +165,40 @@ describe('useJobFit Hook', () => {
     expect(result.current.analysisResult).toBeNull();
     expect(result.current.error).toBeNull();
   });
+
+  it('handles invalid URL protocol', async () => {
+    const { result } = renderHook(() => useJobFit());
+    
+    await act(async () => {
+      await result.current.analyzeJobFit({ url: 'ftp://example.com' });
+    });
+    
+    expect(result.current.error).toBe('URL must start with http:// or https://');
+  });
+
+  it('handles invalid file extension', async () => {
+    const { result } = renderHook(() => useJobFit());
+    const file = new File([''], 'test.exe', { type: 'application/x-msdownload' });
+    
+    await act(async () => {
+      await result.current.analyzeJobFit({ file });
+    });
+    
+    expect(result.current.error).toBe('Invalid file type. Only .txt, .pdf, and .docx are supported.');
+  });
+
+  it('handles missing NEXT_PUBLIC_API_BASE_URL', async () => {
+    const originalUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+    delete process.env.NEXT_PUBLIC_API_BASE_URL;
+
+    const { result } = renderHook(() => useJobFit());
+    
+    await act(async () => {
+      await result.current.analyzeJobFit({ rawText: 'test' });
+    });
+    
+    expect(result.current.error).toBe('NEXT_PUBLIC_API_BASE_URL environment variable is not defined. Job Fit analysis cannot proceed.');
+
+    process.env.NEXT_PUBLIC_API_BASE_URL = originalUrl;
+  });
 });

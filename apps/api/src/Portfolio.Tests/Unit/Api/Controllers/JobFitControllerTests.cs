@@ -83,4 +83,65 @@ public class JobFitControllerTests
         // Assert
         result.ShouldBeOfType<BadRequestObjectResult>();
     }
+
+    [Fact]
+    public async Task AnalyzeJobFitAsync_WithFile_OverSizeLimit_ReturnsBadRequest()
+    {
+        // Arrange
+        var mockFile = Substitute.For<Microsoft.AspNetCore.Http.IFormFile>();
+        mockFile.Length.Returns(10 * 1024 * 1024); // 10MB
+        var request = new JobFitAnalyzeApiRequest { File = mockFile };
+
+        var configSection = Substitute.For<Microsoft.Extensions.Configuration.IConfigurationSection>();
+        configSection.Value.Returns("5242880"); // 5MB limit
+        _configurationMock.GetSection("MAX_JOB_FIT_FILE_SIZE").Returns(configSection);
+
+        // Act
+        var result = await _controller.AnalyzeJobFitAsync(request, CancellationToken.None);
+
+        // Assert
+        result.ShouldBeOfType<BadRequestObjectResult>();
+    }
+
+    [Fact]
+    public async Task AnalyzeJobFitAsync_WithException_ReturnsInternalServerError()
+    {
+        // Arrange
+        var request = new JobFitAnalyzeApiRequest { RawText = "test" };
+        _jobFitServiceMock.AnalyzeJobFitAsync(Arg.Any<JobFitUploadRequest>(), CancellationToken.None)
+            .Returns<JobFitAnalysisResponse>(x => throw new System.Exception("Test exception"));
+
+        // Act
+        var result = await _controller.AnalyzeJobFitAsync(request, CancellationToken.None);
+
+        // Assert
+        var objectResult = result.ShouldBeOfType<ObjectResult>();
+        objectResult.StatusCode.ShouldBe(500);
+    }
+
+    [Fact]
+    public async Task AnalyzeJobFitAsync_WithUrl_FormatsQueryLogCorrectly()
+    {
+        // Arrange
+        var request = new JobFitAnalyzeApiRequest { Url = "http://example.com" };
+        var aiResponse = new JobFitAnalysisResponse 
+        { 
+            Company = "Unknown Company",
+            Role = "Unknown Role",
+            MatchScore = 50, 
+            GrowthOpportunities = [], 
+            ActionChips = [] 
+        };
+
+        _jobFitServiceMock.AnalyzeJobFitAsync(Arg.Any<JobFitUploadRequest>(), CancellationToken.None).Returns(aiResponse);
+
+        // Act
+        var result = await _controller.AnalyzeJobFitAsync(request, CancellationToken.None);
+
+        // Assert
+        result.ShouldBeOfType<OkObjectResult>();
+
+        await _analyticsServiceMock.Received(1).LogAiQueryAsync(Arg.Is<Portfolio.Domain.Analytics.AiQueryLog>(log => 
+            log.QueryText == "Analyzed Job Fit via URL: http://example.com"));
+    }
 }

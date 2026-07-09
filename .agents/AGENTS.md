@@ -1,0 +1,1 @@
+- Always use pnpm commands instead of npx or npm if pnpm is installed in the repository
