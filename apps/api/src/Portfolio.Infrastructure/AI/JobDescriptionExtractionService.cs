@@ -53,7 +53,16 @@ public class JobDescriptionExtractionService(HttpClient httpClient, Microsoft.Ex
         try
         {
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-            return await httpClient.GetStringAsync(url, cts.Token);
+            using var response = await httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, cts.Token);
+            response.EnsureSuccessStatusCode();
+
+            var maxFileSize = configuration.GetValue<long>("MAX_JOB_FIT_FILE_SIZE", 5 * 1024 * 1024);
+            if (response.Content.Headers.ContentLength > maxFileSize)
+            {
+                throw new ArgumentException($"URL content exceeds the maximum allowed limit of {maxFileSize / (1024 * 1024)}MB.");
+            }
+
+            return await response.Content.ReadAsStringAsync(cts.Token);
         }
         catch (Exception ex)
         {

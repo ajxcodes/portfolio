@@ -153,7 +153,7 @@ describe('useJobFit Hook', () => {
     const { result } = renderHook(() => useJobFit());
 
     await act(async () => {
-      await result.current.analyzeJobFit({ url: 'test' });
+      await result.current.analyzeJobFit({ url: 'http://test.com' });
     });
 
     expect(result.current.analysisResult).not.toBeNull();

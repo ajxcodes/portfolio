@@ -28,7 +28,14 @@ export function useJobFit() {
         }
         formData.append('Url', data.url);
       }
-      if (data.file) formData.append('File', data.file);
+      if (data.file) {
+        const allowedExtensions = ['.txt', '.pdf', '.docx'];
+        const fileName = data.file.name.toLowerCase();
+        if (!allowedExtensions.some(ext => fileName.endsWith(ext))) {
+          throw new Error("Invalid file type. Only .txt, .pdf, and .docx are supported.");
+        }
+        formData.append('File', data.file);
+      }
       
       const visitorSessionId = sessionStorage.getItem('visitor_session_id');
       if (visitorSessionId) formData.append('VisitorSessionId', visitorSessionId);
