@@ -220,4 +220,60 @@ describe('ResumeProfilesPage', () => {
       expect(screen.getByText(/Failed to load profiles/i)).toBeInTheDocument();
     });
   });
+
+  it('displays error when activating a profile fails', async () => {
+    mockFetch.mockImplementation((url, options) => {
+      if (options && options.method === 'POST' && url.includes('/activate')) {
+        return Promise.resolve({ ok: false, status: 500, text: () => Promise.resolve('Error activating') });
+      }
+      if (url.includes('/api/resume')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve(mockProfiles)
+        });
+      }
+      return Promise.resolve({ ok: true });
+    });
+
+    render(<ResumeProfilesPage />);
+    
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /^Inactive Profile$/i })).toBeInTheDocument();
+    });
+
+    const activateButton = screen.getByRole('button', { name: /Activate/i });
+    fireEvent.click(activateButton);
+
+    await waitFor(() => {
+      expect(screen.getByText(/Error activating/i)).toBeInTheDocument();
+    });
+  });
+
+  it('fetches with authorization header when session exists', async () => {
+    // Mock the session for this test only
+    const { supabase } = require('@/lib/supabaseBrowser');
+    supabase.auth.getSession.mockResolvedValueOnce({ 
+      data: { session: { access_token: 'mock-token' } } 
+    });
+
+    mockFetch.mockImplementation((url, options) => {
+      if (url.includes('/api/resume')) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve(mockProfiles) });
+      }
+      return Promise.resolve({ ok: true });
+    });
+
+    render(<ResumeProfilesPage />);
+    
+    await waitFor(() => {
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/resume'),
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            Authorization: 'Bearer mock-token'
+          })
+        })
+      );
+    });
+  });
 });

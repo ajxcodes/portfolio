@@ -59,6 +59,19 @@ public class JobDescriptionExtractionServiceTests
         // Act & Assert
         await Should.ThrowAsync<ArgumentException>(() => _service.ExtractJobDescriptionAsync(request));
     }
+    
+    [Fact]
+    public async Task ExtractJobDescriptionAsync_WithValidUrl_ReturnsContent()
+    {
+        // Arrange
+        var request = new JobFitUploadRequest { Url = "http://example.com/job.txt" };
+
+        // Act
+        var result = await _service.ExtractJobDescriptionAsync(request);
+
+        // Assert
+        result.ShouldBe("Mocked Response Content");
+    }
 
     [Fact]
     public async Task ExtractJobDescriptionAsync_WithNoSource_ThrowsArgumentException()
