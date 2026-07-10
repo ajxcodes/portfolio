@@ -276,4 +276,40 @@ describe('ResumeProfilesPage', () => {
       );
     });
   });
+
+  it('traps focus inside the modal when pressing Tab', async () => {
+    mockFetch.mockImplementation((url) => {
+      if (url.includes('/api/resume')) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve(mockProfiles) });
+      }
+      return Promise.resolve({ ok: true });
+    });
+
+    render(<ResumeProfilesPage />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /^Inactive Profile$/i })).toBeInTheDocument();
+    });
+
+    // Open modal
+    const deleteButton = screen.getByRole('button', { name: /Delete/i });
+    fireEvent.click(deleteButton);
+
+    const cancelButton = await screen.findByRole('button', { name: /Cancel/i });
+    const confirmButton = screen.getByRole('button', { name: /Confirm Delete/i });
+
+    // Focus first element initially (Cancel button usually, or whatever is first)
+    cancelButton.focus();
+    expect(document.activeElement).toBe(cancelButton);
+
+    // Simulate Tab on last element to wrap to first
+    confirmButton.focus();
+    fireEvent.keyDown(document, { key: 'Tab', code: 'Tab' });
+    expect(document.activeElement).toBe(cancelButton);
+
+    // Simulate Shift+Tab on first element to wrap to last
+    cancelButton.focus();
+    fireEvent.keyDown(document, { key: 'Tab', code: 'Tab', shiftKey: true });
+    expect(document.activeElement).toBe(confirmButton);
+  });
 });

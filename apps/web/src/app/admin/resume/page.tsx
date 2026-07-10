@@ -34,6 +34,8 @@ export default function ResumeProfilesPage() {
   const [profileToDelete, setProfileToDelete] = useState<Profile | null>(null);
   const modalRef = useRef<HTMLDivElement>(null);
 
+  // Note: Consider migrating to a headless UI library like Radix UI for 
+  // more robust focus management and accessibility in the future.
   useEffect(() => {
     if (profileToDelete && modalRef.current) {
       const focusableElements = modalRef.current.querySelectorAll(
@@ -142,6 +144,8 @@ export default function ResumeProfilesPage() {
     setProfileToDelete(null);
 
     try {
+      // NOTE: Ensure API_BASE_URL is HTTPS in production.
+      // The Authorization header is strictly sent to the API and not logged.
       const headers = await fetchAuthHeaders();
       const res = await fetch(`${API_BASE_URL}/api/resume/${id}`, {
         method: "DELETE",
