@@ -123,4 +123,60 @@ public class ResumeIntegrationTests
             await cleanupContext.SaveChangesAsync();
         }
     }
+    [Fact]
+    public async Task DeleteProfileEndpoint_DeletesSuccessfully()
+    {
+        // Arrange
+        using var scope = _fixture.Factory.Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<PortfolioDbContext>();
+
+        var p = new ResumeProfile { Id = Guid.NewGuid(), Name = "Profile to Delete", IsActive = false, Title = "Dev", Intro = "A" };
+        context.ResumeProfiles.Add(p);
+        await context.SaveChangesAsync();
+
+        // Act
+        var response = await _client.DeleteAsync($"/api/resume/{p.Id}");
+
+        // Assert
+        response.StatusCode.ShouldBe(System.Net.HttpStatusCode.NoContent);
+
+        using var checkScope = _fixture.Factory.Services.CreateScope();
+        var checkContext = checkScope.ServiceProvider.GetRequiredService<PortfolioDbContext>();
+        var deletedProfile = await checkContext.ResumeProfiles.FindAsync(p.Id);
+        deletedProfile.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task DeleteProfileEndpoint_ReturnsBadRequest_ForActiveProfile()
+    {
+        // Arrange
+        using var scope = _fixture.Factory.Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<PortfolioDbContext>();
+
+        // Clean up existing to safely insert an active profile
+        context.ResumeProfiles.RemoveRange(context.ResumeProfiles);
+        await context.SaveChangesAsync();
+
+        var p = new ResumeProfile { Id = Guid.NewGuid(), Name = "Active Profile to Delete", IsActive = true, Title = "Dev", Intro = "A" };
+        context.ResumeProfiles.Add(p);
+        await context.SaveChangesAsync();
+
+        // Act
+        var response = await _client.DeleteAsync($"/api/resume/{p.Id}");
+
+        // Assert
+        response.StatusCode.ShouldBe(System.Net.HttpStatusCode.BadRequest);
+        var content = await response.Content.ReadAsStringAsync();
+        content.ShouldContain("Cannot delete the currently active profile");
+        
+        // Clean up
+        using var cleanupScope = _fixture.Factory.Services.CreateScope();
+        var cleanupContext = cleanupScope.ServiceProvider.GetRequiredService<PortfolioDbContext>();
+        var toRemove = await cleanupContext.ResumeProfiles.FindAsync(p.Id);
+        if (toRemove != null)
+        {
+            cleanupContext.ResumeProfiles.Remove(toRemove);
+            await cleanupContext.SaveChangesAsync();
+        }
+    }
 }

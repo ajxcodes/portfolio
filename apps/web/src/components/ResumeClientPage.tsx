@@ -188,21 +188,20 @@ export const ResumeClientPage = ({ resume, personalInfo }: ResumeClientPageProps
             <p className="text-balance">{personalInfo.intro}</p>
           </div>
           
-          {/* CTA Button is now ABOVE contact links */}
           <div ref={ctaRef} className="mt-6 flex justify-center md:justify-start">
             <div className="relative inline-flex group">
               {/* Glowing background effect tied to button size */}
-              <div className="absolute inset-0 bg-white blur-xl rounded-xl opacity-40 group-hover:opacity-60 transition-opacity duration-500 animate-pulse" style={{ animationDuration: '3s' }} />
+              <div className="absolute inset-0 bg-primary blur-xl rounded-xl opacity-40 group-hover:opacity-60 transition-opacity duration-500 animate-pulse" style={{ animationDuration: '3s' }} />
               
               <button
                 onClick={() => window.dispatchEvent(new CustomEvent('openAiWidget'))}
-                className="relative inline-flex items-center gap-3 px-6 py-3.5 font-semibold text-black bg-white rounded-xl overflow-hidden shadow-[0_0_20px_rgba(255,255,255,0.4)] hover:shadow-[0_0_30px_rgba(255,255,255,0.6)] transition-all duration-300 hover:-translate-y-1"
+                className="relative inline-flex items-center gap-3 px-6 py-3.5 font-semibold text-primary-foreground bg-primary rounded-xl overflow-hidden shadow-xl shadow-primary/30 hover:shadow-primary/50 transition-all duration-300 hover:-translate-y-1"
               >
                 {/* Shimmer effect on hover */}
-                <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-black/10 to-transparent group-hover:animate-[shimmer_1.5s_infinite]" />
+                <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-primary-foreground/10 to-transparent group-hover:animate-[shimmer_1.5s_infinite]" />
                 
-                <div className="relative z-10 bg-black/5 p-1.5 rounded-lg">
-                  <BotIcon className="w-5 h-5 animate-pulse text-black" style={{ animationDuration: '2s' }} />
+                <div className="relative z-10 bg-primary-foreground/10 p-1.5 rounded-lg">
+                  <BotIcon className="w-5 h-5 animate-pulse text-primary-foreground" style={{ animationDuration: '2s' }} />
                 </div>
                 
                 <TypewriterText />
@@ -210,8 +209,8 @@ export const ResumeClientPage = ({ resume, personalInfo }: ResumeClientPageProps
 
               {/* Notification dot placed OUTSIDE the overflow-hidden button */}
               <span className="absolute -top-1.5 -right-1.5 flex h-3.5 w-3.5 pointer-events-none transition-transform duration-300 group-hover:-translate-y-1">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" style={{ animationDuration: '2s' }}></span>
-                <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-white shadow-[0_0_8px_white]"></span>
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-300 opacity-75 dark:bg-white" style={{ animationDuration: '2s' }}></span>
+                <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-teal-200 shadow-[0_0_8px_theme(colors.teal.300)] dark:bg-white dark:shadow-[0_0_8px_white]"></span>
               </span>
             </div>
           </div>

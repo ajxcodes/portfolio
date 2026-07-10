@@ -238,7 +238,7 @@ export default function AdminBlogPage() {
                 type="button"
                 onClick={() => handleDelete(postToDelete.id)}
                 disabled={deleteLoading === postToDelete.id}
-                className="px-4 py-2 bg-destructive text-destructive-foreground hover:bg-destructive/90 text-sm font-bold rounded transition-all disabled:opacity-50"
+                className="px-4 py-2 bg-primary text-primary-foreground hover:bg-primary/90 text-sm font-bold rounded transition-all disabled:opacity-50"
               >
                 {deleteLoading === postToDelete.id ? "Deleting..." : "Confirm Delete"}
               </button>
