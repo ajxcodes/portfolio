@@ -8,7 +8,8 @@ import {
   UserSquare, 
   Plus, 
   CheckCircle2, 
-  AlertCircle
+  AlertCircle,
+  Trash2
 } from "lucide-react";
 import { AdminSkeleton } from "@/components/admin/AdminSkeleton";
 
@@ -29,6 +30,8 @@ export default function ResumeProfilesPage() {
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
+  const [profileToDelete, setProfileToDelete] = useState<Profile | null>(null);
 
   const fetchAuthHeaders = async () => {
     const headers: Record<string, string> = {
@@ -90,6 +93,34 @@ export default function ResumeProfilesPage() {
       setErrorMsg(err.message || "Failed to activate resume profile.");
     } finally {
       setActionLoading(null);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    setDeleteLoading(id);
+    setErrorMsg("");
+    
+    // Optimistic UI Update
+    const previousProfiles = [...profiles];
+    setProfiles((prev) => prev.filter((p) => p.id !== id));
+    setProfileToDelete(null);
+
+    try {
+      const headers = await fetchAuthHeaders();
+      const res = await fetch(`${API_BASE_URL}/api/resume/${id}`, {
+        method: "DELETE",
+        headers,
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(errorText || `Failed to delete profile (${res.status})`);
+      }
+    } catch (err: any) {
+      setProfiles(previousProfiles);
+      setErrorMsg(err.message || "Failed to delete resume profile.");
+    } finally {
+      setDeleteLoading(null);
     }
   };
 
@@ -181,18 +212,64 @@ export default function ResumeProfilesPage() {
                   </Link>
 
                   {!profile.isActive && (
-                    <button
-                      onClick={() => handleActivate(profile.id)}
-                      disabled={actionLoading !== null}
-                      className="px-3 py-1 bg-primary text-primary-foreground text-[10px] font-bold rounded transition-all disabled:opacity-50"
-                    >
-                      {actionLoading === profile.id ? "Activating..." : "Activate"}
-                    </button>
+                    <>
+                      <button
+                        onClick={() => handleActivate(profile.id)}
+                        disabled={actionLoading !== null}
+                        className="px-3 py-1 bg-primary text-primary-foreground text-[10px] font-bold rounded transition-all disabled:opacity-50"
+                      >
+                        {actionLoading === profile.id ? "Activating..." : "Activate"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setProfileToDelete(profile)}
+                        disabled={deleteLoading === profile.id}
+                        className="flex items-center gap-1 px-3 py-1 border border-destructive/20 text-destructive hover:bg-destructive/10 text-[10px] font-bold rounded transition-all disabled:opacity-50"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                        {deleteLoading === profile.id ? "..." : "Delete"}
+                      </button>
+                    </>
                   )}
                 </div>
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Custom Delete Confirmation Dialog */}
+      {profileToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
+          <div className="terminal-card border border-destructive/20 bg-card w-full max-w-md p-6 rounded-xl shadow-2xl animate-in fade-in zoom-in duration-200">
+            <div className="flex items-center gap-3 mb-4">
+              <AlertCircle className="w-6 h-6 text-destructive" />
+              <h2 className="text-lg font-bold text-foreground font-mono">delete_profile</h2>
+            </div>
+            
+            <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
+              Are you sure you want to delete <span className="text-foreground font-bold">"{profileToDelete.name}"</span>? This action is permanent and cannot be undone.
+            </p>
+
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setProfileToDelete(null)}
+                disabled={deleteLoading === profileToDelete.id}
+                className="px-4 py-2 border border-primary/20 text-foreground/80 hover:bg-primary/10 hover:text-foreground text-sm font-bold rounded transition-all disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDelete(profileToDelete.id)}
+                disabled={deleteLoading === profileToDelete.id}
+                className="px-4 py-2 bg-primary text-primary-foreground hover:bg-primary/90 text-sm font-bold rounded transition-all disabled:opacity-50"
+              >
+                {deleteLoading === profileToDelete.id ? "Deleting..." : "Confirm Delete"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -516,8 +516,8 @@ export function FloatingAiWidget({ blogPosts = [], resume }: FloatingAiWidgetPro
         <BotIcon className={`w-6 h-6 transition-transform duration-300 ${isOpen ? 'scale-0' : 'scale-100'}`} />
         <svg className={`w-6 h-6 absolute transition-transform duration-300 ${isOpen ? 'scale-100' : 'scale-0'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
         <span className="absolute -top-1 -right-1 flex h-3 w-3">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-          <span className="relative inline-flex rounded-full h-3 w-3 bg-white/90"></span>
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-300 opacity-75 dark:bg-white"></span>
+          <span className="relative inline-flex rounded-full h-3 w-3 bg-teal-200 dark:bg-white/90"></span>
         </span>
       </motion.button>
     </>

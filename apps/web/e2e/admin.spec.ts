@@ -128,4 +128,43 @@ test.describe('Admin Control Panel', () => {
     await expect(page.locator('#contact-links-section a[href="mailto:playwright-test@ajx.codes"]')).toBeAttached();
     await expect(page.locator('#contact-links-section a[href="https://instagram.com/playwright"]')).toBeAttached();
   });
+  test('should create and delete a resume profile', async ({ page }) => {
+    // 1. Navigate to resume profile list
+    await page.goto('/admin/resume');
+
+    // 2. Click "New Profile" and wait for navigation
+    await Promise.all([
+      page.waitForURL('**/admin/resume/form*'),
+      page.locator('text=New Profile').click()
+    ]);
+    await expect(page).toHaveURL(/\/admin\/resume\/form/);
+
+    // 3. Fill in Personal Info
+    const testName = `Delete Test Profile ${Date.now()}`;
+    await page.locator('#name').fill(testName);
+    await page.locator('#title').fill('Delete Candidate');
+    await page.locator('#intro').fill('This profile will be deleted.');
+
+    // 4. Save the profile
+    await page.locator('button[type="submit"]').first().click();
+
+    // Verify success banner and wait for auto-redirect back to list
+    const successBanner = page.locator('text=Profile details saved successfully!');
+    await expect(successBanner).toBeVisible({ timeout: 15000 });
+    await expect(page).toHaveURL(/\/admin\/resume/, { timeout: 15000 });
+
+    // 5. Find the newly created profile card and click "Delete"
+    const profileCard = page.locator('div.terminal-card', { hasText: testName });
+    await expect(profileCard).toBeVisible();
+    
+    const deleteButton = profileCard.locator('button:has-text("Delete")');
+    await deleteButton.click();
+
+    // 6. Confirm the deletion dialog
+    const confirmButton = page.locator('button:has-text("Confirm Delete")');
+    await confirmButton.click();
+
+    // Verify the profile is removed
+    await expect(profileCard).not.toBeVisible();
+  });
 });
