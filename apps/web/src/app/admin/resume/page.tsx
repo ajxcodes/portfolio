@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, startTransition } from "react";
+import { useEffect, useState, useRef, startTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseBrowser";
@@ -32,6 +32,42 @@ export default function ResumeProfilesPage() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
   const [profileToDelete, setProfileToDelete] = useState<Profile | null>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (profileToDelete && modalRef.current) {
+      const focusableElements = modalRef.current.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      if (focusableElements.length > 0) {
+        (focusableElements[0] as HTMLElement).focus();
+      }
+
+      const handleTabKey = (e: KeyboardEvent) => {
+        if (e.key === 'Tab') {
+          const firstElement = focusableElements[0] as HTMLElement;
+          const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
+
+          if (e.shiftKey) {
+            if (document.activeElement === firstElement) {
+              e.preventDefault();
+              lastElement.focus();
+            }
+          } else {
+            if (document.activeElement === lastElement) {
+              e.preventDefault();
+              firstElement.focus();
+            }
+          }
+        }
+      };
+
+      document.addEventListener('keydown', handleTabKey);
+      return () => {
+        document.removeEventListener('keydown', handleTabKey);
+      };
+    }
+  }, [profileToDelete]);
 
   const fetchAuthHeaders = async () => {
     const headers: Record<string, string> = {
@@ -241,13 +277,20 @@ export default function ResumeProfilesPage() {
       {/* Custom Delete Confirmation Dialog */}
       {profileToDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
-          <div className="terminal-card border border-destructive/20 bg-card w-full max-w-md p-6 rounded-xl shadow-2xl animate-in fade-in zoom-in duration-200">
+          <div 
+            ref={modalRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-dialog-title"
+            aria-describedby="delete-dialog-description"
+            className="terminal-card border border-destructive/20 bg-card w-full max-w-md p-6 rounded-xl shadow-2xl animate-in fade-in zoom-in duration-200"
+          >
             <div className="flex items-center gap-3 mb-4">
               <AlertCircle className="w-6 h-6 text-destructive" />
-              <h2 className="text-lg font-bold text-foreground font-mono">delete_profile</h2>
+              <h2 id="delete-dialog-title" className="text-lg font-bold text-foreground font-mono">delete_profile</h2>
             </div>
             
-            <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
+            <p id="delete-dialog-description" className="text-sm text-muted-foreground mb-6 leading-relaxed">
               Are you sure you want to delete <span className="text-foreground font-bold">"{profileToDelete.name}"</span>? This action is permanent and cannot be undone.
             </p>
 
