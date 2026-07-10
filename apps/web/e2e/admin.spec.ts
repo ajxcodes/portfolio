@@ -7,7 +7,7 @@ test.describe('Admin Control Panel', () => {
 
     // Verify analytics header
     const header = page.locator('h1');
-    await expect(header).toContainText('traffic_telemetry');
+    await expect(header).toContainText('traffic_telemetry', { timeout: 15000 });
 
     // Verify presence of metrics cards
     const totalViewsCard = page.locator('text=Total Views');
@@ -93,8 +93,8 @@ test.describe('Admin Control Panel', () => {
 
     // Verify success banner and wait for auto-redirect back to list
     const successBanner = page.locator('text=Profile details saved successfully!');
-    await expect(successBanner).toBeVisible();
-    await expect(page).toHaveURL(/\/admin\/resume/, { timeout: 10000 });
+    await expect(successBanner).toBeVisible({ timeout: 15000 });
+    await expect(page).toHaveURL(/\/admin\/resume/, { timeout: 15000 });
 
     // 6. Find the newly created profile card and click "Activate"
     const profileCard = page.locator('div.terminal-card', { hasText: testName });

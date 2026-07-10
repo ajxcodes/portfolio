@@ -132,6 +132,7 @@ public class GeminiChatServiceTests
         }
 
         // Assert
+        result.ShouldNotBeNull();
         result.ShouldContain("offline");
     }
 

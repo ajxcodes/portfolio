@@ -17,5 +17,6 @@ public interface IAnalyticsRepository
     Task<int> GetUniqueAiQueriesCountAsync();
     Task<List<AiQueryLog>> GetAiQueriesAsync(int limit);
     Task<VisitorSession> GetOrCreateVisitorSessionAsync(string trackingId);
+    Task<Dictionary<string, int>> GetPageViewsCountByPathAsync(IEnumerable<string> paths);
     Task SaveChangesAsync();
 }

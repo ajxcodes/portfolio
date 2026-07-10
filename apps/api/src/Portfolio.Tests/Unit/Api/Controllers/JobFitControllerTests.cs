@@ -8,6 +8,7 @@ using Portfolio.Application.AI.Services;
 using Portfolio.Application.Analytics.Services;
 using Shouldly;
 using Xunit;
+using NSubstitute.ExceptionExtensions;
 
 namespace Portfolio.Tests.Unit.Api.Controllers;
 
@@ -109,7 +110,7 @@ public class JobFitControllerTests
         // Arrange
         var request = new JobFitAnalyzeApiRequest { RawText = "test" };
         _jobFitServiceMock.AnalyzeJobFitAsync(Arg.Any<JobFitUploadRequest>(), CancellationToken.None)
-            .Returns<JobFitAnalysisResponse>(x => throw new System.Exception("Test exception"));
+            .ThrowsAsync(new System.Exception("Test exception"));
 
         // Act
         var result = await _controller.AnalyzeJobFitAsync(request, CancellationToken.None);

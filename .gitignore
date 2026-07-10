@@ -61,3 +61,5 @@ e2e-api-logs.txt
 reports/
 stryker-tmp/
 
+# Custom Agent Artifacts
+artifacts/

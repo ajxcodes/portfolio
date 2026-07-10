@@ -98,6 +98,32 @@ describe('AnalyticsPage', () => {
     expect(screen.getByText('Session: session123')).toBeInTheDocument();
   });
 
+  it('renders loading state initially', async () => {
+    // Delay resolution to capture loading state
+    (global.fetch as jest.Mock).mockImplementationOnce(() => new Promise(resolve => setTimeout(() => resolve({
+      ok: true,
+      json: () => Promise.resolve(mockSummary),
+    }), 100)));
+
+    render(<AnalyticsPage />);
+    
+    // Check for AdminSkeleton classes
+    expect(document.querySelector('.animate-pulse')).toBeInTheDocument();
+  });
+
+  it('shows error state when fetching fails', async () => {
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: false,
+      text: jest.fn().mockResolvedValue('Failed to load analytics'),
+    });
+    
+    render(<AnalyticsPage />);
+    
+    await waitFor(() => {
+      expect(screen.getByText(/Failed to load analytics/i)).toBeInTheDocument();
+    });
+  });
+
   it('displays BOT badge for bot user agents in visitor journeys', async () => {
     render(<AnalyticsPage />);
     

@@ -2,6 +2,8 @@ using System;
 using System.IO;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
+using System.Collections.Generic;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using Portfolio.Api.Upload.Controllers;
@@ -14,11 +16,19 @@ namespace Portfolio.Tests.Unit;
 public class UploadControllerTests
 {
     private readonly IStorageService _storageServiceMock = Substitute.For<IStorageService>();
+    private readonly IConfiguration _configuration;
     private readonly UploadController _controller;
 
     public UploadControllerTests()
     {
-        _controller = new UploadController(_storageServiceMock);
+        var inMemorySettings = new Dictionary<string, string?> {
+            {"Upload:MaxFileSizeBytes", "52428800"}
+        };
+        _configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(inMemorySettings)
+            .Build();
+
+        _controller = new UploadController(_storageServiceMock, _configuration);
     }
 
     [Fact]
@@ -41,14 +51,14 @@ public class UploadControllerTests
     {
         // Arrange
         var fileMock = Substitute.For<IFormFile>();
-        fileMock.Length.Returns(6 * 1024 * 1024); // 6 MB
+        fileMock.Length.Returns(51 * 1024 * 1024); // 51 MB
 
         // Act
         var result = await _controller.UploadAsync(fileMock);
 
         // Assert
         var badRequestResult = result.ShouldBeOfType<BadRequestObjectResult>();
-        badRequestResult.Value.ShouldBe("File size exceeds the 5MB limit");
+        badRequestResult.Value.ShouldBe("File size exceeds the 50MB limit");
     }
 
     [Fact]
@@ -65,7 +75,7 @@ public class UploadControllerTests
 
         // Assert
         var badRequestResult = result.ShouldBeOfType<BadRequestObjectResult>();
-        badRequestResult.Value.ShouldBe("Invalid image format. Allowed formats: JPEG, PNG, WEBP, GIF");
+        badRequestResult.Value.ShouldBe("Invalid media format. Allowed formats: JPEG, PNG, WEBP, GIF, MP4, WEBM, MOV");
     }
 
     [Fact]

@@ -14,6 +14,12 @@ public record PostResponse
     public DateTime? DateModified { get; set; }
     public string? ModifiedBy { get; set; } // modified by username
 
+    public bool Visible { get; init; }
+    public string? CanonicalUrl { get; init; }
+
+    public List<string> Tags { get; set; } = new();
+    public int Views { get; set; }
+
     public static PostResponse FromDomain(Post post) =>
         new()
         {
@@ -25,6 +31,9 @@ public record PostResponse
             DatePosted = post.DatePosted,
             PostedBy = post.PostedBy,
             DateModified = post.DateModified,
-            ModifiedBy = post.ModifiedBy
+            ModifiedBy = post.ModifiedBy,
+            Visible = post.Visible,
+            CanonicalUrl = post.CanonicalUrl,
+            Tags = post.PostTags.Select(pt => pt.Tag!.Name).OrderBy(t => t).ToList()
         };
 }

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getBlogPosts } from '@/lib/data';
+import { BlogListClient } from './BlogListClient';
 
 export const metadata: Metadata = {
   title: 'Blog | AJX Portfolio',
@@ -29,37 +30,7 @@ export default async function BlogPage() {
           </p>
         </header>
 
-        {blogPosts && blogPosts.length > 0 ? (
-          <div className="space-y-6">
-            {blogPosts.map((post) => (
-              <article key={post.slug} className="border border-primary/10 hover:border-primary/30 bg-primary/5/10 p-6 rounded-md transition-all duration-300">
-                <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2 mb-3">
-                  <h2 className="text-lg font-bold text-primary hover:underline">
-                    <Link href={`/blog/${post.slug}`} className="flex items-center gap-1.5">
-                      <span className="text-primary/60 text-sm select-none">&gt;_</span>
-                      {post.title}
-                    </Link>
-                  </h2>
-                </div>
-                <p className="text-xs sm:text-sm text-foreground/80 leading-relaxed mb-4">
-                  {post.summary}
-                </p>
-                <div className="flex justify-end">
-                  <Link
-                    href={`/blog/${post.slug}`}
-                    className="px-3 py-1.5 text-xs font-bold border border-primary/20 hover:border-primary/40 rounded bg-primary/5 hover:bg-primary/10 text-primary transition-all duration-200"
-                  >
-                    read_post.exe
-                  </Link>
-                </div>
-              </article>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-12 border border-dashed border-primary/10 rounded-md">
-            <p className="text-sm text-muted-foreground">No blog posts found.</p>
-          </div>
-        )}
+        <BlogListClient initialPosts={blogPosts} />
       </div>
     </div>
   );
