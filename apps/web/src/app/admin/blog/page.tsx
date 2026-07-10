@@ -39,11 +39,9 @@ export default function AdminBlogPage() {
       "Content-Type": "application/json",
     };
 
-    if (process.env.NEXT_PUBLIC_LOCAL_DEV_BYPASS_AUTH !== "true") {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.access_token) {
-        headers["Authorization"] = `Bearer ${session.access_token}`;
-      }
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.access_token) {
+      headers["Authorization"] = `Bearer ${session.access_token}`;
     }
     return headers;
   };
@@ -72,6 +70,12 @@ export default function AdminBlogPage() {
   const handleDelete = async (id: string) => {
     setDeleteLoading(id);
     setErrorMsg("");
+    
+    // Optimistic UI Update
+    const previousPosts = [...posts];
+    setPosts((prevPosts) => prevPosts.filter((p) => p.id !== id));
+    setPostToDelete(null);
+
     try {
       const headers = await fetchAuthHeaders();
       const res = await fetch(`${API_BASE_URL}/api/blog/posts/${id}`, {
@@ -83,11 +87,9 @@ export default function AdminBlogPage() {
         const errorText = await res.text();
         throw new Error(errorText || `Failed to delete post (${res.status})`);
       }
-
-      // Update state directly for immediate UI feedback instead of re-fetching
-      setPosts((prevPosts) => prevPosts.filter((p) => p.id !== id));
-      setPostToDelete(null);
     } catch (err: any) {
+      // Revert optimistic update on failure
+      setPosts(previousPosts);
       setErrorMsg(err.message || "Failed to delete post.");
     } finally {
       setDeleteLoading(null);

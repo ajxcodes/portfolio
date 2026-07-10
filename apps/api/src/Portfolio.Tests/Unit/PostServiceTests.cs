@@ -235,9 +235,9 @@ public class PostServiceTests
             Content = "This is a post about AI."
         };
 
-        _aiServiceMock.AskQuestionAsync(Arg.Any<string>(), Arg.Is<string>(s => s.Contains("summary") && !s.Contains("URL-friendly")))
+        _aiServiceMock.AskQuestionAsync(Arg.Any<string>(), Arg.Is<string>(s => s.Contains("summary") && !s.Contains("URL-friendly")), Arg.Any<CancellationToken>())
             .Returns("Generated summary.");
-        _aiServiceMock.AskQuestionAsync(Arg.Any<string>(), Arg.Is<string>(s => s.Contains("slug") || s.Contains("URL-friendly")))
+        _aiServiceMock.AskQuestionAsync(Arg.Any<string>(), Arg.Is<string>(s => s.Contains("slug") || s.Contains("URL-friendly")), Arg.Any<CancellationToken>())
             .Returns("MY AI BLOG POST @!#");
 
         var result = await _service.GenerateMetadataAsync(request);
@@ -256,13 +256,13 @@ public class PostServiceTests
             Summary = "Existing summary"
         };
 
-        _aiServiceMock.AskQuestionAsync(Arg.Any<string>(), Arg.Is<string>(s => s.Contains("slug") || s.Contains("URL-friendly")))
+        _aiServiceMock.AskQuestionAsync(Arg.Any<string>(), Arg.Is<string>(s => s.Contains("slug") || s.Contains("URL-friendly")), Arg.Any<CancellationToken>())
             .Returns("test-slug");
 
         var result = await _service.GenerateMetadataAsync(request);
 
         result.Summary.ShouldBeNull(); // We don't overwrite if it wasn't requested/missing
         result.Slug.ShouldBe("test-slug");
-        await _aiServiceMock.DidNotReceive().AskQuestionAsync(Arg.Any<string>(), Arg.Is<string>(s => s.Contains("summary") && !s.Contains("URL-friendly")));
+        await _aiServiceMock.DidNotReceive().AskQuestionAsync(Arg.Any<string>(), Arg.Is<string>(s => s.Contains("summary") && !s.Contains("URL-friendly")), Arg.Any<CancellationToken>());
     }
 }

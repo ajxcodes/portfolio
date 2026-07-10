@@ -132,7 +132,8 @@ public class PostService(IPostRepository repository, AI.IAiChatService aiService
         if (string.IsNullOrWhiteSpace(request.Summary) && !string.IsNullOrWhiteSpace(request.Content))
         {
             var prompt = $"Generate a concise, 1-2 sentence summary for a blog post titled '{request.Title}'. Output ONLY the summary text.";
-            var summary = await aiService.AskQuestionAsync("You are a helpful blog editor. Return only the requested text without quotes or markdown formatting.", prompt + "\n\nContent:\n" + request.Content);
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+            var summary = await aiService.AskQuestionAsync("You are a helpful blog editor. Return only the requested text without quotes or markdown formatting.", prompt + "\n\nContent:\n" + request.Content, cts.Token);
             response.Summary = summary.Trim();
         }
 
@@ -140,7 +141,8 @@ public class PostService(IPostRepository repository, AI.IAiChatService aiService
         {
             var contentSummary = response.Summary ?? request.Summary ?? "No summary";
             var prompt = $"Generate a clean, URL-friendly slug (lowercase, hyphen-separated, no special characters) for a blog post titled '{request.Title}'. The post is about: '{contentSummary}'. Output ONLY the slug.";
-            var slug = await aiService.AskQuestionAsync("You are a strict URL slug generator. Return only the slug string.", prompt);
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+            var slug = await aiService.AskQuestionAsync("You are a strict URL slug generator. Return only the slug string.", prompt, cts.Token);
             
             slug = slug.ToLowerInvariant().Trim();
             slug = System.Text.RegularExpressions.Regex.Replace(slug, @"[^a-z0-9\-]", "-");

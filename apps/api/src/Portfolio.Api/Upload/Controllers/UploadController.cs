@@ -7,7 +7,7 @@ namespace Portfolio.Api.Upload.Controllers;
 [ApiController]
 [Route("api/admin/upload")]
 [Authorize]
-public class UploadController(IStorageService storageService) : ControllerBase
+public class UploadController(IStorageService storageService, IConfiguration configuration) : ControllerBase
 {
     private static readonly string[] AllowedImageMimeTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
     private static readonly string[] AllowedImageExtensions = [".jpg", ".jpeg", ".png", ".webp", ".gif"];
@@ -15,19 +15,21 @@ public class UploadController(IStorageService storageService) : ControllerBase
     private static readonly string[] AllowedVideoMimeTypes = ["video/mp4", "video/webm", "video/quicktime"];
     private static readonly string[] AllowedVideoExtensions = [".mp4", ".webm", ".mov"];
     
-    private const long MaxFileSizeBytes = 50 * 1024 * 1024; // 50 MB to allow videos
-
     [HttpPost]
+    [DisableRequestSizeLimit]
+    [RequestFormLimits(ValueLengthLimit = int.MaxValue, MultipartBodyLengthLimit = int.MaxValue)]
     public async Task<IActionResult> UploadAsync(IFormFile file)
     {
+        var maxFileSizeBytes = configuration.GetValue<long>("Upload:MaxFileSizeBytes", 50 * 1024 * 1024);
+
         if (file == null || file.Length == 0)
         {
             return BadRequest("No file was uploaded");
         }
 
-        if (file.Length > MaxFileSizeBytes)
+        if (file.Length > maxFileSizeBytes)
         {
-            return BadRequest("File size exceeds the 50MB limit");
+            return BadRequest($"File size exceeds the {maxFileSizeBytes / (1024 * 1024)}MB limit");
         }
 
         var extension = Path.GetExtension(file.FileName).ToLowerInvariant();

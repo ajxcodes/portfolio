@@ -2,6 +2,8 @@ using System;
 using System.IO;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
+using System.Collections.Generic;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using Portfolio.Api.Upload.Controllers;
@@ -14,11 +16,19 @@ namespace Portfolio.Tests.Unit;
 public class UploadControllerTests
 {
     private readonly IStorageService _storageServiceMock = Substitute.For<IStorageService>();
+    private readonly IConfiguration _configuration;
     private readonly UploadController _controller;
 
     public UploadControllerTests()
     {
-        _controller = new UploadController(_storageServiceMock);
+        var inMemorySettings = new Dictionary<string, string?> {
+            {"Upload:MaxFileSizeBytes", "52428800"}
+        };
+        _configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(inMemorySettings)
+            .Build();
+
+        _controller = new UploadController(_storageServiceMock, _configuration);
     }
 
     [Fact]

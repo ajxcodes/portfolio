@@ -247,11 +247,15 @@ export const getBlogPosts = cache(async (): Promise<BlogPost[]> => {
     if (postsRes.ok) {
       const dbPosts = await postsRes.json();
       return dbPosts ? dbPosts.filter((p: any) => p.visible !== false).map((p: any) => ({
+        id: p.id,
         slug: p.slug,
         title: p.title,
         summary: p.summary || '',
         content: p.content,
         visible: p.visible,
+        datePosted: p.datePosted,
+        tags: p.tags,
+        views: p.views
       })) : [];
     }
   } catch (e) {
@@ -286,10 +290,15 @@ export async function getBlogPostBySlug(slug: string): Promise<BlogPost | undefi
       const post = posts.find((p: any) => p.slug === slug);
       if (post) {
         return {
+          id: post.id,
           slug: post.slug,
           title: post.title,
           summary: post.summary || '',
           content: post.content,
+          visible: post.visible,
+          datePosted: post.datePosted,
+          tags: post.tags,
+          views: post.views
         };
       }
     }

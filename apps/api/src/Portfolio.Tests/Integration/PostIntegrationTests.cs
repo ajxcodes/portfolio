@@ -253,7 +253,7 @@ public class PostIntegrationTests
             Content = "Hello from integration test!"
         };
 
-        _aiServiceMock.AskQuestionAsync(Arg.Any<string>(), Arg.Any<string>()).Returns("AI generated string");
+        _aiServiceMock.AskQuestionAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns("AI generated string");
 
         // Act
         var response = await _client.PostAsJsonAsync("/api/blog/posts/generate-metadata", request);
