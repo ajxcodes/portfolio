@@ -11,7 +11,11 @@ public class UploadController(IStorageService storageService) : ControllerBase
 {
     private static readonly string[] AllowedImageMimeTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
     private static readonly string[] AllowedImageExtensions = [".jpg", ".jpeg", ".png", ".webp", ".gif"];
-    private const long MaxFileSizeBytes = 5 * 1024 * 1024; // 5 MB
+    
+    private static readonly string[] AllowedVideoMimeTypes = ["video/mp4", "video/webm", "video/quicktime"];
+    private static readonly string[] AllowedVideoExtensions = [".mp4", ".webm", ".mov"];
+    
+    private const long MaxFileSizeBytes = 50 * 1024 * 1024; // 50 MB to allow videos
 
     [HttpPost]
     public async Task<IActionResult> UploadAsync(IFormFile file)
@@ -23,13 +27,18 @@ public class UploadController(IStorageService storageService) : ControllerBase
 
         if (file.Length > MaxFileSizeBytes)
         {
-            return BadRequest("File size exceeds the 5MB limit");
+            return BadRequest("File size exceeds the 50MB limit");
         }
 
         var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-        if (!AllowedImageExtensions.Contains(extension) || !AllowedImageMimeTypes.Contains(file.ContentType.ToLowerInvariant()))
+        var contentType = file.ContentType.ToLowerInvariant();
+
+        var isImage = AllowedImageExtensions.Contains(extension) && AllowedImageMimeTypes.Contains(contentType);
+        var isVideo = AllowedVideoExtensions.Contains(extension) && AllowedVideoMimeTypes.Contains(contentType);
+
+        if (!isImage && !isVideo)
         {
-            return BadRequest("Invalid image format. Allowed formats: JPEG, PNG, WEBP, GIF");
+            return BadRequest("Invalid media format. Allowed formats: JPEG, PNG, WEBP, GIF, MP4, WEBM, MOV");
         }
 
         try

@@ -71,10 +71,15 @@ export interface ResumeData {
 }
 
 export interface BlogPost {
+  id: string;
   slug: string;
   title: string;
   summary: string;
-  content?: string;
+  content: string;
+  datePosted: string;
+  visible: boolean;
+  tags?: string[];
+  views?: number;
 }
 
 export interface PortfolioData {
@@ -241,11 +246,12 @@ export const getBlogPosts = cache(async (): Promise<BlogPost[]> => {
 
     if (postsRes.ok) {
       const dbPosts = await postsRes.json();
-      return dbPosts ? dbPosts.map((p: any) => ({
+      return dbPosts ? dbPosts.filter((p: any) => p.visible !== false).map((p: any) => ({
         slug: p.slug,
         title: p.title,
         summary: p.summary || '',
         content: p.content,
+        visible: p.visible,
       })) : [];
     }
   } catch (e) {

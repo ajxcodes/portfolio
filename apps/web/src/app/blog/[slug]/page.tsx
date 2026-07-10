@@ -1,6 +1,8 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { getBlogPostBySlug } from '@/lib/data';
+import ReactMarkdown from 'react-markdown';
+import rehypeSanitize from 'rehype-sanitize';
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
@@ -32,8 +34,10 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         <p className="text-xs font-mono text-primary/80 mt-4 bg-primary/5 px-3 py-1.5 rounded border border-primary/20 inline-block">{post.summary}</p>
       </header>
 
-      <section className="mt-8 text-base leading-relaxed whitespace-pre-wrap">
-        {post.content ?? post.summary}
+      <section className="mt-8 prose prose-sm sm:prose-base dark:prose-invert max-w-none prose-a:text-primary">
+        <ReactMarkdown rehypePlugins={[rehypeSanitize]}>
+          {post.content ?? post.summary ?? ''}
+        </ReactMarkdown>
       </section>
     </article>
   );

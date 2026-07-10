@@ -160,6 +160,25 @@ describe('FloatingAiWidget', () => {
     expect(mockStopStreaming).toHaveBeenCalled();
   });
 
+  it('renders error messages with error styling', () => {
+    (useAiChat as jest.Mock).mockReturnValue({
+      messages: [
+        { id: '1', role: 'assistant', content: 'Connection failed', error: true },
+      ],
+      isTyping: false,
+      sendMessage: mockSendMessage,
+      stopStreaming: mockStopStreaming,
+      clearChat: mockClearChat
+    });
+
+    render(<FloatingAiWidget />);
+    fireEvent.click(screen.getByRole('button', { name: /Open AI Chat/i }));
+    
+    const message = screen.getByText('Connection failed');
+    expect(message).toBeInTheDocument();
+    expect(message.closest('.text-red-500')).toBeInTheDocument();
+  });
+
   it('renders and interacts with action chips', () => {
     (useAiChat as jest.Mock).mockReturnValue({
       messages: [

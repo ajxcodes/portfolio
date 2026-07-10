@@ -41,14 +41,14 @@ public class UploadControllerTests
     {
         // Arrange
         var fileMock = Substitute.For<IFormFile>();
-        fileMock.Length.Returns(6 * 1024 * 1024); // 6 MB
+        fileMock.Length.Returns(51 * 1024 * 1024); // 51 MB
 
         // Act
         var result = await _controller.UploadAsync(fileMock);
 
         // Assert
         var badRequestResult = result.ShouldBeOfType<BadRequestObjectResult>();
-        badRequestResult.Value.ShouldBe("File size exceeds the 5MB limit");
+        badRequestResult.Value.ShouldBe("File size exceeds the 50MB limit");
     }
 
     [Fact]
@@ -65,7 +65,7 @@ public class UploadControllerTests
 
         // Assert
         var badRequestResult = result.ShouldBeOfType<BadRequestObjectResult>();
-        badRequestResult.Value.ShouldBe("Invalid image format. Allowed formats: JPEG, PNG, WEBP, GIF");
+        badRequestResult.Value.ShouldBe("Invalid media format. Allowed formats: JPEG, PNG, WEBP, GIF, MP4, WEBM, MOV");
     }
 
     [Fact]

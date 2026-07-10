@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using Portfolio.Api.Blog.Controllers;
+using Portfolio.Application.Blog.Requests;
 using Portfolio.Application.Blog.Responses;
 using Portfolio.Application.Blog.Services;
 using Shouldly;
@@ -51,5 +52,19 @@ public class PostsControllerTests
         var result = await _controller.GetAsync(id);
 
         result.Result.ShouldBeOfType<NotFoundResult>();
+    }
+
+    [Fact]
+    public async Task GenerateMetadataAsync_ReturnsOkWithResponse()
+    {
+        var request = new GenerateMetadataRequest { Title = "Title", Content = "Content" };
+        var response = new GenerateMetadataResponse { Slug = "title", Summary = "Summary" };
+        
+        _serviceMock.GenerateMetadataAsync(request).Returns(response);
+
+        var result = await _controller.GenerateMetadataAsync(request);
+
+        var okResult = result.Result.ShouldBeOfType<OkObjectResult>();
+        okResult.Value.ShouldBe(response);
     }
 }

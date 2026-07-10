@@ -1,1 +1,3 @@
 - Always use pnpm commands instead of npx or npm if pnpm is installed in the repository
+- All generated artifacts (plans, json, scripts, media, etc.) must be saved inside the `artifacts/` folder in the root of the repository, within their respective subfolders (`plans/`, `json/`, `scripts/`, `media/`). Furthermore, artifacts must be grouped in a specific subfolder for the current branch or feature (e.g., `artifacts/plans/91-cms-for-blog/` if working on issue #91).
+- Any generated `.md` file must include the timestamp of when it was generated.

@@ -106,6 +106,15 @@ public class AnalyticsRepository(PortfolioDbContext context) : IAnalyticsReposit
         return session;
     }
 
+    public Task<Dictionary<string, int>> GetPageViewsCountByPathAsync(IEnumerable<string> paths)
+    {
+        return context.PageViewLogs
+            .Where(pv => pv.PagePath != null && paths.Contains(pv.PagePath))
+            .GroupBy(pv => pv.PagePath)
+            .Select(g => new { Path = g.Key!, Count = g.Count() })
+            .ToDictionaryAsync(k => k.Path, v => v.Count);
+    }
+
     public Task SaveChangesAsync()
     {
         return context.SaveChangesAsync();

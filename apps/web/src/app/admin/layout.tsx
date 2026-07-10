@@ -7,7 +7,8 @@ import {
   UserSquare, 
   BarChart3, 
   FileClock,
-  Tags
+  Tags,
+  FileText
 } from "lucide-react";
 
 export default function AdminLayout({
@@ -21,6 +22,7 @@ export default function AdminLayout({
     { href: "/admin/dashboard", label: "dashboard", Icon: LayoutDashboard },
     { href: "/admin/resume", label: "resume-profile", Icon: UserSquare },
     { href: "/admin/resume/skills", label: "skills-library", Icon: Tags },
+    { href: "/admin/blog", label: "blog-posts", Icon: FileText },
     { href: "/admin/analytics", label: "telemetry", Icon: BarChart3 },
     { href: "/admin/audit-logs", label: "audit-logs", Icon: FileClock },
   ];
