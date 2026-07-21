@@ -1,7 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Portfolio.Application.Resume.Contracts.Requests;
+using Portfolio.Application.Resume.Contracts.Responses;
 using Portfolio.Application.Resume.Services;
-using Portfolio.Domain.Resume;
 
 namespace Portfolio.Api.Resume.Controllers;
 
@@ -11,32 +12,16 @@ namespace Portfolio.Api.Resume.Controllers;
 public class SkillsController(IResumeService service) : ControllerBase
 {
     [HttpPost("categories")]
-    public async Task<ActionResult<SkillCategory>> CreateCategoryAsync([FromBody] CreateSkillCategoryDto request)
+    public async Task<ActionResult<SkillCategoryResponse>> CreateCategoryAsync([FromBody] CreateSkillCategoryRequest request)
     {
-        var category = new SkillCategory
-        {
-            Id = Guid.CreateVersion7(),
-            CategoryName = request.CategoryName,
-            IconName = request.IconName,
-            DisplayOrder = request.DisplayOrder
-        };
-
-        var created = await service.CreateSkillCategoryAsync(category);
+        var created = await service.CreateSkillCategoryAsync(request);
         return Ok(created);
     }
 
     [HttpPut("categories/{id}")]
-    public async Task<IActionResult> UpdateCategoryAsync(Guid id, [FromBody] UpdateSkillCategoryDto request)
+    public async Task<IActionResult> UpdateCategoryAsync(Guid id, [FromBody] UpdateSkillCategoryRequest request)
     {
-        var category = new SkillCategory
-        {
-            Id = id,
-            CategoryName = request.CategoryName,
-            IconName = request.IconName,
-            DisplayOrder = request.DisplayOrder
-        };
-
-        await service.UpdateSkillCategoryAsync(category);
+        await service.UpdateSkillCategoryAsync(id, request);
         return NoContent();
     }
 
@@ -48,32 +33,16 @@ public class SkillsController(IResumeService service) : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<Skill>> CreateSkillAsync([FromBody] CreateSkillDto request)
+    public async Task<ActionResult<SkillResponse>> CreateSkillAsync([FromBody] CreateSkillRequest request)
     {
-        var skill = new Skill
-        {
-            Id = Guid.CreateVersion7(),
-            CategoryId = request.CategoryId,
-            SkillName = request.SkillName,
-            DisplayOrder = request.DisplayOrder
-        };
-
-        var created = await service.CreateSkillAsync(skill);
+        var created = await service.CreateSkillAsync(request);
         return Ok(created);
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateSkillAsync(Guid id, [FromBody] UpdateSkillDto request)
+    public async Task<IActionResult> UpdateSkillAsync(Guid id, [FromBody] UpdateSkillRequest request)
     {
-        var skill = new Skill
-        {
-            Id = id,
-            CategoryId = request.CategoryId,
-            SkillName = request.SkillName,
-            DisplayOrder = request.DisplayOrder
-        };
-
-        await service.UpdateSkillAsync(skill);
+        await service.UpdateSkillAsync(id, request);
         return NoContent();
     }
 
@@ -83,32 +52,4 @@ public class SkillsController(IResumeService service) : ControllerBase
         await service.DeleteSkillAsync(id);
         return NoContent();
     }
-}
-
-public class CreateSkillCategoryDto
-{
-    public string CategoryName { get; set; } = string.Empty;
-    public string? IconName { get; set; }
-    public int DisplayOrder { get; set; }
-}
-
-public class UpdateSkillCategoryDto
-{
-    public string CategoryName { get; set; } = string.Empty;
-    public string? IconName { get; set; }
-    public int DisplayOrder { get; set; }
-}
-
-public class CreateSkillDto
-{
-    public Guid CategoryId { get; set; }
-    public string SkillName { get; set; } = string.Empty;
-    public int DisplayOrder { get; set; }
-}
-
-public class UpdateSkillDto
-{
-    public Guid CategoryId { get; set; }
-    public string SkillName { get; set; } = string.Empty;
-    public int DisplayOrder { get; set; }
 }

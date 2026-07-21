@@ -5,7 +5,7 @@ using System.Linq;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
-using Portfolio.Domain.Resume;
+using Portfolio.Application.Resume.Contracts.Responses;
 
 namespace Portfolio.Application.Resume.Services;
 
@@ -16,7 +16,7 @@ public class ResumePdfGenerator : IResumePdfGenerator
         QuestPDF.Settings.License = LicenseType.Community;
     }
 
-    public byte[] GeneratePdf(ResumeProfile profile, List<SkillCategory> skillCategories)
+    public byte[] GeneratePdf(ResumeProfileResponse profile, List<SkillCategoryResponse> skillCategories)
     {
         return Document.Create(container =>
         {
@@ -99,34 +99,33 @@ public class ResumePdfGenerator : IResumePdfGenerator
                         });
                     }
 
-                    // 4. Skills
+                    // 4. Skills & Technologies
                     if (skillCategories != null && skillCategories.Any())
                     {
                         column.Item().Column(skillsCol =>
                         {
                             skillsCol.Spacing(4);
-                            skillsCol.Item().Text("AREAS OF EXPERTISE & SKILLS").Bold().FontSize(11).FontColor(Colors.Black);
+                            skillsCol.Item().Text("SKILLS & TECHNOLOGIES").Bold().FontSize(11).FontColor(Colors.Black);
 
-                            foreach (var cat in skillCategories)
+                            foreach (var cat in skillCategories.OrderBy(c => c.DisplayOrder))
                             {
-                                var skills = cat.Skills.OrderBy(s => s.DisplayOrder).Select(s => s.SkillName);
-                                if (skills.Any())
+                                if (cat.Skills != null && cat.Skills.Any())
                                 {
+                                    var skillNames = string.Join(", ", cat.Skills.OrderBy(s => s.DisplayOrder).Select(s => s.SkillName));
                                     skillsCol.Item().Text(text =>
                                     {
-                                        text.DefaultTextStyle(x => x.LineHeight(1.15f));
                                         text.Span($"{cat.CategoryName}: ").Bold();
-                                        text.Span(string.Join(", ", skills));
+                                        text.Span(skillNames);
                                     });
                                 }
                             }
                         });
                     }
 
-                    // 5. Professional Experience
+                    // 5. Work Experience
                     var activeExperiences = profile.WorkExperiences
-                        .Where(we => !we.IsPrevious)
-                        .OrderBy(we => we.DisplayOrder)
+                        .Where(w => !w.IsPrevious)
+                        .OrderBy(w => w.DisplayOrder)
                         .ToList();
 
                     if (activeExperiences.Any())
@@ -140,43 +139,38 @@ public class ResumePdfGenerator : IResumePdfGenerator
                             {
                                 expCol.Item().Column(jobCol =>
                                 {
-                                    jobCol.Spacing(3);
-                                    
-                                    // Job Title Line (Role, Company, Location on Left, Period on Right)
+                                    jobCol.Spacing(2);
+
                                     jobCol.Item().Row(row =>
                                     {
                                         row.RelativeItem().Text(text =>
                                         {
-                                            text.Span($"{exp.Role}").Bold().FontColor(Colors.Black);
-                                            text.Span(" | ").FontColor(Colors.Grey.Darken1);
-                                            text.Span($"{exp.Company}").SemiBold().FontColor(Colors.Grey.Darken3);
+                                            text.Span(exp.Role).Bold();
+                                            text.Span($" | {exp.Company}").SemiBold();
                                             if (!string.IsNullOrEmpty(exp.Location))
                                             {
-                                                text.Span($" — {exp.Location}").Italic().FontColor(Colors.Grey.Darken2);
+                                                text.Span($" ({exp.Location})").Italic().FontColor(Colors.Grey.Darken1);
                                             }
                                         });
-                                        row.ConstantItem(120).AlignRight().Text(exp.Period).SemiBold().FontColor(Colors.Grey.Darken3);
+                                        row.ConstantItem(150).AlignRight().Text(exp.Period).FontSize(9).FontColor(Colors.Grey.Darken2);
                                     });
 
-                                    // Bullet Points
-                                    var sortedHighlights = exp.Highlights.OrderBy(h => h.DisplayOrder).ToList();
-                                    foreach (var hl in sortedHighlights)
+                                    if (exp.Highlights != null && exp.Highlights.Any())
                                     {
-                                        jobCol.Item().Row(bulletRow =>
+                                        foreach (var highlight in exp.Highlights.OrderBy(h => h.DisplayOrder))
                                         {
-                                            bulletRow.ConstantItem(12).AlignLeft().Text("•").FontSize(10);
-                                            bulletRow.RelativeItem().Text(hl.ResultText).LineHeight(1.2f).FontSize(9.5f);
-                                        });
+                                            jobCol.Item().PaddingLeft(8).Text($"• {highlight.ResultText}").LineHeight(1.15f);
+                                        }
                                     }
                                 });
                             }
                         });
                     }
 
-                    // 6. Previous Experience
+                    // 6. Additional / Previous Experience
                     var prevExperiences = profile.WorkExperiences
-                        .Where(we => we.IsPrevious)
-                        .OrderBy(we => we.DisplayOrder)
+                        .Where(w => w.IsPrevious)
+                        .OrderBy(w => w.DisplayOrder)
                         .ToList();
 
                     if (prevExperiences.Any())
@@ -184,7 +178,7 @@ public class ResumePdfGenerator : IResumePdfGenerator
                         column.Item().Column(prevCol =>
                         {
                             prevCol.Spacing(6);
-                            prevCol.Item().Text("PREVIOUS EXPERIENCE").Bold().FontSize(11).FontColor(Colors.Black);
+                            prevCol.Item().Text("ADDITIONAL EXPERIENCE").Bold().FontSize(11).FontColor(Colors.Black);
 
                             foreach (var exp in prevExperiences)
                             {
@@ -192,42 +186,27 @@ public class ResumePdfGenerator : IResumePdfGenerator
                                 {
                                     row.RelativeItem().Text(text =>
                                     {
-                                        text.Span($"{exp.Role}").Bold();
-                                        text.Span(" | ").FontColor(Colors.Grey.Darken1);
-                                        text.Span($"{exp.Company}").FontColor(Colors.Grey.Darken3);
-                                        if (!string.IsNullOrEmpty(exp.Location))
-                                        {
-                                            text.Span($" ({exp.Location})").FontColor(Colors.Grey.Darken2);
-                                        }
+                                        text.Span(exp.Role).Bold();
+                                        text.Span($" | {exp.Company}");
                                     });
-                                    row.ConstantItem(120).AlignRight().Text(exp.Period).FontColor(Colors.Grey.Darken3);
+                                    row.ConstantItem(150).AlignRight().Text(exp.Period).FontSize(9).FontColor(Colors.Grey.Darken2);
                                 });
                             }
                         });
                     }
                 });
-
-                // Footer with page numbering
-                page.Footer().AlignCenter().Text(x =>
-                {
-                    x.Span("Page ");
-                    x.CurrentPageNumber();
-                    x.Span(" of ");
-                    x.TotalPages();
-                });
             });
         }).GeneratePdf();
     }
 
-    private static string FormatContactUrl(string url, string type)
+    private static string FormatContactUrl(string rawUrl, string type)
     {
-        if (string.IsNullOrWhiteSpace(url)) return url;
+        if (string.IsNullOrWhiteSpace(rawUrl)) return string.Empty;
 
-        return type.ToLowerInvariant() switch
-        {
-            "email" => url.Replace("mailto:", ""),
-            "linkedin" or "github" or "website" => url.Replace("https://", "").Replace("http://", "").Replace("www.", "").TrimEnd('/'),
-            _ => url
-        };
+        var cleaned = rawUrl.Trim();
+        cleaned = cleaned.Replace("https://", "").Replace("http://", "").Replace("mailto:", "").Replace("tel:", "");
+        if (cleaned.EndsWith("/")) cleaned = cleaned.TrimEnd('/');
+
+        return cleaned;
     }
 }

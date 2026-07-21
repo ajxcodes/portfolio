@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using Portfolio.Application.Resume.Contracts.Requests;
+using Portfolio.Application.Resume.Contracts.Responses;
 using Portfolio.Application.Resume.Services;
 using Portfolio.Application.Storage.Services;
-using Portfolio.Domain.Resume;
 
 namespace Portfolio.Api.Resume.Controllers;
 
@@ -16,7 +16,7 @@ public class ResumeController(
 {
     [HttpGet("active")]
     [AllowAnonymous]
-    public async Task<ActionResult<ResumeProfile>> GetActiveAsync()
+    public async Task<ActionResult<ResumeProfileResponse>> GetActiveAsync()
     {
         var activeProfile = await service.GetActiveProfileAsync();
         if (activeProfile == null)
@@ -65,7 +65,7 @@ public class ResumeController(
 
     [HttpGet("skills")]
     [AllowAnonymous]
-    public async Task<ActionResult<IEnumerable<SkillCategory>>> GetSkillsAsync()
+    public async Task<ActionResult<IEnumerable<SkillCategoryResponse>>> GetSkillsAsync()
     {
         var skills = await service.ListSkillsAsync();
         return Ok(skills);
@@ -73,7 +73,7 @@ public class ResumeController(
 
     [HttpGet]
     [Authorize]
-    public async Task<ActionResult<IEnumerable<ResumeProfile>>> GetAllAsync()
+    public async Task<ActionResult<IEnumerable<ResumeProfileResponse>>> GetAllAsync()
     {
         var profiles = await service.ListProfilesAsync();
         return Ok(profiles);
@@ -81,7 +81,7 @@ public class ResumeController(
 
     [HttpGet("{id:guid}", Name = "GetResumeById")]
     [Authorize]
-    public async Task<ActionResult<ResumeProfile>> GetById(Guid id)
+    public async Task<ActionResult<ResumeProfileResponse>> GetById(Guid id)
     {
         var profile = await service.GetProfileByIdAsync(id);
         if (profile == null)
@@ -112,7 +112,7 @@ public class ResumeController(
 
     [HttpPost]
     [Authorize]
-    public async Task<ActionResult<ResumeProfile>> CreateAsync([FromBody] CreateResumeRequest request)
+    public async Task<ActionResult<ResumeProfileResponse>> CreateAsync([FromBody] CreateResumeRequest request)
     {
         var createdProfile = await service.CreateProfileWithDetailsAsync(request);
         return CreatedAtRoute("GetResumeById", new { id = createdProfile.Id }, createdProfile);
@@ -152,4 +152,3 @@ public class ResumeController(
         return NoContent();
     }
 }
-
