@@ -1,8 +1,8 @@
-using Portfolio.Domain.Resume;
+using Portfolio.Application.Resume.Contracts.Responses;
 
 namespace Portfolio.Application.Resume.Services;
 
 public interface IResumePdfGenerator
 {
-    byte[] GeneratePdf(ResumeProfile profile, List<SkillCategory> skillCategories);
+    byte[] GeneratePdf(ResumeProfileResponse profile, List<SkillCategoryResponse> skillCategories);
 }

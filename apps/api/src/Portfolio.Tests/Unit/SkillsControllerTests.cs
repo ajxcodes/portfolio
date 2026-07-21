@@ -1,8 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using Portfolio.Api.Resume.Controllers;
+using Portfolio.Application.Resume.Contracts.Requests;
+using Portfolio.Application.Resume.Contracts.Responses;
 using Portfolio.Application.Resume.Services;
-using Portfolio.Domain.Resume;
 using Shouldly;
 using Xunit;
 
@@ -21,26 +22,27 @@ public class SkillsControllerTests
     [Fact]
     public async Task CreateCategoryAsync_ReturnsOk_WithCategory()
     {
-        var request = new CreateSkillCategoryDto { CategoryName = "Cat", DisplayOrder = 1 };
-        _serviceMock.CreateSkillCategoryAsync(Arg.Any<SkillCategory>()).Returns(callInfo => callInfo.Arg<SkillCategory>());
+        var request = new CreateSkillCategoryRequest { CategoryName = "Cat", DisplayOrder = 1 };
+        var expectedResponse = new SkillCategoryResponse { Id = Guid.NewGuid(), CategoryName = "Cat", DisplayOrder = 1 };
+        _serviceMock.CreateSkillCategoryAsync(request).Returns(expectedResponse);
 
         var result = await _controller.CreateCategoryAsync(request);
 
         var okResult = result.Result.ShouldBeOfType<OkObjectResult>();
-        var category = okResult.Value.ShouldBeOfType<SkillCategory>();
+        var category = okResult.Value.ShouldBeOfType<SkillCategoryResponse>();
         category.CategoryName.ShouldBe("Cat");
     }
 
     [Fact]
     public async Task UpdateCategoryAsync_ReturnsNoContent()
     {
-        var request = new UpdateSkillCategoryDto { CategoryName = "Cat2" };
+        var request = new UpdateSkillCategoryRequest { CategoryName = "Cat2" };
         var id = Guid.NewGuid();
 
         var result = await _controller.UpdateCategoryAsync(id, request);
 
         result.ShouldBeOfType<NoContentResult>();
-        await _serviceMock.Received(1).UpdateSkillCategoryAsync(Arg.Is<SkillCategory>(c => c.Id == id && c.CategoryName == "Cat2"));
+        await _serviceMock.Received(1).UpdateSkillCategoryAsync(id, request);
     }
 
     [Fact]
@@ -57,26 +59,27 @@ public class SkillsControllerTests
     [Fact]
     public async Task CreateSkillAsync_ReturnsOk_WithSkill()
     {
-        var request = new CreateSkillDto { SkillName = "Skill", CategoryId = Guid.NewGuid() };
-        _serviceMock.CreateSkillAsync(Arg.Any<Skill>()).Returns(callInfo => callInfo.Arg<Skill>());
+        var request = new CreateSkillRequest { SkillName = "Skill", CategoryId = Guid.NewGuid() };
+        var expectedResponse = new SkillResponse { Id = Guid.NewGuid(), SkillName = "Skill", CategoryId = request.CategoryId };
+        _serviceMock.CreateSkillAsync(request).Returns(expectedResponse);
 
         var result = await _controller.CreateSkillAsync(request);
 
         var okResult = result.Result.ShouldBeOfType<OkObjectResult>();
-        var skill = okResult.Value.ShouldBeOfType<Skill>();
+        var skill = okResult.Value.ShouldBeOfType<SkillResponse>();
         skill.SkillName.ShouldBe("Skill");
     }
 
     [Fact]
     public async Task UpdateSkillAsync_ReturnsNoContent()
     {
-        var request = new UpdateSkillDto { SkillName = "Skill2", CategoryId = Guid.NewGuid() };
+        var request = new UpdateSkillRequest { SkillName = "Skill2", CategoryId = Guid.NewGuid() };
         var id = Guid.NewGuid();
 
         var result = await _controller.UpdateSkillAsync(id, request);
 
         result.ShouldBeOfType<NoContentResult>();
-        await _serviceMock.Received(1).UpdateSkillAsync(Arg.Is<Skill>(s => s.Id == id && s.SkillName == "Skill2"));
+        await _serviceMock.Received(1).UpdateSkillAsync(id, request);
     }
 
     [Fact]

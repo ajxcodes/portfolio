@@ -1,98 +1,58 @@
+using Portfolio.Application.Resume.Contracts.Requests;
+using Portfolio.Application.Resume.Contracts.Responses;
 using Portfolio.Application.Resume.Repositories;
 using Portfolio.Domain.Resume;
 
 namespace Portfolio.Application.Resume.Services;
 
-public class ResumeLinkDto
-{
-    public string LinkTypeName { get; set; } = string.Empty;
-    public string LinkTypeKey { get; set; } = string.Empty;
-    public string Url { get; set; } = string.Empty;
-    public bool DisplayInHeader { get; set; } = true;
-}
-
-public class WorkExperienceDto
-{
-    public string Company { get; set; } = string.Empty;
-    public string Role { get; set; } = string.Empty;
-    public string Period { get; set; } = string.Empty;
-    public string? Location { get; set; }
-    public bool IsPrevious { get; set; }
-    public int DisplayOrder { get; set; }
-    public List<string> Highlights { get; set; } = new();
-    public List<Guid>? SkillIds { get; set; }
-}
-
-public class CreateResumeRequest
-{
-    public string Name { get; init; } = string.Empty;
-    public string Title { get; init; } = string.Empty;
-    public string Intro { get; init; } = string.Empty;
-    public string? PhotoUrlLight { get; init; }
-    public string? PhotoUrlDark { get; init; }
-    public List<ResumeLinkDto>? Links { get; set; }
-    public List<WorkExperienceDto>? WorkExperiences { get; set; }
-}
-
-public class UpdateResumeRequest
-{
-    public string Name { get; set; } = string.Empty;
-    public string Title { get; set; } = string.Empty;
-    public string Intro { get; set; } = string.Empty;
-    public string? PhotoUrlLight { get; set; }
-    public string? PhotoUrlDark { get; set; }
-    public List<ResumeLinkDto>? Links { get; set; }
-    public List<WorkExperienceDto>? WorkExperiences { get; set; }
-}
-
 public interface IResumeService
 {
-    Task<ResumeProfile?> GetActiveProfileAsync();
-    Task<List<ResumeProfile>> ListProfilesAsync();
-    Task<ResumeProfile?> GetProfileByIdAsync(Guid id);
-    Task<ResumeProfile> CreateProfileAsync(ResumeProfile profile);
-    Task UpdateProfileAsync(ResumeProfile profile);
-    Task<ResumeProfile> CreateProfileWithDetailsAsync(CreateResumeRequest request);
+    Task<ResumeProfileResponse?> GetActiveProfileAsync();
+    Task<List<ResumeProfileResponse>> ListProfilesAsync();
+    Task<ResumeProfileResponse?> GetProfileByIdAsync(Guid id);
+    Task<ResumeProfileResponse> CreateProfileAsync(CreateResumeRequest request);
+    Task UpdateProfileAsync(Guid id, UpdateResumeRequest request);
+    Task<ResumeProfileResponse> CreateProfileWithDetailsAsync(CreateResumeRequest request);
     Task UpdateProfileWithDetailsAsync(Guid id, UpdateResumeRequest request);
     Task DeleteProfileAsync(Guid id);
     Task ActivateProfileAsync(Guid id);
-    Task<List<SkillCategory>> ListSkillsAsync();
-    Task<SkillCategory> CreateSkillCategoryAsync(SkillCategory category);
-    Task UpdateSkillCategoryAsync(SkillCategory category);
+    Task<List<SkillCategoryResponse>> ListSkillsAsync();
+    Task<SkillCategoryResponse> CreateSkillCategoryAsync(CreateSkillCategoryRequest request);
+    Task UpdateSkillCategoryAsync(Guid id, UpdateSkillCategoryRequest request);
     Task DeleteSkillCategoryAsync(Guid id);
-    Task<Skill> CreateSkillAsync(Skill skill);
-    Task UpdateSkillAsync(Skill skill);
+    Task<SkillResponse> CreateSkillAsync(CreateSkillRequest request);
+    Task UpdateSkillAsync(Guid id, UpdateSkillRequest request);
     Task DeleteSkillAsync(Guid id);
 }
 
 public class ResumeService(IResumeRepository repository) : IResumeService
 {
-    public Task<ResumeProfile?> GetActiveProfileAsync()
+    public async Task<ResumeProfileResponse?> GetActiveProfileAsync()
     {
-        return repository.GetActiveProfileAsync();
+        var profile = await repository.GetActiveProfileAsync();
+        return profile == null ? null : MapToResponse(profile);
     }
 
-    public Task<List<ResumeProfile>> ListProfilesAsync()
+    public async Task<List<ResumeProfileResponse>> ListProfilesAsync()
     {
-        return repository.ListProfilesAsync();
+        var profiles = await repository.ListProfilesAsync();
+        return profiles.Select(MapToResponse).ToList();
     }
 
-    public Task<ResumeProfile?> GetProfileByIdAsync(Guid id)
+    public async Task<ResumeProfileResponse?> GetProfileByIdAsync(Guid id)
     {
-        return repository.GetProfileByIdAsync(id);
+        var profile = await repository.GetProfileByIdAsync(id);
+        return profile == null ? null : MapToResponse(profile);
     }
 
-    public async Task<ResumeProfile> CreateProfileAsync(ResumeProfile profile)
+    public Task<ResumeProfileResponse> CreateProfileAsync(CreateResumeRequest request)
     {
-        await repository.AddProfileAsync(profile);
-        await repository.SaveChangesAsync();
-        return profile;
+        return CreateProfileWithDetailsAsync(request);
     }
 
-    public async Task UpdateProfileAsync(ResumeProfile profile)
+    public Task UpdateProfileAsync(Guid id, UpdateResumeRequest request)
     {
-        await repository.UpdateProfileAsync(profile);
-        await repository.SaveChangesAsync();
+        return UpdateProfileWithDetailsAsync(id, request);
     }
 
     public async Task DeleteProfileAsync(Guid id)
@@ -101,7 +61,7 @@ public class ResumeService(IResumeRepository repository) : IResumeService
         await repository.SaveChangesAsync();
     }
 
-    public async Task<ResumeProfile> CreateProfileWithDetailsAsync(CreateResumeRequest request)
+    public async Task<ResumeProfileResponse> CreateProfileWithDetailsAsync(CreateResumeRequest request)
     {
         var profile = new ResumeProfile
         {
@@ -194,7 +154,8 @@ public class ResumeService(IResumeRepository repository) : IResumeService
         }
 
         await repository.SaveChangesAsync();
-        return profile;
+        var savedProfile = await repository.GetProfileByIdAsync(profile.Id);
+        return MapToResponse(savedProfile ?? profile);
     }
 
     public async Task UpdateProfileWithDetailsAsync(Guid id, UpdateResumeRequest request)
@@ -325,20 +286,35 @@ public class ResumeService(IResumeRepository repository) : IResumeService
         await repository.SaveChangesAsync();
     }
 
-    public Task<List<SkillCategory>> ListSkillsAsync()
+    public async Task<List<SkillCategoryResponse>> ListSkillsAsync()
     {
-        return repository.ListSkillsAsync();
+        var categories = await repository.ListSkillsAsync();
+        return categories.Select(MapSkillCategoryToResponse).ToList();
     }
 
-    public async Task<SkillCategory> CreateSkillCategoryAsync(SkillCategory category)
+    public async Task<SkillCategoryResponse> CreateSkillCategoryAsync(CreateSkillCategoryRequest request)
     {
+        var category = new SkillCategory
+        {
+            Id = Guid.CreateVersion7(),
+            CategoryName = request.CategoryName,
+            IconName = request.IconName,
+            DisplayOrder = request.DisplayOrder
+        };
         await repository.AddSkillCategoryAsync(category);
         await repository.SaveChangesAsync();
-        return category;
+        return MapSkillCategoryToResponse(category);
     }
 
-    public async Task UpdateSkillCategoryAsync(SkillCategory category)
+    public async Task UpdateSkillCategoryAsync(Guid id, UpdateSkillCategoryRequest request)
     {
+        var category = new SkillCategory
+        {
+            Id = id,
+            CategoryName = request.CategoryName,
+            IconName = request.IconName,
+            DisplayOrder = request.DisplayOrder
+        };
         await repository.UpdateSkillCategoryAsync(category);
         await repository.SaveChangesAsync();
     }
@@ -349,15 +325,29 @@ public class ResumeService(IResumeRepository repository) : IResumeService
         await repository.SaveChangesAsync();
     }
 
-    public async Task<Skill> CreateSkillAsync(Skill skill)
+    public async Task<SkillResponse> CreateSkillAsync(CreateSkillRequest request)
     {
+        var skill = new Skill
+        {
+            Id = Guid.CreateVersion7(),
+            CategoryId = request.CategoryId,
+            SkillName = request.SkillName,
+            DisplayOrder = request.DisplayOrder
+        };
         await repository.AddSkillAsync(skill);
         await repository.SaveChangesAsync();
-        return skill;
+        return MapSkillToResponse(skill);
     }
 
-    public async Task UpdateSkillAsync(Skill skill)
+    public async Task UpdateSkillAsync(Guid id, UpdateSkillRequest request)
     {
+        var skill = new Skill
+        {
+            Id = id,
+            CategoryId = request.CategoryId,
+            SkillName = request.SkillName,
+            DisplayOrder = request.DisplayOrder
+        };
         await repository.UpdateSkillAsync(skill);
         await repository.SaveChangesAsync();
     }
@@ -366,5 +356,87 @@ public class ResumeService(IResumeRepository repository) : IResumeService
     {
         await repository.DeleteSkillAsync(id);
         await repository.SaveChangesAsync();
+    }
+
+    public static ResumeProfileResponse MapToResponse(ResumeProfile profile)
+    {
+        return new ResumeProfileResponse
+        {
+            Id = profile.Id,
+            Name = profile.Name,
+            Title = profile.Title,
+            Intro = profile.Intro,
+            PhotoUrlLight = profile.PhotoUrlLight,
+            PhotoUrlDark = profile.PhotoUrlDark,
+            IsActive = profile.IsActive,
+            UpdatedAt = profile.UpdatedAt,
+            Links = profile.Links?.Select(l => new ResumeProfileLinkResponse
+            {
+                Id = l.Id,
+                ProfileId = l.ProfileId,
+                LinkTypeId = l.LinkTypeId,
+                Url = l.Url,
+                DisplayInHeader = l.DisplayInHeader,
+                LinkType = l.LinkType == null ? null : new ResumeLinkTypeResponse
+                {
+                    Id = l.LinkType.Id,
+                    Name = l.LinkType.Name,
+                    KeyIdentifier = l.LinkType.KeyIdentifier
+                }
+            }).ToList() ?? new(),
+            WorkExperiences = profile.WorkExperiences?.OrderBy(we => we.DisplayOrder).Select(we => new WorkExperienceResponse
+            {
+                Id = we.Id,
+                ProfileId = we.ProfileId,
+                Company = we.Company,
+                Role = we.Role,
+                Period = we.Period,
+                Location = we.Location,
+                IsPrevious = we.IsPrevious,
+                DisplayOrder = we.DisplayOrder,
+                Highlights = we.Highlights?.OrderBy(h => h.DisplayOrder).Select(h => new ExperienceHighlightResponse
+                {
+                    Id = h.Id,
+                    ExperienceId = h.ExperienceId,
+                    ResultText = h.ResultText,
+                    DisplayOrder = h.DisplayOrder
+                }).ToList() ?? new(),
+                WorkExperienceSkills = we.WorkExperienceSkills?.Select(wes => new WorkExperienceSkillResponse
+                {
+                    WorkExperienceId = wes.WorkExperienceId,
+                    SkillId = wes.SkillId,
+                    Skill = wes.Skill == null ? null : new SkillResponse
+                    {
+                        Id = wes.Skill.Id,
+                        CategoryId = wes.Skill.CategoryId,
+                        SkillName = wes.Skill.SkillName,
+                        DisplayOrder = wes.Skill.DisplayOrder
+                    }
+                }).ToList() ?? new()
+            }).ToList() ?? new()
+        };
+    }
+
+    public static SkillCategoryResponse MapSkillCategoryToResponse(SkillCategory category)
+    {
+        return new SkillCategoryResponse
+        {
+            Id = category.Id,
+            CategoryName = category.CategoryName,
+            IconName = category.IconName,
+            DisplayOrder = category.DisplayOrder,
+            Skills = category.Skills?.Select(MapSkillToResponse).ToList() ?? new()
+        };
+    }
+
+    public static SkillResponse MapSkillToResponse(Skill skill)
+    {
+        return new SkillResponse
+        {
+            Id = skill.Id,
+            CategoryId = skill.CategoryId,
+            SkillName = skill.SkillName,
+            DisplayOrder = skill.DisplayOrder
+        };
     }
 }

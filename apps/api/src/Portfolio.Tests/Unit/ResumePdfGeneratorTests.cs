@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
+using Portfolio.Application.Resume.Contracts.Responses;
 using Portfolio.Application.Resume.Services;
-using Portfolio.Domain.Resume;
 using Shouldly;
 using Xunit;
 
@@ -15,35 +15,35 @@ public class ResumePdfGeneratorTests
     public void GeneratePdf_ReturnsNonEmptyByteArray_WhenProfileIsValid()
     {
         // Arrange
-        var profile = new ResumeProfile
+        var profile = new ResumeProfileResponse
         {
             Id = Guid.NewGuid(),
             Name = "John Doe",
             Title = "Senior Software Engineer",
             Intro = "An experienced software engineer with a track record of success.",
             IsActive = true,
-            Links = new List<ResumeProfileLink>
+            Links = new List<ResumeProfileLinkResponse>
             {
                 new() 
                 { 
                     Id = Guid.NewGuid(),
                     Url = "mailto:john@example.com",
-                    LinkType = new ResumeProfileLinkType { KeyIdentifier = "email", Name = "Email" }
+                    LinkType = new ResumeLinkTypeResponse { KeyIdentifier = "email", Name = "Email" }
                 },
                 new() 
                 { 
                     Id = Guid.NewGuid(),
                     Url = "https://github.com/johndoe",
-                    LinkType = new ResumeProfileLinkType { KeyIdentifier = "github", Name = "GitHub" }
+                    LinkType = new ResumeLinkTypeResponse { KeyIdentifier = "github", Name = "GitHub" }
                 },
                 new()
                 {
                     Id = Guid.NewGuid(),
                     Url = "https://linkedin.com/in/johndoe",
-                    LinkType = new ResumeProfileLinkType { KeyIdentifier = "linkedin", Name = "LinkedIn" }
+                    LinkType = new ResumeLinkTypeResponse { KeyIdentifier = "linkedin", Name = "LinkedIn" }
                 }
             },
-            WorkExperiences = new List<WorkExperience>
+            WorkExperiences = new List<WorkExperienceResponse>
             {
                 new()
                 {
@@ -54,7 +54,7 @@ public class ResumePdfGeneratorTests
                     Period = "2020 - Present",
                     IsPrevious = false,
                     DisplayOrder = 1,
-                    Highlights = new List<ExperienceHighlight>
+                    Highlights = new List<ExperienceHighlightResponse>
                     {
                         new() { Id = Guid.NewGuid(), ResultText = "Led a team of developers to build awesome cloud applications.", DisplayOrder = 1 }
                     }
@@ -72,14 +72,14 @@ public class ResumePdfGeneratorTests
             }
         };
 
-        var skillCategories = new List<SkillCategory>
+        var skillCategories = new List<SkillCategoryResponse>
         {
             new()
             {
                 Id = Guid.NewGuid(),
                 CategoryName = "Languages",
                 DisplayOrder = 1,
-                Skills = new List<Skill>
+                Skills = new List<SkillResponse>
                 {
                     new() { Id = Guid.NewGuid(), SkillName = "C#", DisplayOrder = 1 },
                     new() { Id = Guid.NewGuid(), SkillName = "TypeScript", DisplayOrder = 2 }
@@ -99,18 +99,18 @@ public class ResumePdfGeneratorTests
     public void GeneratePdf_HandlesEmptyLinksAndExperiences()
     {
         // Arrange
-        var profile = new ResumeProfile
+        var profile = new ResumeProfileResponse
         {
             Id = Guid.NewGuid(),
             Name = "John Doe Minimal",
             Title = "Freelancer",
             Intro = null!, // Empty Intro
             IsActive = true,
-            Links = new List<ResumeProfileLink>(),
-            WorkExperiences = new List<WorkExperience>()
+            Links = new List<ResumeProfileLinkResponse>(),
+            WorkExperiences = new List<WorkExperienceResponse>()
         };
 
-        var skillCategories = new List<SkillCategory>();
+        var skillCategories = new List<SkillCategoryResponse>();
 
         // Act
         var pdfBytes = _generator.GeneratePdf(profile, skillCategories);
@@ -133,25 +133,25 @@ public class ResumePdfGeneratorTests
     public void GeneratePdf_FormatsContactUrlsCorrectly(string linkType, string? inputUrl)
     {
         // Arrange
-        var profile = new ResumeProfile
+        var profile = new ResumeProfileResponse
         {
             Id = Guid.NewGuid(),
             Name = "Link Test",
             Title = "Tester",
-            Links = new List<ResumeProfileLink>
+            Links = new List<ResumeProfileLinkResponse>
             {
                 new()
                 {
                     Id = Guid.NewGuid(),
                     Url = inputUrl!,
-                    LinkType = new ResumeProfileLinkType { KeyIdentifier = linkType, Name = linkType }
+                    LinkType = new ResumeLinkTypeResponse { KeyIdentifier = linkType, Name = linkType }
                 }
             },
-            WorkExperiences = new List<WorkExperience>()
+            WorkExperiences = new List<WorkExperienceResponse>()
         };
 
         // Act
-        var pdfBytes = _generator.GeneratePdf(profile, new List<SkillCategory>());
+        var pdfBytes = _generator.GeneratePdf(profile, new List<SkillCategoryResponse>());
 
         // Assert
         pdfBytes.ShouldNotBeNull();
@@ -162,17 +162,17 @@ public class ResumePdfGeneratorTests
     public void GeneratePdf_FiltersAndSortsWorkExperiences_Correctly()
     {
         // Arrange
-        var profile = new ResumeProfile
+        var profile = new ResumeProfileResponse
         {
             Id = Guid.NewGuid(),
             Name = "Work Test",
             Title = "Tester",
-            WorkExperiences = new List<WorkExperience>
+            WorkExperiences = new List<WorkExperienceResponse>
             {
-                new() { Role = "Old Job", IsPrevious = true, DisplayOrder = 2, Highlights = new List<ExperienceHighlight>() },
-                new() { Role = "Older Job", IsPrevious = true, DisplayOrder = 1, Highlights = new List<ExperienceHighlight>() },
-                new() { Role = "Current Job", IsPrevious = false, DisplayOrder = 2, Highlights = new List<ExperienceHighlight>() },
-                new() { Role = "Most Recent Job", IsPrevious = false, DisplayOrder = 1, Location = "Remote", Highlights = new List<ExperienceHighlight>
+                new() { Role = "Old Job", IsPrevious = true, DisplayOrder = 2, Highlights = new List<ExperienceHighlightResponse>() },
+                new() { Role = "Older Job", IsPrevious = true, DisplayOrder = 1, Highlights = new List<ExperienceHighlightResponse>() },
+                new() { Role = "Current Job", IsPrevious = false, DisplayOrder = 2, Highlights = new List<ExperienceHighlightResponse>() },
+                new() { Role = "Most Recent Job", IsPrevious = false, DisplayOrder = 1, Location = "Remote", Highlights = new List<ExperienceHighlightResponse>
                 {
                     new() { ResultText = "Did something", DisplayOrder = 2 },
                     new() { ResultText = "Did something better", DisplayOrder = 1 }
@@ -181,7 +181,7 @@ public class ResumePdfGeneratorTests
         };
 
         // Act
-        var pdfBytes = _generator.GeneratePdf(profile, new List<SkillCategory>());
+        var pdfBytes = _generator.GeneratePdf(profile, new List<SkillCategoryResponse>());
 
         // Assert
         pdfBytes.ShouldNotBeNull();
@@ -192,20 +192,20 @@ public class ResumePdfGeneratorTests
     public void GeneratePdf_HandlesEmptySkillsWithinCategory()
     {
         // Arrange
-        var profile = new ResumeProfile { Name = "Skill Test", Title = "Tester", WorkExperiences = new List<WorkExperience>() };
-        var categories = new List<SkillCategory>
+        var profile = new ResumeProfileResponse { Name = "Skill Test", Title = "Tester", WorkExperiences = new List<WorkExperienceResponse>() };
+        var categories = new List<SkillCategoryResponse>
         {
             new() 
             { 
                 CategoryName = "Empty Cat", 
                 DisplayOrder = 1, 
-                Skills = new List<Skill>() 
+                Skills = new List<SkillResponse>() 
             },
             new() 
             { 
                 CategoryName = "Populated Cat", 
                 DisplayOrder = 2, 
-                Skills = new List<Skill> { new() { SkillName = "C#", DisplayOrder = 1 } } 
+                Skills = new List<SkillResponse> { new() { SkillName = "C#", DisplayOrder = 1 } } 
             }
         };
 

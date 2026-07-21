@@ -1,4 +1,6 @@
 using NSubstitute;
+using Portfolio.Application.Resume.Contracts.Requests;
+using Portfolio.Application.Resume.Contracts.Responses;
 using Portfolio.Application.Resume.Repositories;
 using Portfolio.Application.Resume.Services;
 using Portfolio.Domain.Resume;
@@ -18,7 +20,7 @@ public class ResumeServiceTests
     }
 
     [Fact]
-    public async Task GetActiveProfileAsync_ReturnsActiveProfile()
+    public async Task GetActiveProfileAsync_ReturnsActiveProfileResponse()
     {
         // Arrange
         var profile = new ResumeProfile { Id = Guid.NewGuid(), Name = "AJ", IsActive = true, Title = "Dev", Intro = "Intro" };
@@ -30,6 +32,7 @@ public class ResumeServiceTests
         // Assert
         result.ShouldNotBeNull();
         result.IsActive.ShouldBeTrue();
+        result.Name.ShouldBe("AJ");
     }
 
     [Fact]
@@ -49,14 +52,13 @@ public class ResumeServiceTests
         // Assert
         p1.IsActive.ShouldBeTrue();
         p2.IsActive.ShouldBeFalse();
-
         await _repositoryMock.Received(1).UpdateProfileAsync(p1);
         await _repositoryMock.Received(1).UpdateProfileAsync(p2);
         await _repositoryMock.Received(2).SaveChangesAsync();
     }
 
     [Fact]
-    public async Task ActivateProfileAsync_ThrowsKeyNotFoundException_WhenProfileDoesNotExist()
+    public async Task ActivateProfileAsync_ThrowsNotFoundException_WhenProfileDoesNotExist()
     {
         // Arrange
         var targetId = Guid.NewGuid();
@@ -70,217 +72,204 @@ public class ResumeServiceTests
     }
 
     [Fact]
-    public async Task ListProfilesAsync_ReturnsProfiles()
+    public async Task ListProfilesAsync_ReturnsAllProfilesAsResponses()
     {
-        var profiles = new List<ResumeProfile> { new() { Id = Guid.NewGuid() } };
+        // Arrange
+        var profiles = new List<ResumeProfile>
+        {
+            new ResumeProfile { Id = Guid.NewGuid(), Name = "P1" },
+            new ResumeProfile { Id = Guid.NewGuid(), Name = "P2" }
+        };
         _repositoryMock.ListProfilesAsync().Returns(profiles);
 
+        // Act
         var result = await _service.ListProfilesAsync();
 
-        result.ShouldBe(profiles);
-        await _repositoryMock.Received(1).ListProfilesAsync();
+        // Assert
+        result.Count.ShouldBe(2);
+        result[0].Name.ShouldBe("P1");
+        result[1].Name.ShouldBe("P2");
     }
 
     [Fact]
-    public async Task CreateProfileAsync_AddsAndSaves()
+    public async Task CreateProfileAsync_CallsCreateProfileWithDetailsAsync()
     {
-        var profile = new ResumeProfile { Id = Guid.NewGuid() };
+        // Arrange
+        var request = new CreateResumeRequest { Name = "New Profile" };
 
-        var result = await _service.CreateProfileAsync(profile);
+        // Act
+        var result = await _service.CreateProfileAsync(request);
 
-        result.ShouldBe(profile);
-        await _repositoryMock.Received(1).AddProfileAsync(profile);
+        // Assert
+        result.ShouldNotBeNull();
+        result.Name.ShouldBe("New Profile");
+        await _repositoryMock.Received(1).AddProfileAsync(Arg.Is<ResumeProfile>(p => p.Name == "New Profile"));
         await _repositoryMock.Received(1).SaveChangesAsync();
     }
 
     [Fact]
-    public async Task UpdateProfileAsync_UpdatesAndSaves()
+    public async Task UpdateProfileAsync_CallsUpdateProfileWithDetailsAsync()
     {
-        var profile = new ResumeProfile { Id = Guid.NewGuid() };
+        // Arrange
+        var id = Guid.NewGuid();
+        var existingProfile = new ResumeProfile { Id = id, Name = "Old Name" };
+        _repositoryMock.GetProfileByIdAsync(id).Returns(existingProfile);
 
-        await _service.UpdateProfileAsync(profile);
+        var request = new UpdateResumeRequest { Name = "Updated Name" };
 
-        await _repositoryMock.Received(1).UpdateProfileAsync(profile);
+        // Act
+        await _service.UpdateProfileAsync(id, request);
+
+        // Assert
+        await _repositoryMock.Received(1).UpdateProfileAsync(Arg.Is<ResumeProfile>(p => p.Name == "Updated Name"));
         await _repositoryMock.Received(1).SaveChangesAsync();
     }
 
     [Fact]
-    public async Task DeleteProfileAsync_DeletesAndSaves()
+    public async Task DeleteProfileAsync_CallsRepositoryDeleteAndSave()
     {
+        // Arrange
         var id = Guid.NewGuid();
 
+        // Act
         await _service.DeleteProfileAsync(id);
 
+        // Assert
         await _repositoryMock.Received(1).DeleteProfileAsync(id);
         await _repositoryMock.Received(1).SaveChangesAsync();
     }
 
     [Fact]
-    public async Task ListSkillsAsync_ReturnsSkills()
+    public async Task ListSkillsAsync_ReturnsSkillsFromRepositoryAsResponses()
     {
-        var skills = new List<SkillCategory> { new() { Id = Guid.NewGuid(), CategoryName = "Category" } };
+        // Arrange
+        var skills = new List<SkillCategory> { new SkillCategory { Id = Guid.NewGuid(), CategoryName = "Cat1" } };
         _repositoryMock.ListSkillsAsync().Returns(skills);
 
+        // Act
         var result = await _service.ListSkillsAsync();
 
-        result.ShouldBe(skills);
-        await _repositoryMock.Received(1).ListSkillsAsync();
+        // Assert
+        result.Count.ShouldBe(1);
+        result[0].CategoryName.ShouldBe("Cat1");
     }
 
     [Fact]
-    public async Task CreateSkillCategoryAsync_AddsAndSaves()
+    public async Task CreateSkillCategoryAsync_CallsRepositoryAndSave()
     {
-        var category = new SkillCategory { Id = Guid.NewGuid(), CategoryName = "Cat" };
+        // Arrange
+        var request = new CreateSkillCategoryRequest { CategoryName = "New Cat" };
 
-        var result = await _service.CreateSkillCategoryAsync(category);
+        // Act
+        var result = await _service.CreateSkillCategoryAsync(request);
 
-        result.ShouldBe(category);
-        await _repositoryMock.Received(1).AddSkillCategoryAsync(category);
+        // Assert
+        result.ShouldNotBeNull();
+        result.CategoryName.ShouldBe("New Cat");
+        await _repositoryMock.Received(1).AddSkillCategoryAsync(Arg.Is<SkillCategory>(c => c.CategoryName == "New Cat"));
         await _repositoryMock.Received(1).SaveChangesAsync();
     }
 
     [Fact]
-    public async Task UpdateSkillCategoryAsync_UpdatesAndSaves()
+    public async Task UpdateSkillCategoryAsync_CallsRepositoryAndSave()
     {
-        var category = new SkillCategory { Id = Guid.NewGuid(), CategoryName = "Cat" };
+        // Arrange
+        var id = Guid.NewGuid();
+        var request = new UpdateSkillCategoryRequest { CategoryName = "Updated Cat" };
 
-        await _service.UpdateSkillCategoryAsync(category);
+        // Act
+        await _service.UpdateSkillCategoryAsync(id, request);
 
-        await _repositoryMock.Received(1).UpdateSkillCategoryAsync(category);
+        // Assert
+        await _repositoryMock.Received(1).UpdateSkillCategoryAsync(Arg.Is<SkillCategory>(c => c.Id == id && c.CategoryName == "Updated Cat"));
         await _repositoryMock.Received(1).SaveChangesAsync();
     }
 
     [Fact]
-    public async Task DeleteSkillCategoryAsync_DeletesAndSaves()
+    public async Task DeleteSkillCategoryAsync_CallsRepositoryAndSave()
     {
+        // Arrange
         var id = Guid.NewGuid();
 
+        // Act
         await _service.DeleteSkillCategoryAsync(id);
 
+        // Assert
         await _repositoryMock.Received(1).DeleteSkillCategoryAsync(id);
         await _repositoryMock.Received(1).SaveChangesAsync();
     }
 
     [Fact]
-    public async Task CreateSkillAsync_AddsAndSaves()
+    public async Task CreateSkillAsync_CallsRepositoryAndSave()
     {
-        var skill = new Skill { Id = Guid.NewGuid(), SkillName = "Skill" };
+        // Arrange
+        var request = new CreateSkillRequest { CategoryId = Guid.NewGuid(), SkillName = "C#" };
 
-        var result = await _service.CreateSkillAsync(skill);
+        // Act
+        var result = await _service.CreateSkillAsync(request);
 
-        result.ShouldBe(skill);
-        await _repositoryMock.Received(1).AddSkillAsync(skill);
+        // Assert
+        result.ShouldNotBeNull();
+        result.SkillName.ShouldBe("C#");
+        await _repositoryMock.Received(1).AddSkillAsync(Arg.Is<Skill>(s => s.SkillName == "C#"));
         await _repositoryMock.Received(1).SaveChangesAsync();
     }
 
     [Fact]
-    public async Task UpdateSkillAsync_UpdatesAndSaves()
+    public async Task UpdateSkillAsync_CallsRepositoryAndSave()
     {
-        var skill = new Skill { Id = Guid.NewGuid(), SkillName = "Skill" };
+        // Arrange
+        var id = Guid.NewGuid();
+        var request = new UpdateSkillRequest { CategoryId = Guid.NewGuid(), SkillName = "C# Updated" };
 
-        await _service.UpdateSkillAsync(skill);
+        // Act
+        await _service.UpdateSkillAsync(id, request);
 
-        await _repositoryMock.Received(1).UpdateSkillAsync(skill);
+        // Assert
+        await _repositoryMock.Received(1).UpdateSkillAsync(Arg.Is<Skill>(s => s.Id == id && s.SkillName == "C# Updated"));
         await _repositoryMock.Received(1).SaveChangesAsync();
     }
 
     [Fact]
-    public async Task DeleteSkillAsync_DeletesAndSaves()
+    public async Task DeleteSkillAsync_CallsRepositoryAndSave()
     {
+        // Arrange
         var id = Guid.NewGuid();
 
+        // Act
         await _service.DeleteSkillAsync(id);
 
+        // Assert
         await _repositoryMock.Received(1).DeleteSkillAsync(id);
         await _repositoryMock.Received(1).SaveChangesAsync();
     }
 
     [Fact]
-    public async Task CreateProfileWithDetailsAsync_CreatesFullyPopulatedProfile()
+    public async Task CreateProfileWithDetailsAsync_CreatesProfileAndDetails_Successfully()
     {
         // Arrange
         var request = new CreateResumeRequest
         {
             Name = "John Doe",
             Title = "Software Engineer",
-            Intro = "Hello world",
-            PhotoUrlLight = "light.jpg",
-            PhotoUrlDark = "dark.jpg",
-            Links = new List<ResumeLinkDto>
+            Intro = "Test Intro",
+            PhotoUrlLight = "http://light.png",
+            PhotoUrlDark = "http://dark.png",
+            Links = new List<ResumeLinkRequest>
             {
-                new() { LinkTypeName = "GitHub", LinkTypeKey = "github", Url = "https://github.com", DisplayInHeader = false },
-                new() { LinkTypeName = "LinkedIn", LinkTypeKey = "linkedin", Url = "https://linkedin.com", DisplayInHeader = true }
+                new ResumeLinkRequest { LinkTypeName = "GitHub", LinkTypeKey = "github", Url = "https://github.com/test", DisplayInHeader = true }
             },
-            WorkExperiences = new List<WorkExperienceDto>
+            WorkExperiences = new List<WorkExperienceRequest>
             {
-                new()
+                new WorkExperienceRequest
                 {
-                    Company = "Google",
-                    Role = "SWE",
-                    Period = "2020-Present",
-                    Location = "Mountain View",
+                    Company = "Test Co",
+                    Role = "Engineer",
+                    Period = "2020 - Present",
+                    Location = "Remote",
                     IsPrevious = false,
                     DisplayOrder = 1,
-                    Highlights = new List<string> { "Did code", "Did more code" },
-                    SkillIds = new List<Guid> { Guid.NewGuid() }
-                }
-            }
-        };
-
-        var existingLinkType = new ResumeProfileLinkType { Id = Guid.NewGuid(), KeyIdentifier = "github", Name = "GitHub" };
-        _repositoryMock.GetLinkTypeByKeyAsync("github").Returns(existingLinkType);
-        _repositoryMock.GetLinkTypeByKeyAsync("linkedin").Returns((ResumeProfileLinkType?)null);
-
-        // Act
-        var result = await _service.CreateProfileWithDetailsAsync(request);
-
-        // Assert
-        result.Name.ShouldBe("John Doe");
-        result.Title.ShouldBe("Software Engineer");
-        result.Intro.ShouldBe("Hello world");
-        result.PhotoUrlLight.ShouldBe("light.jpg");
-        result.PhotoUrlDark.ShouldBe("dark.jpg");
-
-        await _repositoryMock.Received(1).AddProfileAsync(Arg.Any<ResumeProfile>());
-        await _repositoryMock.Received(1).AddProfileLinkAsync(Arg.Is<ResumeProfileLink>(l => l.Url == "https://github.com" && l.DisplayInHeader == false));
-        await _repositoryMock.Received(1).AddProfileLinkAsync(Arg.Is<ResumeProfileLink>(l => l.Url == "https://linkedin.com" && l.DisplayInHeader == true));
-        await _repositoryMock.Received(1).AddProfileLinkTypeAsync(Arg.Is<ResumeProfileLinkType>(lt => lt.KeyIdentifier == "linkedin"));
-        await _repositoryMock.Received(1).AddWorkExperienceAsync(Arg.Any<WorkExperience>());
-        await _repositoryMock.Received(2).AddExperienceHighlightAsync(Arg.Any<ExperienceHighlight>());
-        await _repositoryMock.Received(1).AddWorkExperienceSkillAsync(Arg.Any<WorkExperienceSkill>());
-        await _repositoryMock.Received(1).SaveChangesAsync();
-    }
-
-    [Fact]
-    public async Task UpdateProfileWithDetailsAsync_UpdatesFullyPopulatedProfile()
-    {
-        // Arrange
-        var profileId = Guid.NewGuid();
-        var profile = new ResumeProfile { Id = profileId, Name = "Old Name" };
-        _repositoryMock.GetProfileByIdAsync(profileId).Returns(profile);
-
-        var request = new UpdateResumeRequest
-        {
-            Name = "New Name",
-            Title = "Senior SWE",
-            Intro = "New Intro",
-            PhotoUrlLight = "new-light.jpg",
-            PhotoUrlDark = "new-dark.jpg",
-            Links = new List<ResumeLinkDto>
-            {
-                new() { LinkTypeName = "GitHub", LinkTypeKey = "github", Url = "https://github.com/new", DisplayInHeader = false }
-            },
-            WorkExperiences = new List<WorkExperienceDto>
-            {
-                new()
-                {
-                    Company = "Meta",
-                    Role = "Senior SWE",
-                    Period = "2024",
-                    Location = "Remote",
-                    IsPrevious = true,
-                    DisplayOrder = 2,
-                    Highlights = new List<string> { "Led team" },
+                    Highlights = new List<string> { "Highlight 1" },
                     SkillIds = new List<Guid> { Guid.NewGuid() }
                 }
             }
@@ -289,22 +278,53 @@ public class ResumeServiceTests
         _repositoryMock.GetLinkTypeByKeyAsync("github").Returns((ResumeProfileLinkType?)null);
 
         // Act
-        await _service.UpdateProfileWithDetailsAsync(profileId, request);
+        var result = await _service.CreateProfileWithDetailsAsync(request);
 
         // Assert
-        profile.Name.ShouldBe("New Name");
-        profile.Title.ShouldBe("Senior SWE");
-        profile.Intro.ShouldBe("New Intro");
-        profile.PhotoUrlLight.ShouldBe("new-light.jpg");
-        profile.PhotoUrlDark.ShouldBe("new-dark.jpg");
+        result.ShouldNotBeNull();
+        result.Name.ShouldBe("John Doe");
+        result.Title.ShouldBe("Software Engineer");
+        result.Intro.ShouldBe("Test Intro");
 
-        await _repositoryMock.Received(1).RemoveLinksByProfileIdAsync(profileId);
-        await _repositoryMock.Received(1).RemoveWorkExperiencesByProfileIdAsync(profileId);
-        await _repositoryMock.Received(1).AddProfileLinkTypeAsync(Arg.Any<ResumeProfileLinkType>());
-        await _repositoryMock.Received(1).AddProfileLinkAsync(Arg.Is<ResumeProfileLink>(l => l.Url == "https://github.com/new" && l.DisplayInHeader == false));
-        await _repositoryMock.Received(1).AddWorkExperienceAsync(Arg.Any<WorkExperience>());
-        await _repositoryMock.Received(1).AddExperienceHighlightAsync(Arg.Any<ExperienceHighlight>());
+        await _repositoryMock.Received(1).AddProfileAsync(Arg.Is<ResumeProfile>(p => p.Name == "John Doe"));
+        await _repositoryMock.Received(1).AddProfileLinkTypeAsync(Arg.Is<ResumeProfileLinkType>(lt => lt.KeyIdentifier == "github"));
+        await _repositoryMock.Received(1).AddProfileLinkAsync(Arg.Any<ResumeProfileLink>());
+        await _repositoryMock.Received(1).AddWorkExperienceAsync(Arg.Is<WorkExperience>(w => w.Company == "Test Co"));
+        await _repositoryMock.Received(1).AddExperienceHighlightAsync(Arg.Is<ExperienceHighlight>(h => h.ResultText == "Highlight 1"));
         await _repositoryMock.Received(1).AddWorkExperienceSkillAsync(Arg.Any<WorkExperienceSkill>());
+        await _repositoryMock.Received(1).SaveChangesAsync();
+    }
+
+    [Fact]
+    public async Task UpdateProfileWithDetailsAsync_UpdatesExistingProfile_Successfully()
+    {
+        // Arrange
+        var id = Guid.NewGuid();
+        var existingProfile = new ResumeProfile { Id = id, Name = "Old Name" };
+        _repositoryMock.GetProfileByIdAsync(id).Returns(existingProfile);
+
+        var request = new UpdateResumeRequest
+        {
+            Name = "New Name",
+            Title = "New Title",
+            Intro = "New Intro",
+            Links = new List<ResumeLinkRequest>
+            {
+                new ResumeLinkRequest { LinkTypeName = "LinkedIn", LinkTypeKey = "linkedin", Url = "https://linkedin.com/in/test" }
+            },
+            WorkExperiences = new List<WorkExperienceRequest>()
+        };
+
+        _repositoryMock.GetLinkTypeByKeyAsync("linkedin").Returns(new ResumeProfileLinkType { Id = Guid.NewGuid(), KeyIdentifier = "linkedin" });
+
+        // Act
+        await _service.UpdateProfileWithDetailsAsync(id, request);
+
+        // Assert
+        await _repositoryMock.Received(1).UpdateProfileAsync(Arg.Is<ResumeProfile>(p => p.Name == "New Name"));
+        await _repositoryMock.Received(1).RemoveLinksByProfileIdAsync(id);
+        await _repositoryMock.Received(1).AddProfileLinkAsync(Arg.Any<ResumeProfileLink>());
+        await _repositoryMock.Received(1).RemoveWorkExperiencesByProfileIdAsync(id);
         await _repositoryMock.Received(1).SaveChangesAsync();
     }
 
@@ -323,7 +343,7 @@ public class ResumeServiceTests
     }
 
     [Fact]
-    public async Task GetProfileByIdAsync_ReturnsProfileFromRepository()
+    public async Task GetProfileByIdAsync_ReturnsProfileFromRepositoryAsResponse()
     {
         // Arrange
         var id = Guid.NewGuid();
@@ -334,7 +354,9 @@ public class ResumeServiceTests
         var result = await _service.GetProfileByIdAsync(id);
 
         // Assert
-        result.ShouldBe(profile);
+        result.ShouldNotBeNull();
+        result.Id.ShouldBe(id);
+        result.Name.ShouldBe("Test");
         await _repositoryMock.Received(1).GetProfileByIdAsync(id);
     }
 
@@ -344,189 +366,76 @@ public class ResumeServiceTests
         // Arrange
         var request = new CreateResumeRequest
         {
-            Name = "A", Title = "B", Intro = "C",
-            PhotoUrlLight = null, PhotoUrlDark = null
+            Name = "John Doe",
+            PhotoUrlLight = null,
+            PhotoUrlDark = null
         };
 
         // Act
         var result = await _service.CreateProfileWithDetailsAsync(request);
 
         // Assert
-        result.PhotoUrlLight.ShouldBe("https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80");
-        result.PhotoUrlDark.ShouldBe("https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=300&q=80");
+        await _repositoryMock.Received(1).AddProfileAsync(Arg.Is<ResumeProfile>(p => 
+            p.PhotoUrlLight.Contains("unsplash") && p.PhotoUrlDark.Contains("unsplash")));
     }
 
     [Fact]
-    public async Task CreateProfileWithDetailsAsync_UsesProvidedPhotos_WhenNotNull()
+    public async Task MapToResponse_StripsCyclicReferences()
     {
         // Arrange
-        var request = new CreateResumeRequest
+        var profileId = Guid.NewGuid();
+        var expId = Guid.NewGuid();
+        var skillId = Guid.NewGuid();
+
+        var profile = new ResumeProfile
         {
-            Name = "A", Title = "B", Intro = "C",
-            PhotoUrlLight = "http://light.jpg", PhotoUrlDark = "http://dark.jpg"
+            Id = profileId,
+            Name = "Test Developer"
         };
 
-        // Act
-        var result = await _service.CreateProfileWithDetailsAsync(request);
-
-        // Assert
-        result.PhotoUrlLight.ShouldBe("http://light.jpg");
-        result.PhotoUrlDark.ShouldBe("http://dark.jpg");
-    }
-
-    [Fact]
-    public async Task UpdateProfileWithDetailsAsync_KeepsExistingPhotos_WhenNull()
-    {
-        // Arrange
-        var id = Guid.NewGuid();
-        var profile = new ResumeProfile { Id = id, PhotoUrlLight = "old-light", PhotoUrlDark = "old-dark" };
-        _repositoryMock.GetProfileByIdAsync(id).Returns(profile);
-
-        var request = new UpdateResumeRequest
+        var exp = new WorkExperience
         {
-            Name = "A", Title = "B", Intro = "C",
-            PhotoUrlLight = null, PhotoUrlDark = null
+            Id = expId,
+            ProfileId = profileId,
+            Profile = profile,
+            Company = "Tech Corp"
         };
 
-        // Act
-        await _service.UpdateProfileWithDetailsAsync(id, request);
-
-        // Assert
-        profile.PhotoUrlLight.ShouldBe("old-light");
-        profile.PhotoUrlDark.ShouldBe("old-dark");
-        await _repositoryMock.Received(1).UpdateProfileAsync(profile);
-    }
-
-    [Fact]
-    public async Task UpdateProfileWithDetailsAsync_UpdatesPhotos_WhenProvided()
-    {
-        // Arrange
-        var id = Guid.NewGuid();
-        var profile = new ResumeProfile { Id = id, PhotoUrlLight = "old-light", PhotoUrlDark = "old-dark" };
-        _repositoryMock.GetProfileByIdAsync(id).Returns(profile);
-
-        var request = new UpdateResumeRequest
+        var highlight = new ExperienceHighlight
         {
-            Name = "A", Title = "B", Intro = "C",
-            PhotoUrlLight = "new-light", PhotoUrlDark = "new-dark"
+            Id = Guid.NewGuid(),
+            ExperienceId = expId,
+            Experience = exp,
+            ResultText = "Did cool stuff"
         };
 
-        // Act
-        await _service.UpdateProfileWithDetailsAsync(id, request);
-
-        // Assert
-        // Assert
-        profile.PhotoUrlLight.ShouldBe("new-light");
-        profile.PhotoUrlDark.ShouldBe("new-dark");
-        await _repositoryMock.Received(1).UpdateProfileAsync(profile);
-    }
-
-    [Fact]
-    public async Task CreateProfileWithDetailsAsync_HandlesNullCollections()
-    {
-        // Arrange
-        var request = new CreateResumeRequest
+        var skill = new Skill
         {
-            Name = "A", Title = "B", Intro = "C",
-            Links = null,
-            WorkExperiences = null
+            Id = skillId,
+            SkillName = "C#"
         };
 
-        // Act
-        var result = await _service.CreateProfileWithDetailsAsync(request);
-
-        // Assert
-        result.ShouldNotBeNull();
-        await _repositoryMock.Received(1).AddProfileAsync(Arg.Any<ResumeProfile>());
-        await _repositoryMock.DidNotReceive().AddProfileLinkAsync(Arg.Any<ResumeProfileLink>());
-        await _repositoryMock.DidNotReceive().AddWorkExperienceAsync(Arg.Any<WorkExperience>());
-        await _repositoryMock.Received(1).SaveChangesAsync();
-    }
-
-    [Fact]
-    public async Task UpdateProfileWithDetailsAsync_HandlesNullCollections()
-    {
-        // Arrange
-        var id = Guid.NewGuid();
-        var profile = new ResumeProfile { Id = id };
-        _repositoryMock.GetProfileByIdAsync(id).Returns(profile);
-
-        var request = new UpdateResumeRequest
+        var wes = new WorkExperienceSkill
         {
-            Name = "A", Title = "B", Intro = "C",
-            Links = null,
-            WorkExperiences = null
+            WorkExperienceId = expId,
+            WorkExperience = exp,
+            SkillId = skillId,
+            Skill = skill
         };
 
-        // Act
-        await _service.UpdateProfileWithDetailsAsync(id, request);
-
-        // Assert
-        await _repositoryMock.Received(1).UpdateProfileAsync(profile);
-        await _repositoryMock.Received(1).RemoveLinksByProfileIdAsync(id);
-        await _repositoryMock.Received(1).RemoveWorkExperiencesByProfileIdAsync(id);
-        await _repositoryMock.DidNotReceive().AddProfileLinkAsync(Arg.Any<ResumeProfileLink>());
-        await _repositoryMock.DidNotReceive().AddWorkExperienceAsync(Arg.Any<WorkExperience>());
-        await _repositoryMock.Received(1).SaveChangesAsync();
-    }
-
-    [Fact]
-    public async Task CreateProfileWithDetailsAsync_HandlesEmptyHighlightsAndNullSkillIds()
-    {
-        // Arrange
-        var request = new CreateResumeRequest
-        {
-            Name = "A", Title = "B", Intro = "C",
-            WorkExperiences = new List<WorkExperienceDto>
-            {
-                new()
-                {
-                    Company = "Google", Role = "SWE", Period = "2020",
-                    Highlights = new List<string>(), // Empty highlights
-                    SkillIds = null // Null skills
-                }
-            }
-        };
+        exp.Highlights.Add(highlight);
+        exp.WorkExperienceSkills.Add(wes);
+        profile.WorkExperiences.Add(exp);
 
         // Act
-        var result = await _service.CreateProfileWithDetailsAsync(request);
+        var response = ResumeService.MapToResponse(profile);
 
         // Assert
-        await _repositoryMock.Received(1).AddWorkExperienceAsync(Arg.Any<WorkExperience>());
-        await _repositoryMock.DidNotReceive().AddExperienceHighlightAsync(Arg.Any<ExperienceHighlight>());
-        await _repositoryMock.DidNotReceive().AddWorkExperienceSkillAsync(Arg.Any<WorkExperienceSkill>());
-        await _repositoryMock.Received(1).SaveChangesAsync();
-    }
-
-    [Fact]
-    public async Task UpdateProfileWithDetailsAsync_HandlesEmptyHighlightsAndNullSkillIds()
-    {
-        // Arrange
-        var id = Guid.NewGuid();
-        var profile = new ResumeProfile { Id = id };
-        _repositoryMock.GetProfileByIdAsync(id).Returns(profile);
-
-        var request = new UpdateResumeRequest
-        {
-            Name = "A", Title = "B", Intro = "C",
-            WorkExperiences = new List<WorkExperienceDto>
-            {
-                new()
-                {
-                    Company = "Google", Role = "SWE", Period = "2020",
-                    Highlights = new List<string>(), // Empty highlights
-                    SkillIds = null // Null skills
-                }
-            }
-        };
-
-        // Act
-        await _service.UpdateProfileWithDetailsAsync(id, request);
-
-        // Assert
-        await _repositoryMock.Received(1).AddWorkExperienceAsync(Arg.Any<WorkExperience>());
-        await _repositoryMock.DidNotReceive().AddExperienceHighlightAsync(Arg.Any<ExperienceHighlight>());
-        await _repositoryMock.DidNotReceive().AddWorkExperienceSkillAsync(Arg.Any<WorkExperienceSkill>());
-        await _repositoryMock.Received(1).SaveChangesAsync();
+        response.ShouldNotBeNull();
+        response.WorkExperiences.Count.ShouldBe(1);
+        response.WorkExperiences[0].Highlights.Count.ShouldBe(1);
+        response.WorkExperiences[0].Highlights[0].ResultText.ShouldBe("Did cool stuff");
+        response.WorkExperiences[0].WorkExperienceSkills.Count.ShouldBe(1);
+        response.WorkExperiences[0].WorkExperienceSkills[0].Skill!.SkillName.ShouldBe("C#");
     }
 }

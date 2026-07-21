@@ -5,9 +5,10 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using Portfolio.Api.Resume.Controllers;
+using Portfolio.Application.Resume.Contracts.Requests;
+using Portfolio.Application.Resume.Contracts.Responses;
 using Portfolio.Application.Resume.Services;
 using Portfolio.Application.Storage.Services;
-using Portfolio.Domain.Resume;
 using Shouldly;
 using Xunit;
 
@@ -29,7 +30,7 @@ public class ResumeControllerTests
     public async Task GetActiveAsync_ReturnsActiveProfile_WhenExists()
     {
         // Arrange
-        var activeProfile = new ResumeProfile
+        var activeProfile = new ResumeProfileResponse
         {
             Id = Guid.NewGuid(),
             Name = "John Doe",
@@ -44,81 +45,23 @@ public class ResumeControllerTests
 
         // Assert
         var okResult = result.Result.ShouldBeOfType<OkObjectResult>();
-        var profile = okResult.Value.ShouldBeOfType<ResumeProfile>();
-        profile.IsActive.ShouldBeTrue();
-        profile.Name.ShouldBe("John Doe");
+        okResult.Value.ShouldBe(activeProfile);
     }
 
     [Fact]
-    public async Task GetActiveAsync_ReturnsNotFound_WhenDoesNotExist()
+    public async Task GetActiveAsync_ReturnsNotFound_WhenNoActiveProfile()
     {
-        // Arrange
-        _serviceMock.GetActiveProfileAsync().Returns((ResumeProfile?)null);
+        _serviceMock.GetActiveProfileAsync().Returns((ResumeProfileResponse?)null);
 
-        // Act
         var result = await _controller.GetActiveAsync();
 
-        // Assert
         result.Result.ShouldBeOfType<NotFoundObjectResult>();
     }
 
     [Fact]
-    public async Task GetById_ReturnsProfile_WhenExists()
+    public async Task GetAllAsync_ReturnsAllProfiles()
     {
-        // Arrange
-        var profileId = Guid.NewGuid();
-        var profile = new ResumeProfile { Id = profileId, Name = "Alice", Title = "Architect", Intro = "Intro" };
-        _serviceMock.GetProfileByIdAsync(profileId).Returns(profile);
-
-        // Act
-        var result = await _controller.GetById(profileId);
-
-        // Assert
-        var okResult = result.Result.ShouldBeOfType<OkObjectResult>();
-        var returnedProfile = okResult.Value.ShouldBeOfType<ResumeProfile>();
-        returnedProfile.Id.ShouldBe(profileId);
-    }
-
-    [Fact]
-    public async Task CreateAsync_ReturnsCreated_WithProfile()
-    {
-        // Arrange
-        var request = new CreateResumeRequest
-        {
-            Name = "Bob",
-            Title = "Designer",
-            Intro = "Creative guy",
-            PhotoUrlLight = "http://light.png",
-            PhotoUrlDark = "http://dark.png"
-        };
-        var returnedProfile = new ResumeProfile
-        {
-            Id = Guid.NewGuid(),
-            Name = "Bob",
-            Title = "Designer",
-            Intro = "Creative guy",
-            IsActive = false
-        };
-
-        _serviceMock.CreateProfileWithDetailsAsync(request).Returns(returnedProfile);
-
-        // Act
-        var result = await _controller.CreateAsync(request);
-
-        // Assert
-        var createdResult = result.Result.ShouldBeOfType<CreatedAtRouteResult>();
-        var profile = createdResult.Value.ShouldBeOfType<ResumeProfile>();
-        profile.Name.ShouldBe("Bob");
-        profile.Title.ShouldBe("Designer");
-        profile.IsActive.ShouldBeFalse();
-
-        await _serviceMock.Received(1).CreateProfileWithDetailsAsync(request);
-    }
-
-    [Fact]
-    public async Task GetAllAsync_ReturnsOk_WithProfiles()
-    {
-        var profiles = new List<ResumeProfile> { new() { Id = Guid.NewGuid() } };
+        var profiles = new List<ResumeProfileResponse> { new() { Id = Guid.NewGuid() } };
         _serviceMock.ListProfilesAsync().Returns(profiles);
 
         var result = await _controller.GetAllAsync();
@@ -128,18 +71,42 @@ public class ResumeControllerTests
     }
 
     [Fact]
+    public async Task GetById_ReturnsProfile_WhenExists()
+    {
+        var id = Guid.NewGuid();
+        var profile = new ResumeProfileResponse { Id = id };
+        _serviceMock.GetProfileByIdAsync(id).Returns(profile);
+
+        var result = await _controller.GetById(id);
+
+        var okResult = result.Result.ShouldBeOfType<OkObjectResult>();
+        okResult.Value.ShouldBe(profile);
+    }
+
+    [Fact]
+    public async Task GetById_ReturnsNotFound_WhenProfileDoesNotExist()
+    {
+        var id = Guid.NewGuid();
+        _serviceMock.GetProfileByIdAsync(id).Returns((ResumeProfileResponse?)null);
+
+        var result = await _controller.GetById(id);
+
+        result.Result.ShouldBeOfType<NotFoundObjectResult>();
+    }
+
+    [Fact]
     public async Task ActivateAsync_ReturnsOk_WhenSuccessful()
     {
         var id = Guid.NewGuid();
 
         var result = await _controller.ActivateAsync(id);
 
-        var okResult = result.ShouldBeOfType<OkObjectResult>();
+        result.ShouldBeOfType<OkObjectResult>();
         await _serviceMock.Received(1).ActivateProfileAsync(id);
     }
 
     [Fact]
-    public async Task ActivateAsync_ReturnsNotFound_WhenProfileDoesNotExist()
+    public async Task ActivateAsync_ReturnsNotFound_WhenKeyNotFoundExceptionThrown()
     {
         var id = Guid.NewGuid();
         _serviceMock.When(x => x.ActivateProfileAsync(id)).Throw(new KeyNotFoundException("Not found"));
@@ -147,6 +114,33 @@ public class ResumeControllerTests
         var result = await _controller.ActivateAsync(id);
 
         result.ShouldBeOfType<NotFoundObjectResult>();
+    }
+
+    [Fact]
+    public async Task ActivateAsync_Returns500_WhenExceptionThrown()
+    {
+        var id = Guid.NewGuid();
+        _serviceMock.When(x => x.ActivateProfileAsync(id)).Throw(new Exception("Error"));
+
+        var result = await _controller.ActivateAsync(id);
+
+        var statusResult = result.ShouldBeOfType<ObjectResult>();
+        statusResult.StatusCode.ShouldBe(500);
+    }
+
+    [Fact]
+    public async Task CreateAsync_ReturnsCreatedAtRoute_WithCreatedProfile()
+    {
+        var request = new CreateResumeRequest { Name = "New Profile" };
+        var createdProfile = new ResumeProfileResponse { Id = Guid.NewGuid(), Name = "New Profile" };
+        _serviceMock.CreateProfileWithDetailsAsync(request).Returns(createdProfile);
+
+        var result = await _controller.CreateAsync(request);
+
+        var createdResult = result.Result.ShouldBeOfType<CreatedAtRouteResult>();
+        createdResult.RouteName.ShouldBe("GetResumeById");
+        createdResult.RouteValues!["id"].ShouldBe(createdProfile.Id);
+        createdResult.Value.ShouldBe(createdProfile);
     }
 
     [Fact]
@@ -177,7 +171,7 @@ public class ResumeControllerTests
     public async Task DeleteAsync_ReturnsNoContent_WhenSuccessful()
     {
         var id = Guid.NewGuid();
-        var profile = new ResumeProfile { Id = id, IsActive = false };
+        var profile = new ResumeProfileResponse { Id = id, IsActive = false };
         _serviceMock.GetProfileByIdAsync(id).Returns(profile);
 
         var result = await _controller.DeleteAsync(id);
@@ -190,7 +184,7 @@ public class ResumeControllerTests
     public async Task DeleteAsync_ReturnsBadRequest_WhenProfileIsActive()
     {
         var id = Guid.NewGuid();
-        var profile = new ResumeProfile { Id = id, IsActive = true };
+        var profile = new ResumeProfileResponse { Id = id, IsActive = true };
         _serviceMock.GetProfileByIdAsync(id).Returns(profile);
 
         var result = await _controller.DeleteAsync(id);
@@ -201,7 +195,7 @@ public class ResumeControllerTests
     [Fact]
     public async Task GetSkillsAsync_ReturnsOk_WithSkills()
     {
-        var skills = new List<SkillCategory> { new() { Id = Guid.NewGuid() } };
+        var skills = new List<SkillCategoryResponse> { new() { Id = Guid.NewGuid() } };
         _serviceMock.ListSkillsAsync().Returns(skills);
 
         var result = await _controller.GetSkillsAsync();
@@ -222,7 +216,7 @@ public class ResumeControllerTests
     [Fact]
     public async Task PrepareDownloadAsync_Returns404_WhenNoActiveProfile()
     {
-        _serviceMock.GetActiveProfileAsync().Returns((ResumeProfile?)null);
+        _serviceMock.GetActiveProfileAsync().Returns((ResumeProfileResponse?)null);
         var result = await _controller.PrepareDownloadAsync();
         result.ShouldBeOfType<NotFoundObjectResult>();
     }
@@ -230,7 +224,7 @@ public class ResumeControllerTests
     [Fact]
     public async Task PrepareDownloadAsync_ReturnsOkWithUrl_WhenCacheHit()
     {
-        var activeProfile = new ResumeProfile { Id = Guid.NewGuid(), UpdatedAt = DateTime.UtcNow };
+        var activeProfile = new ResumeProfileResponse { Id = Guid.NewGuid(), UpdatedAt = DateTime.UtcNow };
         _serviceMock.GetActiveProfileAsync().Returns(activeProfile);
         _storageServiceMock.GetFileUrlIfExistsAsync(Arg.Any<string>()).Returns("http://cached-url.pdf");
 
@@ -246,8 +240,8 @@ public class ResumeControllerTests
     [Fact]
     public async Task PrepareDownloadAsync_GeneratesAndUploads_WhenCacheMiss()
     {
-        var activeProfile = new ResumeProfile { Id = Guid.NewGuid(), UpdatedAt = DateTime.UtcNow };
-        var skillCategories = new List<SkillCategory>();
+        var activeProfile = new ResumeProfileResponse { Id = Guid.NewGuid(), UpdatedAt = DateTime.UtcNow };
+        var skillCategories = new List<SkillCategoryResponse>();
         _serviceMock.GetActiveProfileAsync().Returns(activeProfile);
         _serviceMock.ListSkillsAsync().Returns(skillCategories);
         _storageServiceMock.GetFileUrlIfExistsAsync(Arg.Any<string>()).Returns((string?)null);

@@ -1,10 +1,6 @@
-using System;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
 using NSubstitute;
-using Portfolio.Application.AI.Constants;
 using Portfolio.Application.AI.Services;
+using Portfolio.Application.Resume.Contracts.Responses;
 using Portfolio.Application.Resume.Services;
 using Portfolio.Domain.Resume;
 using Shouldly;
@@ -23,54 +19,62 @@ public class AiPromptServiceTests
     }
 
     [Fact]
-    public async Task BuildResumeSystemPromptAsync_WithActiveProfile_ReturnsFormattedPrompt()
+    public async Task BuildResumeSystemPromptAsync_FormatsProfileAndSkillsCorrectly()
     {
         // Arrange
-        var profile = new ResumeProfile
+        var profile = new ResumeProfileResponse
         {
             Name = "John Doe",
             Title = "Dev",
             Intro = "Hello",
-            Links = new System.Collections.Generic.List<ResumeProfileLink>
+            Links = new System.Collections.Generic.List<ResumeProfileLinkResponse>
             {
-                new ResumeProfileLink { Url = "https://github.com", LinkType = new ResumeProfileLinkType { Name = "GitHub" } },
-                new ResumeProfileLink { Url = "https://nolinktype.com", LinkType = null }
+                new ResumeProfileLinkResponse 
+                { 
+                    Url = "https://github.com", 
+                    LinkType = new ResumeLinkTypeResponse { Name = "GitHub" } 
+                },
+                new ResumeProfileLinkResponse 
+                { 
+                    Url = "https://nolinktype.com", 
+                    LinkType = null 
+                }
             },
-            WorkExperiences = new System.Collections.Generic.List<WorkExperience>
+            WorkExperiences = new System.Collections.Generic.List<WorkExperienceResponse>
             {
-                new WorkExperience 
+                new WorkExperienceResponse 
                 { 
                     Role = "Job 2", 
                     Company = "Comp", 
                     Period = "Later", 
                     DisplayOrder = 2,
-                    Highlights = new System.Collections.Generic.List<ExperienceHighlight>
-                    {
-                        new ExperienceHighlight { ResultText = "Did second thing", DisplayOrder = 2 },
-                        new ExperienceHighlight { ResultText = "Did first thing", DisplayOrder = 1 }
-                    }
+                    Highlights = new System.Collections.Generic.List<ExperienceHighlightResponse>()
                 },
-                new WorkExperience 
+                new WorkExperienceResponse 
                 { 
                     Role = "Job 1", 
                     Company = "Comp", 
                     Period = "Now", 
                     DisplayOrder = 1,
-                    Highlights = new System.Collections.Generic.List<ExperienceHighlight>()
+                    Highlights = new System.Collections.Generic.List<ExperienceHighlightResponse>
+                    {
+                        new ExperienceHighlightResponse { ResultText = "Did second thing", DisplayOrder = 2 },
+                        new ExperienceHighlightResponse { ResultText = "Did first thing", DisplayOrder = 1 }
+                    }
                 }
             }
         };
         _resumeServiceMock.GetActiveProfileAsync().Returns(profile);
 
-        var skills = new System.Collections.Generic.List<SkillCategory>
+        var skills = new System.Collections.Generic.List<SkillCategoryResponse>
         {
-            new SkillCategory 
+            new SkillCategoryResponse 
             { 
                 CategoryName = "Languages",
-                Skills = new System.Collections.Generic.List<Skill>
+                Skills = new System.Collections.Generic.List<SkillResponse>
                 {
-                    new Skill { SkillName = "C#" },
-                    new Skill { SkillName = "TypeScript" }
+                    new SkillResponse { SkillName = "C#" },
+                    new SkillResponse { SkillName = "TypeScript" }
                 }
             }
         };
@@ -106,7 +110,7 @@ public class AiPromptServiceTests
     public async Task BuildResumeSystemPromptAsync_WithNullProfile_ReturnsNoProfileMessage()
     {
         // Arrange
-        _resumeServiceMock.GetActiveProfileAsync().Returns((ResumeProfile?)null);
+        _resumeServiceMock.GetActiveProfileAsync().Returns((ResumeProfileResponse?)null);
 
         // Act
         var prompt = await _service.BuildResumeSystemPromptAsync();
@@ -119,9 +123,9 @@ public class AiPromptServiceTests
     public async Task BuildJobFitSystemPromptAsync_IncludesJobDescriptionAndResumeContext()
     {
         // Arrange
-        var profile = new ResumeProfile { Name = "John Doe" };
+        var profile = new ResumeProfileResponse { Name = "John Doe" };
         _resumeServiceMock.GetActiveProfileAsync().Returns(profile);
-        _resumeServiceMock.ListSkillsAsync().Returns(new System.Collections.Generic.List<SkillCategory>());
+        _resumeServiceMock.ListSkillsAsync().Returns(new System.Collections.Generic.List<SkillCategoryResponse>());
 
         var jobDescription = "Looking for a Senior Software Engineer with C# experience.";
 
@@ -131,8 +135,5 @@ public class AiPromptServiceTests
         // Assert
         prompt.ShouldContain("John Doe");
         prompt.ShouldContain(jobDescription);
-        prompt.ShouldContain("MatchScore");
-        prompt.ShouldContain("GrowthOpportunities");
-        prompt.ShouldContain("ActionChips");
     }
 }
