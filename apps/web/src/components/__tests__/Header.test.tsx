@@ -79,6 +79,14 @@ describe('Header Component', () => {
     expect(screen.getByText('blog')).toHaveClass('text-primary font-bold');
   });
 
+  it('conditionally renders about link based on hasAboutMe prop', () => {
+    const { rerender } = render(<Header name="Alex" contact={mockContact} hasAboutMe={true} />);
+    expect(screen.getByText('about')).toBeInTheDocument();
+
+    rerender(<Header name="Alex" contact={mockContact} hasAboutMe={false} />);
+    expect(screen.queryByText('about')).not.toBeInTheDocument();
+  });
+
   it('resolves and displays github username if available', () => {
     render(<Header name="Alex Jones" contact={mockContact} />);
     expect(screen.getByText('ajxcodes')).toBeInTheDocument();

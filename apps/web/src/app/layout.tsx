@@ -30,6 +30,7 @@ export default async function RootLayout({
           <Header 
             contact={data.resume.contact} 
             name={data.personalInfo.name} 
+            hasAboutMe={data.blogPosts.some(p => p.slug === 'about-me')}
             downloadUrl={data.resume.downloadUrl} 
             photoUrlLight={data.resume.photoUrlLight}
             photoUrlDark={data.resume.photoUrlDark}
