@@ -168,6 +168,17 @@ public class ResumeControllerTests
     }
 
     [Fact]
+    public async Task DeleteAsync_ReturnsNotFound_WhenProfileDoesNotExist()
+    {
+        var id = Guid.NewGuid();
+        _serviceMock.GetProfileByIdAsync(id).Returns((ResumeProfileResponse?)null);
+
+        var result = await _controller.DeleteAsync(id);
+
+        result.ShouldBeOfType<NotFoundObjectResult>();
+    }
+
+    [Fact]
     public async Task DeleteAsync_ReturnsNoContent_WhenSuccessful()
     {
         var id = Guid.NewGuid();

@@ -64,13 +64,23 @@ describe('CreateBlogPage', () => {
   });
 
   it('submits a new post successfully', async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve({ id: 'new-post' })
+    mockFetch.mockImplementation((url: string) => {
+      if (url.includes('/api/resume')) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve([{ id: 'p1', name: 'P1', isActive: true }]) });
+      }
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ id: 'new-post' })
+      });
     });
 
     render(<CreateBlogPage />);
     
+    // Wait for profiles to load
+    await waitFor(() => {
+      expect(screen.getByText(/P1/)).toBeInTheDocument();
+    });
+
     // Fill out form
     fireEvent.change(screen.getByPlaceholderText(/Post Title/i), { target: { value: 'New Test Post' } });
     fireEvent.change(screen.getByPlaceholderText(/url-friendly-slug/i), { target: { value: 'new-test-post' } });
@@ -91,12 +101,17 @@ describe('CreateBlogPage', () => {
 
   it('calls generate-metadata endpoint for AI auto-fill', async () => {
     // We only need to mock the AI generation fetch
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve({
-        slug: 'ai-generated-slug',
-        summary: 'AI generated summary'
-      })
+    mockFetch.mockImplementation((url: string) => {
+      if (url.includes('/api/resume')) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve([{ id: 'p1', name: 'P1', isActive: true }]) });
+      }
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({
+          slug: 'ai-generated-slug',
+          summary: 'AI generated summary'
+        })
+      });
     });
 
     render(<CreateBlogPage />);
@@ -123,13 +138,23 @@ describe('CreateBlogPage', () => {
   });
 
   it('shows error when submission fails', async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: false,
-      text: jest.fn().mockResolvedValue('Failed to create post'),
+    mockFetch.mockImplementation((url: string) => {
+      if (url.includes('/api/resume')) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve([{ id: 'p1', name: 'P1', isActive: true }]) });
+      }
+      return Promise.resolve({
+        ok: false,
+        text: () => Promise.resolve('Failed to create post')
+      });
     });
 
     render(<CreateBlogPage />);
     
+    // Wait for profiles to load
+    await waitFor(() => {
+      expect(screen.getByText(/P1/)).toBeInTheDocument();
+    });
+
     // Fill out minimum required fields
     fireEvent.change(screen.getByPlaceholderText(/Post Title/i), { target: { value: 'New Test Post' } });
     fireEvent.change(screen.getByPlaceholderText(/url-friendly-slug/i), { target: { value: 'new-test-post' } });
@@ -145,9 +170,14 @@ describe('CreateBlogPage', () => {
   });
 
   it('shows error when generate metadata fails', async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: false,
-      text: jest.fn().mockResolvedValue('Generation failed'),
+    mockFetch.mockImplementation((url: string) => {
+      if (url.includes('/api/resume')) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve([{ id: 'p1', name: 'P1', isActive: true }]) });
+      }
+      return Promise.resolve({
+        ok: false,
+        text: () => Promise.resolve('Generation failed')
+      });
     });
 
     render(<CreateBlogPage />);
@@ -164,13 +194,23 @@ describe('CreateBlogPage', () => {
   });
 
   it('allows adding and removing tags before submitting', async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve({ id: 'new-post' })
+    mockFetch.mockImplementation((url: string) => {
+      if (url.includes('/api/resume')) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve([{ id: 'p1', name: 'P1', isActive: true }]) });
+      }
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ id: 'new-post' })
+      });
     });
 
     render(<CreateBlogPage />);
     
+    // Wait for profiles to load
+    await waitFor(() => {
+      expect(screen.getByText(/P1/)).toBeInTheDocument();
+    });
+
     // Add a tag
     const tagInput = screen.getByPlaceholderText(/Add a tag/i);
     fireEvent.change(tagInput, { target: { value: 'tag1' } });

@@ -2,6 +2,7 @@ namespace Portfolio.Application.Blog.Requests;
 
 public class UpdatePostRequest
 {
+    public required Guid ResumeProfileId { get; set; }
     public required string Slug { get; set; }
     public required string Title { get; set; }
     public string? Summary { get; set; }

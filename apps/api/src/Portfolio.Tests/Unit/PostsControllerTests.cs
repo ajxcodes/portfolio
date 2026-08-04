@@ -22,7 +22,7 @@ public class PostsControllerTests
     [Fact]
     public async Task ListAsync_ReturnsPosts()
     {
-        var posts = new List<PostResponse> { new() { Id = Guid.NewGuid(), Title = "Test", Slug = "test", Content = "content", DatePosted = DateTime.UtcNow, PostedBy = "user" } };
+        var posts = new List<PostResponse> { new() { Id = Guid.NewGuid(), Title = "Test", Slug = "test", Content = "content", DatePosted = DateTime.UtcNow, ResumeProfileId = Guid.NewGuid(), AuthorName = "user" } };
         _serviceMock.ListAsync().Returns(posts);
 
         var result = await _controller.ListAsync();
@@ -34,7 +34,7 @@ public class PostsControllerTests
     public async Task GetAsync_ReturnsPost_WhenFound()
     {
         var id = Guid.NewGuid();
-        var post = new PostResponse { Id = id, Title = "Test", Slug = "test", Content = "content", DatePosted = DateTime.UtcNow, PostedBy = "user" };
+        var post = new PostResponse { Id = id, Title = "Test", Slug = "test", Content = "content", DatePosted = DateTime.UtcNow, ResumeProfileId = Guid.NewGuid(), AuthorName = "user" };
         _serviceMock.GetAsync(id).Returns(post);
 
         var result = await _controller.GetAsync(id);

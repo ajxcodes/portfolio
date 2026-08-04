@@ -10,7 +10,8 @@ public record PostResponse
     public string? Summary { get; init; }
     public required string Content { get; init; }
     public required DateTime DatePosted { get; init; }
-    public required string PostedBy { get; init; } // author username
+    public required Guid ResumeProfileId { get; init; }
+    public required string AuthorName { get; init; }
     public DateTime? DateModified { get; set; }
     public string? ModifiedBy { get; set; } // modified by username
 
@@ -29,7 +30,8 @@ public record PostResponse
             Summary = post.Summary,
             Content = post.Content,
             DatePosted = post.DatePosted,
-            PostedBy = post.PostedBy,
+            ResumeProfileId = post.ResumeProfileId,
+            AuthorName = post.ResumeProfile?.Name ?? string.Empty,
             DateModified = post.DateModified,
             ModifiedBy = post.ModifiedBy,
             Visible = post.Visible,

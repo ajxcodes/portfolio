@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Portfolio.Domain.Blog;
+using Portfolio.Domain.Resume;
 using Portfolio.Infrastructure.Database.Contexts;
 using Portfolio.Tests.Infrastructure;
 using Shouldly;
@@ -27,6 +28,9 @@ public class AuditIntegrationTests
         using var scope = _fixture.Factory.Services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<PortfolioDbContext>();
 
+        var profile = new ResumeProfile { Id = Guid.NewGuid(), Name = "admin" };
+        context.ResumeProfiles.Add(profile);
+
         var postId = Guid.NewGuid();
         var post = new Post
         {
@@ -34,7 +38,7 @@ public class AuditIntegrationTests
             Slug = "audit-test",
             Title = "Original Title",
             Content = "Content",
-            PostedBy = "admin",
+            ResumeProfileId = profile.Id,
             DatePosted = DateTime.UtcNow
         };
 

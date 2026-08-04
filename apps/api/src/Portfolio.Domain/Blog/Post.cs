@@ -8,7 +8,8 @@ public class Post
     public string? Summary { get; set; }
     public required string Content { get; set; }
     public DateTime DatePosted { get; set; }
-    public required string PostedBy { get; set; } // author username
+    public Guid ResumeProfileId { get; set; }
+    public virtual Portfolio.Domain.Resume.ResumeProfile ResumeProfile { get; set; } = null!;
     public DateTime? DateModified { get; set; }
     public string? ModifiedBy { get; set; } // modified by username
     public bool Visible { get; set; } = false;

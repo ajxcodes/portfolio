@@ -1,9 +1,15 @@
 "use client";
 
+interface ResumeProfileInfo {
+  id: string;
+  name: string;
+  isActive: boolean;
+}
+
 import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Save, AlertCircle, Sparkles } from "lucide-react";
+import { ArrowLeft, Save, AlertCircle, Sparkles, Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabaseBrowser";
 import dynamic from 'next/dynamic';
 import { AdminSkeleton } from "@/components/admin/AdminSkeleton";
@@ -32,6 +38,27 @@ export default function EditBlogPostPage({ params }: { params: Promise<{ id: str
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
   const [generatingMetadata, setGeneratingMetadata] = useState(false);
+  const [resumeProfiles, setResumeProfiles] = useState<ResumeProfileInfo[]>([]);
+  const [resumeProfileId, setResumeProfileId] = useState("");
+  const [profilesLoading, setProfilesLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadProfiles() {
+      try {
+        const headers = await fetchAuthHeaders();
+        const res = await fetch(`${API_BASE_URL}/api/resume`, { headers });
+        if (res.ok) {
+          const data: ResumeProfileInfo[] = await res.json();
+          setResumeProfiles(data);
+        }
+      } catch (e) {
+        console.error("Failed to load resume profiles", e);
+      } finally {
+        setProfilesLoading(false);
+      }
+    }
+    loadProfiles();
+  }, []);
 
   const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" || e.key === ",") {
@@ -77,6 +104,7 @@ export default function EditBlogPostPage({ params }: { params: Promise<{ id: str
         setContent(data.content || "");
         setVisible(data.visible ?? true);
         setCanonicalUrl(data.canonicalUrl || "");
+        setResumeProfileId(data.resumeProfileId || "");
         setTags(data.tags || []);
       } catch (err: any) {
         setErrorMsg(err.message || "Failed to load post.");
@@ -126,8 +154,13 @@ export default function EditBlogPostPage({ params }: { params: Promise<{ id: str
   };
 
   const handleSave = async () => {
-    if (!title || !slug || !content) {
-      setErrorMsg("Title, Slug, and Content are required.");
+    if (!title || !slug || !content || !resumeProfileId) {
+      setErrorMsg("Title, Slug, Content, and Persona are required.");
+      return;
+    }
+
+    if (!resumeProfiles.some(p => p.id === resumeProfileId)) {
+      setErrorMsg("Invalid Persona selected.");
       return;
     }
 
@@ -145,6 +178,7 @@ export default function EditBlogPostPage({ params }: { params: Promise<{ id: str
           content,
           visible,
           canonicalUrl: canonicalUrl || null,
+          resumeProfileId,
           tags
         }),
       });
@@ -219,6 +253,24 @@ export default function EditBlogPostPage({ params }: { params: Promise<{ id: str
               {generatingMetadata ? "Generating..." : "Auto-Fill Empty Fields"}
             </button>
             <div className="space-y-2">
+              <label className="text-xs font-bold text-primary/80 uppercase tracking-wider">Author Persona</label>
+              {profilesLoading ? (
+                <div className="w-full bg-muted/20 animate-pulse border border-primary/10 p-2 rounded h-9"></div>
+              ) : (
+                <select
+                  value={resumeProfileId}
+                  onChange={(e) => setResumeProfileId(e.target.value)}
+                  className="w-full bg-background border border-primary/20 p-2 rounded text-xs focus:outline-none focus:border-primary/50 transition-colors"
+                >
+                  {resumeProfiles.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name} {p.isActive ? "(Active)" : ""}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+            <div className="space-y-2">
               <label className="text-xs font-bold text-primary/80 uppercase tracking-wider">Slug</label>
               <input
                 type="text"
@@ -286,10 +338,10 @@ export default function EditBlogPostPage({ params }: { params: Promise<{ id: str
 
           <button
             onClick={handleSave}
-            disabled={saveLoading}
+            disabled={saveLoading || !resumeProfileId}
             className="w-full flex items-center justify-center gap-2 py-3 bg-primary text-primary-foreground font-bold rounded hover:opacity-90 transition-all text-sm disabled:opacity-50"
           >
-            <Save className="w-4 h-4" />
+            {saveLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             {saveLoading ? "Saving..." : "Save Changes"}
           </button>
         </div>

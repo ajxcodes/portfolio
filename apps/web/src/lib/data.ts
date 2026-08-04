@@ -78,6 +78,8 @@ export interface BlogPost {
   content: string;
   datePosted: string;
   visible: boolean;
+  resumeProfileId: string;
+  authorName: string;
   tags?: string[];
   views?: number;
 }
@@ -253,6 +255,8 @@ export const getBlogPosts = cache(async (): Promise<BlogPost[]> => {
         summary: p.summary || '',
         content: p.content,
         visible: p.visible,
+        resumeProfileId: p.resumeProfileId,
+        authorName: p.authorName,
         datePosted: p.datePosted,
         tags: p.tags,
         views: p.views
@@ -296,6 +300,8 @@ export async function getBlogPostBySlug(slug: string): Promise<BlogPost | undefi
           summary: post.summary || '',
           content: post.content,
           visible: post.visible,
+          resumeProfileId: post.resumeProfileId,
+          authorName: post.authorName,
           datePosted: post.datePosted,
           tags: post.tags,
           views: post.views
