@@ -12,6 +12,7 @@ import { ContactInfo } from "@/lib/data";
 interface HeaderProps {
   name: string;
   contact: ContactInfo;
+  hasAboutMe?: boolean;
   downloadUrl?: string;
   photoUrlLight?: string;
   photoUrlDark?: string;
@@ -26,7 +27,7 @@ const getGithubUsername = (githubUrl?: string): string | null => {
   return cleaned || null;
 };
 
-export const Header = ({ name, contact, downloadUrl, photoUrlLight, photoUrlDark }: HeaderProps) => {
+export const Header = ({ name, contact, hasAboutMe, downloadUrl, photoUrlLight, photoUrlDark }: HeaderProps) => {
   const pathname = usePathname();
   // Initialize state based on the path to prevent flashes of content.
   const [isPageTitleVisible, setIsPageTitleVisible] = useState(pathname === '/resume');
@@ -110,6 +111,17 @@ export const Header = ({ name, contact, downloadUrl, photoUrlLight, photoUrlDark
           >
             resume
           </Link>
+          {hasAboutMe && (
+            <Link 
+              href="/about" 
+              className={clsx(
+                "transition-colors font-mono text-sm", 
+                pathname === "/about" ? "text-primary font-bold" : "text-foreground/80 hover:text-primary"
+              )}
+            >
+              about
+            </Link>
+          )}
           <Link 
             href="/blog" 
             className={clsx(
