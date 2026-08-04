@@ -58,6 +58,7 @@ const mockPost = {
   content: 'Existing content',
   visible: true,
   canonicalUrl: null,
+  resumeProfileId: 'p1',
   tags: ['existing-tag']
 };
 
@@ -77,6 +78,9 @@ describe('EditBlogPage', () => {
     
     // Mock the GET request for the post
     mockFetch.mockImplementation((url, options) => {
+      if (url.includes('/api/resume')) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve([{ id: 'p1', name: 'P1', isActive: true }]) });
+      }
       if (url.includes('/api/blog/posts/post-1') && (!options || options.method === 'GET' || options.method === undefined)) {
         return Promise.resolve({
           ok: true,
@@ -109,6 +113,9 @@ describe('EditBlogPage', () => {
   it('submits updated post successfully', async () => {
     // Setup PUT mock
     mockFetch.mockImplementation((url, options) => {
+      if (url.includes('/api/resume')) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve([{ id: 'p1', name: 'P1', isActive: true }]) });
+      }
       if (url.includes('/api/blog/posts/post-1')) {
         if (!options || options.method === 'GET' || options.method === undefined) {
           return Promise.resolve({
@@ -166,6 +173,9 @@ describe('EditBlogPage', () => {
   it('calls generate-metadata endpoint for AI auto-fill', async () => {
     // Mock both GET and AI POST
     mockFetch.mockImplementation((url, options) => {
+      if (url.includes('/api/resume')) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve([{ id: 'p1', name: 'P1', isActive: true }]) });
+      }
       if (url.includes('/api/blog/posts/post-1') && (!options || options.method === 'GET' || options.method === undefined)) {
         return Promise.resolve({
           ok: true,
@@ -208,9 +218,14 @@ describe('EditBlogPage', () => {
   });
 
   it('shows error when loading fails', async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: false,
-      text: jest.fn().mockResolvedValue('Failed to load post'),
+    mockFetch.mockImplementation((url: string) => {
+      if (url.includes('/api/resume')) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve([{ id: 'p1', name: 'P1', isActive: true }]) });
+      }
+      return Promise.resolve({
+        ok: false,
+        text: () => Promise.resolve('Failed to load post')
+      });
     });
 
     render(<EditBlogPage params={mockParams} />);
@@ -221,15 +236,23 @@ describe('EditBlogPage', () => {
   });
 
   it('shows error when save fails', async () => {
-    // First load succeeds
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: jest.fn().mockResolvedValue(mockPost),
-    });
-    // Save fails
-    mockFetch.mockResolvedValueOnce({
-      ok: false,
-      text: jest.fn().mockResolvedValue('Failed to update post.'),
+    mockFetch.mockImplementation((url, options) => {
+      if (url.includes('/api/resume')) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve([{ id: 'p1', name: 'P1', isActive: true }]) });
+      }
+      if (options && options.method === 'PUT') {
+        return Promise.resolve({
+          ok: false,
+          text: () => Promise.resolve('Failed to update post.')
+        });
+      }
+      if (url.includes('/api/blog/posts/post-1')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve(mockPost)
+        });
+      }
+      return Promise.resolve({ ok: true });
     });
 
     render(<EditBlogPage params={mockParams} />);
@@ -247,15 +270,23 @@ describe('EditBlogPage', () => {
   });
 
   it('shows error when generate metadata fails', async () => {
-    // First load succeeds
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: jest.fn().mockResolvedValue(mockPost),
-    });
-    // Generate fails
-    mockFetch.mockResolvedValueOnce({
-      ok: false,
-      text: jest.fn().mockResolvedValue('Generation failed'),
+    mockFetch.mockImplementation((url, options) => {
+      if (url.includes('/api/resume')) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve([{ id: 'p1', name: 'P1', isActive: true }]) });
+      }
+      if (url.includes('/api/blog/posts/generate-metadata')) {
+        return Promise.resolve({
+          ok: false,
+          text: () => Promise.resolve('Generation failed')
+        });
+      }
+      if (url.includes('/api/blog/posts/post-1')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve(mockPost)
+        });
+      }
+      return Promise.resolve({ ok: true });
     });
 
     render(<EditBlogPage params={mockParams} />);

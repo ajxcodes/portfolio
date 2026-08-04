@@ -12,6 +12,7 @@ public class PostRepository(PortfolioDbContext context) : IPostRepository
         return context.Posts
             .AsNoTracking()
             .AsSplitQuery()
+            .Include(p => p.ResumeProfile)
             .Include(p => p.PostTags)
                 .ThenInclude(pt => pt.Tag)
             .Include(p => p.PostSyndications)
@@ -24,6 +25,7 @@ public class PostRepository(PortfolioDbContext context) : IPostRepository
     {
         return context.Posts
             .AsSplitQuery()
+            .Include(p => p.ResumeProfile)
             .Include(p => p.PostTags)
                 .ThenInclude(pt => pt.Tag)
             .Include(p => p.PostSyndications)
@@ -36,6 +38,7 @@ public class PostRepository(PortfolioDbContext context) : IPostRepository
         return context.Posts
             .AsNoTracking()
             .AsSplitQuery()
+            .Include(p => p.ResumeProfile)
             .Include(p => p.PostTags)
                 .ThenInclude(pt => pt.Tag)
             .Include(p => p.PostSyndications)

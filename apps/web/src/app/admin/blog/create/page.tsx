@@ -1,9 +1,15 @@
 "use client";
 
-import { useState } from "react";
+interface ResumeProfileInfo {
+  id: string;
+  name: string;
+  isActive: boolean;
+}
+
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Save, AlertCircle, Sparkles } from "lucide-react";
+import { ArrowLeft, Save, AlertCircle, Sparkles, Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabaseBrowser";
 import dynamic from 'next/dynamic';
 
@@ -27,6 +33,33 @@ export default function CreateBlogPostPage() {
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
   const [generatingMetadata, setGeneratingMetadata] = useState(false);
+  const [resumeProfiles, setResumeProfiles] = useState<ResumeProfileInfo[]>([]);
+  const [resumeProfileId, setResumeProfileId] = useState("");
+  const [profilesLoading, setProfilesLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadProfiles() {
+      try {
+        const headers = await fetchAuthHeaders();
+        const res = await fetch(`${API_BASE_URL}/api/resume`, { headers });
+        if (res.ok) {
+          const data: ResumeProfileInfo[] = await res.json();
+          setResumeProfiles(data);
+          const active = data.find((p) => p.isActive);
+          if (active) {
+            setResumeProfileId(active.id);
+          } else if (data.length > 0) {
+            setResumeProfileId(data[0].id);
+          }
+        }
+      } catch (e) {
+        console.error("Failed to load resume profiles", e);
+      } finally {
+        setProfilesLoading(false);
+      }
+    }
+    loadProfiles();
+  }, []);
 
   const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" || e.key === ",") {
@@ -91,8 +124,13 @@ export default function CreateBlogPostPage() {
   };
 
   const handleSave = async () => {
-    if (!title || !slug || !content) {
-      setErrorMsg("Title, Slug, and Content are required.");
+    if (!title || !slug || !content || !resumeProfileId) {
+      setErrorMsg("Title, Slug, Content, and Persona are required.");
+      return;
+    }
+
+    if (!resumeProfiles.some(p => p.id === resumeProfileId)) {
+      setErrorMsg("Invalid Persona selected.");
       return;
     }
 
@@ -110,6 +148,7 @@ export default function CreateBlogPostPage() {
           content,
           visible,
           canonicalUrl: null,
+          resumeProfileId,
           tags
         }),
       });
@@ -180,6 +219,24 @@ export default function CreateBlogPostPage() {
               {generatingMetadata ? "Generating..." : "Auto-Fill Empty Fields"}
             </button>
             <div className="space-y-2">
+              <label className="text-xs font-bold text-primary/80 uppercase tracking-wider">Author Persona</label>
+              {profilesLoading ? (
+                <div className="w-full bg-muted/20 animate-pulse border border-primary/10 p-2 rounded h-9"></div>
+              ) : (
+                <select
+                  value={resumeProfileId}
+                  onChange={(e) => setResumeProfileId(e.target.value)}
+                  className="w-full bg-background border border-primary/20 p-2 rounded text-xs focus:outline-none focus:border-primary/50 transition-colors"
+                >
+                  {resumeProfiles.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name} {p.isActive ? "(Active)" : ""}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+            <div className="space-y-2">
               <label className="text-xs font-bold text-primary/80 uppercase tracking-wider">Slug</label>
               <input
                 type="text"
@@ -236,10 +293,10 @@ export default function CreateBlogPostPage() {
 
           <button
             onClick={handleSave}
-            disabled={loading}
+            disabled={loading || !resumeProfileId}
             className="w-full flex items-center justify-center gap-2 py-3 bg-primary text-primary-foreground font-bold rounded hover:opacity-90 transition-all text-sm disabled:opacity-50"
           >
-            <Save className="w-4 h-4" />
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             {loading ? "Saving..." : "Save Post"}
           </button>
         </div>

@@ -25,8 +25,7 @@ public class PostsController(IPostService service) : ControllerBase
     [Authorize]
     public async Task<ActionResult<PostResponse>> CreateAsync(CreatePostRequest request)
     {
-        var username = User.Identity?.Name ?? "Admin";
-        var response = await service.CreateAsync(request, username);
+        var response = await service.CreateAsync(request);
         return Created($"/api/blog/posts/{response.Id}", response);
     }
 

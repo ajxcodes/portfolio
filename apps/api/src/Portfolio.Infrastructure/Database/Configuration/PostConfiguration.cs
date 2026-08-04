@@ -14,7 +14,12 @@ public class PostConfiguration : IEntityTypeConfiguration<Post>
         builder.Property(p => p.Summary);
         builder.Property(p => p.Content).IsRequired();
         builder.Property(p => p.DatePosted).IsRequired();
-        builder.Property(p => p.PostedBy).IsRequired();
+        builder.Property(p => p.ResumeProfileId).IsRequired();
+
+        builder.HasOne(p => p.ResumeProfile)
+            .WithMany()
+            .HasForeignKey(p => p.ResumeProfileId)
+            .OnDelete(DeleteBehavior.Restrict);
         builder.Property(p => p.DateModified).IsRequired(false);
         builder.Property(p => p.ModifiedBy).IsRequired(false);
     }

@@ -79,4 +79,38 @@ public class S3StorageServiceTests
         // Assert
         result.ShouldBeNull();
     }
+
+    [Fact]
+    public async Task GetFileUrlIfExistsAsync_ReturnsNull_WhenGeneralExceptionThrown()
+    {
+        // Arrange
+        var key = "nonexistent.png";
+        _s3ClientMock.GetObjectMetadataAsync(Arg.Any<string>(), key, Arg.Any<CancellationToken>())
+            .ThrowsAsync(new Exception("General error"));
+
+        // Act
+        var result = await _service.GetFileUrlIfExistsAsync(key);
+
+        // Assert
+        result.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task UploadFileAsync_SwallowsException_WhenDoesBucketExistThrows()
+    {
+        // Arrange
+        var stream = new MemoryStream(Encoding.UTF8.GetBytes("test content"));
+        
+        _s3ClientMock.GetBucketLocationAsync(Arg.Any<GetBucketLocationRequest>(), Arg.Any<CancellationToken>())
+            .ThrowsAsync(new Exception("Bucket check error"));
+
+        _s3ClientMock.PutObjectAsync(Arg.Any<PutObjectRequest>(), Arg.Any<CancellationToken>())
+            .Returns(new PutObjectResponse { HttpStatusCode = HttpStatusCode.OK });
+
+        // Act
+        var result = await _service.UploadFileAsync(stream, "test.txt", "text/plain");
+
+        // Assert
+        result.ShouldNotBeNull();
+    }
 }

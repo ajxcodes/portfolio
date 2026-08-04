@@ -207,9 +207,8 @@ namespace Portfolio.Infrastructure.Migrations
                     b.Property<string>("ModifiedBy")
                         .HasColumnType("text");
 
-                    b.Property<string>("PostedBy")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<Guid>("ResumeProfileId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Slug")
                         .IsRequired()
@@ -226,6 +225,8 @@ namespace Portfolio.Infrastructure.Migrations
                         .HasColumnType("boolean");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ResumeProfileId");
 
                     b.ToTable("Posts");
                 });
@@ -624,6 +625,17 @@ namespace Portfolio.Infrastructure.Migrations
                         .HasForeignKey("VisitorSessionId");
 
                     b.Navigation("VisitorSession");
+                });
+
+            modelBuilder.Entity("Portfolio.Domain.Blog.Post", b =>
+                {
+                    b.HasOne("Portfolio.Domain.Resume.ResumeProfile", "ResumeProfile")
+                        .WithMany()
+                        .HasForeignKey("ResumeProfileId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ResumeProfile");
                 });
 
             modelBuilder.Entity("Portfolio.Domain.Blog.PostSyndication", b =>

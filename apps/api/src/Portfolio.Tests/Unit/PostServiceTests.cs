@@ -5,7 +5,9 @@ using Portfolio.Application.Blog.Repositories;
 using Portfolio.Application.Blog.Requests;
 using Portfolio.Application.Blog.Responses;
 using Portfolio.Application.Blog.Services;
+using Portfolio.Application.Resume.Repositories;
 using Portfolio.Domain.Blog;
+using Portfolio.Domain.Resume;
 using Shouldly;
 using Xunit;
 
@@ -16,11 +18,12 @@ public class PostServiceTests
     private readonly IPostRepository _repositoryMock = Substitute.For<IPostRepository>();
     private readonly IAiChatService _aiServiceMock = Substitute.For<IAiChatService>();
     private readonly IAnalyticsRepository _analyticsMock = Substitute.For<IAnalyticsRepository>();
+    private readonly IResumeRepository _resumeMock = Substitute.For<IResumeRepository>();
     private readonly PostService _service;
 
     public PostServiceTests()
     {
-        _service = new PostService(_repositoryMock, _aiServiceMock, _analyticsMock);
+        _service = new PostService(_repositoryMock, _aiServiceMock, _analyticsMock, _resumeMock);
     }
 
     [Fact]
@@ -35,7 +38,7 @@ public class PostServiceTests
                 Slug = "first-post",
                 Title = "First Post",
                 Content = "Content 1",
-                PostedBy = "admin",
+                ResumeProfileId = Guid.NewGuid(),
                 DatePosted = DateTime.UtcNow
             },
             new()
@@ -44,7 +47,7 @@ public class PostServiceTests
                 Slug = "second-post",
                 Title = "Second Post",
                 Content = "Content 2",
-                PostedBy = "admin",
+                ResumeProfileId = Guid.NewGuid(),
                 DatePosted = DateTime.UtcNow
             }
         };
@@ -74,7 +77,7 @@ public class PostServiceTests
             Slug = "some-post",
             Title = "Some Post",
             Content = "Post content",
-            PostedBy = "admin",
+            ResumeProfileId = Guid.NewGuid(),
             DatePosted = DateTime.UtcNow
         };
         _repositoryMock.GetAsync(postId).Returns(post);
@@ -116,25 +119,27 @@ public class PostServiceTests
             Content = "Content",
             Visible = true,
             CanonicalUrl = "https://example.com",
+            ResumeProfileId = Guid.NewGuid(),
             Tags = new List<string> { "tag1", "tag2" }
         };
-        var author = "author1";
+        var profileId = request.ResumeProfileId;
 
+        _resumeMock.GetProfileByIdAsync(profileId).Returns(new ResumeProfile { Id = profileId });
         _repositoryMock.GetTagByNameAsync("tag1").Returns(new Tag { Name = "tag1" });
         _repositoryMock.GetTagByNameAsync("tag2").Returns((Tag?)null);
 
-        var result = await _service.CreateAsync(request, author);
+        var result = await _service.CreateAsync(request);
 
         await _repositoryMock.Received(1).AddAsync(Arg.Is<Post>(p => 
             p.Title == "New Post" && 
             p.Slug == "new-post" && 
-            p.PostedBy == author &&
+            p.ResumeProfileId == profileId &&
             p.PostTags.Count == 2));
         await _repositoryMock.Received(1).AddTagAsync(Arg.Is<Tag>(t => t.Name == "tag2"));
         await _repositoryMock.Received(1).SaveChangesAsync();
         
         result.Title.ShouldBe("New Post");
-        result.PostedBy.ShouldBe(author);
+        result.ResumeProfileId.ShouldBe(profileId);
         result.Tags.ShouldContain("tag1");
         result.Tags.ShouldContain("tag2");
     }
@@ -143,7 +148,7 @@ public class PostServiceTests
     public async Task UpdateAsync_UpdatesExistingPost_WhenPostExists()
     {
         var id = Guid.NewGuid();
-        var existingPost = new Post { Id = id, Title = "Old", Slug = "old", Content = "old", PostedBy = "admin" };
+        var existingPost = new Post { Id = id, Title = "Old", Slug = "old", Content = "old", ResumeProfileId = Guid.NewGuid() };
         _repositoryMock.GetAsync(id).Returns(existingPost);
 
         var request = new UpdatePostRequest
@@ -152,10 +157,12 @@ public class PostServiceTests
             Slug = "updated",
             Summary = "Updated summary",
             Content = "Updated content",
+            ResumeProfileId = Guid.NewGuid(),
             Visible = false
         };
         var editor = "editor1";
         
+        _resumeMock.GetProfileByIdAsync(request.ResumeProfileId).Returns(new ResumeProfile { Id = request.ResumeProfileId });
         _analyticsMock.GetPageViewsCountByPathAsync(Arg.Any<IEnumerable<string>>())
             .Returns(new Dictionary<string, int>());
 
@@ -174,7 +181,7 @@ public class PostServiceTests
     public async Task UpdateAsync_UpdatesTags_WhenTagsProvided()
     {
         var id = Guid.NewGuid();
-        var existingPost = new Post { Id = id, Title = "Old", Slug = "old", Content = "old", PostedBy = "admin" };
+        var existingPost = new Post { Id = id, Title = "Old", Slug = "old", Content = "old", ResumeProfileId = Guid.NewGuid() };
         _repositoryMock.GetAsync(id).Returns(existingPost);
 
         var request = new UpdatePostRequest
@@ -183,10 +190,12 @@ public class PostServiceTests
             Slug = "updated",
             Summary = "Updated summary",
             Content = "Updated content",
+            ResumeProfileId = Guid.NewGuid(),
             Tags = new List<string> { "tag1", "tag3" }
         };
         var editor = "editor1";
 
+        _resumeMock.GetProfileByIdAsync(request.ResumeProfileId).Returns(new ResumeProfile { Id = request.ResumeProfileId });
         _repositoryMock.GetTagByNameAsync("tag1").Returns(new Tag { Name = "tag1", Id = Guid.NewGuid() });
         _repositoryMock.GetTagByNameAsync("tag3").Returns((Tag?)null);
 
@@ -209,7 +218,7 @@ public class PostServiceTests
         var id = Guid.NewGuid();
         _repositoryMock.GetAsync(id).Returns((Post?)null);
 
-        var request = new UpdatePostRequest { Title = "T", Slug = "s", Summary = "s", Content = "c" };
+        var request = new UpdatePostRequest { Title = "T", Slug = "s", Summary = "s", Content = "c", ResumeProfileId = Guid.NewGuid() };
         var result = await _service.UpdateAsync(id, request, "editor");
 
         result.ShouldBeNull();
@@ -264,5 +273,44 @@ public class PostServiceTests
         result.Summary.ShouldBeNull(); // We don't overwrite if it wasn't requested/missing
         result.Slug.ShouldBe("test-slug");
         await _aiServiceMock.DidNotReceive().AskQuestionAsync(Arg.Any<string>(), Arg.Is<string>(s => s.Contains("summary") && !s.Contains("URL-friendly")), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task CreateAsync_ThrowsArgumentException_WhenProfileDoesNotExist()
+    {
+        var request = new CreatePostRequest
+        {
+            Title = "New Post",
+            Slug = "new-post",
+            Content = "content",
+            Summary = "summary",
+            ResumeProfileId = Guid.NewGuid()
+        };
+
+        _resumeMock.GetProfileByIdAsync(request.ResumeProfileId).Returns((ResumeProfile?)null);
+
+        await Should.ThrowAsync<ArgumentException>(async () => await _service.CreateAsync(request));
+    }
+
+    [Fact]
+    public async Task UpdateAsync_ThrowsArgumentException_WhenProfileDoesNotExist()
+    {
+        var id = Guid.NewGuid();
+        var existingPost = new Post { Id = id, Title = "Old", Slug = "old", Content = "old", ResumeProfileId = Guid.NewGuid() };
+        _repositoryMock.GetAsync(id).Returns(existingPost);
+
+        var request = new UpdatePostRequest
+        {
+            Title = "Updated Post",
+            Slug = "updated",
+            Content = "content",
+            Summary = "summary",
+            ResumeProfileId = Guid.NewGuid()
+        };
+        var editor = "editor1";
+
+        _resumeMock.GetProfileByIdAsync(request.ResumeProfileId).Returns((ResumeProfile?)null);
+
+        await Should.ThrowAsync<ArgumentException>(async () => await _service.UpdateAsync(id, request, editor));
     }
 }

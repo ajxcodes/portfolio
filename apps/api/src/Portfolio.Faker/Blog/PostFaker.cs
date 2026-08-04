@@ -13,6 +13,6 @@ public static class PostFaker
             .RuleFor(p => p.Visible, _ => true)
             .RuleFor(p => p.Slug, f => f.Lorem.Slug())
             .RuleFor(p => p.DatePosted, f => DateTime.UtcNow)
-            .RuleFor(p => p.PostedBy, _ => nameof(PostFaker))
+            .RuleFor(p => p.ResumeProfileId, f => Guid.CreateVersion7())
             .Generate(count);
 }

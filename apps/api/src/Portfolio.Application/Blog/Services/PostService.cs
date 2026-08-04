@@ -3,6 +3,7 @@ using Portfolio.Application.Blog.Repositories;
 using Portfolio.Application.Blog.Requests;
 using Portfolio.Application.Blog.Responses;
 using Portfolio.Domain.Blog;
+using Portfolio.Application.Resume.Repositories;
 
 namespace Portfolio.Application.Blog.Services;
 
@@ -10,13 +11,17 @@ public interface IPostService
 {
     Task<IEnumerable<PostResponse>> ListAsync();
     Task<PostResponse?> GetAsync(Guid id);
-    Task<PostResponse> CreateAsync(CreatePostRequest request, string authorUsername);
+    Task<PostResponse> CreateAsync(CreatePostRequest request);
     Task<PostResponse?> UpdateAsync(Guid id, UpdatePostRequest request, string editorUsername);
     Task DeleteAsync(Guid id);
     Task<GenerateMetadataResponse> GenerateMetadataAsync(GenerateMetadataRequest request);
 }
 
-public class PostService(IPostRepository repository, AI.IAiChatService aiService, IAnalyticsRepository analyticsRepository) : IPostService
+public class PostService(
+    IPostRepository repository, 
+    AI.IAiChatService aiService, 
+    IAnalyticsRepository analyticsRepository,
+    IResumeRepository resumeRepository) : IPostService
 {
     public async Task<IEnumerable<PostResponse>> ListAsync()
     {
@@ -46,8 +51,14 @@ public class PostService(IPostRepository repository, AI.IAiChatService aiService
         return response;
     }
 
-    public async Task<PostResponse> CreateAsync(CreatePostRequest request, string authorUsername)
+    public async Task<PostResponse> CreateAsync(CreatePostRequest request)
     {
+        var profile = await resumeRepository.GetProfileByIdAsync(request.ResumeProfileId);
+        if (profile == null)
+        {
+            throw new ArgumentException($"ResumeProfile with ID {request.ResumeProfileId} not found.", nameof(request.ResumeProfileId));
+        }
+
         var post = new Post
         {
             Id = Guid.NewGuid(),
@@ -58,7 +69,7 @@ public class PostService(IPostRepository repository, AI.IAiChatService aiService
             Visible = request.Visible,
             CanonicalUrl = request.CanonicalUrl,
             DatePosted = DateTime.UtcNow,
-            PostedBy = authorUsername
+            ResumeProfileId = request.ResumeProfileId
         };
 
         if (request.Tags != null && request.Tags.Any())
@@ -86,8 +97,18 @@ public class PostService(IPostRepository repository, AI.IAiChatService aiService
         var post = await repository.GetAsync(id);
         if (post == null) return null;
 
+        if (post.ResumeProfileId != request.ResumeProfileId)
+        {
+            var profile = await resumeRepository.GetProfileByIdAsync(request.ResumeProfileId);
+            if (profile == null)
+            {
+                throw new ArgumentException($"ResumeProfile with ID {request.ResumeProfileId} not found.", nameof(request.ResumeProfileId));
+            }
+        }
+
         post.Slug = request.Slug;
         post.Title = request.Title;
+        post.ResumeProfileId = request.ResumeProfileId;
         post.Summary = request.Summary;
         post.Content = request.Content;
         post.Visible = request.Visible;

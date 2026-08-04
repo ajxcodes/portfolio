@@ -11,6 +11,17 @@ interface BlogListClientProps {
 
 export function BlogListClient({ initialPosts }: BlogListClientProps) {
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const [selectedPersona, setSelectedPersona] = useState<string | null>(null);
+
+  const allPersonas = useMemo(() => {
+    const personas = new Map<string, string>();
+    initialPosts.forEach(post => {
+      if (post.resumeProfileId) {
+        personas.set(post.resumeProfileId, post.authorName || "Unknown Persona");
+      }
+    });
+    return Array.from(personas.entries());
+  }, [initialPosts]);
 
   const allTags = useMemo(() => {
     const tags = new Set<string>();
@@ -21,12 +32,49 @@ export function BlogListClient({ initialPosts }: BlogListClientProps) {
   }, [initialPosts]);
 
   const filteredPosts = useMemo(() => {
-    if (!selectedTag) return initialPosts;
-    return initialPosts.filter(post => post.tags?.includes(selectedTag));
-  }, [initialPosts, selectedTag]);
+    let posts = initialPosts;
+    if (selectedPersona) {
+      posts = posts.filter(post => post.resumeProfileId === selectedPersona);
+    }
+    if (selectedTag) {
+      posts = posts.filter(post => post.tags?.includes(selectedTag));
+    }
+    return posts;
+  }, [initialPosts, selectedTag, selectedPersona]);
 
   return (
     <>
+      {allPersonas.length > 1 && (
+        <div className="mb-4 pb-4 border-b border-primary/5">
+          <p className="text-xs font-bold text-primary/60 uppercase tracking-wider mb-3">Filter by Persona</p>
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => setSelectedPersona(null)}
+              className={`text-xs px-3 py-1.5 rounded-full border transition-all ${
+                selectedPersona === null 
+                  ? "bg-primary text-primary-foreground border-primary font-bold" 
+                  : "bg-primary/5 text-primary/80 border-primary/20 hover:bg-primary/10"
+              }`}
+            >
+              All
+            </button>
+            {allPersonas.map(([id, name]) => (
+              <button
+                key={id}
+                onClick={() => setSelectedPersona(id)}
+                className={`text-xs px-3 py-1.5 rounded-full border transition-all ${
+                  selectedPersona === id 
+                    ? "bg-primary text-primary-foreground border-primary font-bold" 
+                    : "bg-primary/5 text-primary/80 border-primary/20 hover:bg-primary/10"
+                }`}
+              >
+                {name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {allTags.length > 0 && (
         <div className="mb-8 pb-6 border-b border-primary/10">
           <p className="text-xs font-bold text-primary/60 uppercase tracking-wider mb-3">Filter by Topic</p>

@@ -2,6 +2,7 @@ using System.Net.Http.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Portfolio.Application.Blog.Responses;
 using Portfolio.Domain.Blog;
+using Portfolio.Domain.Resume;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Portfolio.Infrastructure.Database.Contexts;
 using Portfolio.Tests.Infrastructure;
@@ -50,13 +51,16 @@ public class PostIntegrationTests
         using var scope = _fixture.Factory.Services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<PortfolioDbContext>();
 
+        var profile = new ResumeProfile { Id = Guid.NewGuid(), Name = "author" };
+        context.ResumeProfiles.Add(profile);
+
         var post1 = new Post
         {
             Id = Guid.NewGuid(),
             Slug = "first-post",
             Title = "First Title",
             Content = "Content 1",
-            PostedBy = "author",
+            ResumeProfileId = profile.Id,
             DatePosted = DateTime.UtcNow
         };
         var post2 = new Post
@@ -65,7 +69,7 @@ public class PostIntegrationTests
             Slug = "second-post",
             Title = "Second Title",
             Content = "Content 2",
-            PostedBy = "author",
+            ResumeProfileId = profile.Id,
             DatePosted = DateTime.UtcNow
         };
 
@@ -97,6 +101,9 @@ public class PostIntegrationTests
         using var scope = _fixture.Factory.Services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<PortfolioDbContext>();
 
+        var profile = new ResumeProfile { Id = Guid.NewGuid(), Name = "author" };
+        context.ResumeProfiles.Add(profile);
+
         var targetId = Guid.NewGuid();
         var post = new Post
         {
@@ -104,7 +111,7 @@ public class PostIntegrationTests
             Slug = "target-post",
             Title = "Target Title",
             Content = "Target Content",
-            PostedBy = "author",
+            ResumeProfileId = profile.Id,
             DatePosted = DateTime.UtcNow
         };
 
@@ -134,12 +141,19 @@ public class PostIntegrationTests
     [Fact]
     public async Task CreateAsync_ReturnsCreatedPost()
     {
+        using var scope = _fixture.Factory.Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<PortfolioDbContext>();
+        var profile = new ResumeProfile { Id = Guid.NewGuid(), Name = "author" };
+        context.ResumeProfiles.Add(profile);
+        await context.SaveChangesAsync();
+
         var request = new CreatePostRequest
         {
             Title = "Integration Test",
             Slug = "integration-test",
             Summary = "Integration summary",
             Content = "Integration content",
+            ResumeProfileId = profile.Id,
             Visible = true,
             CanonicalUrl = null
         };
@@ -169,13 +183,16 @@ public class PostIntegrationTests
         // Arrange
         using var scope = _fixture.Factory.Services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<PortfolioDbContext>();
+        var profile = new ResumeProfile { Id = Guid.NewGuid(), Name = "author" };
+        context.ResumeProfiles.Add(profile);
+
         var post = new Post
         {
             Id = Guid.NewGuid(),
             Slug = "old-slug",
             Title = "Old Title",
             Content = "Old Content",
-            PostedBy = "author",
+            ResumeProfileId = profile.Id,
             DatePosted = DateTime.UtcNow
         };
         context.Posts.Add(post);
@@ -187,6 +204,7 @@ public class PostIntegrationTests
             Slug = "new-slug",
             Summary = "New Summary",
             Content = "New Content",
+            ResumeProfileId = profile.Id,
             Visible = false,
             CanonicalUrl = "https://new-url.com"
         };
@@ -220,13 +238,16 @@ public class PostIntegrationTests
         // Arrange
         using var scope = _fixture.Factory.Services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<PortfolioDbContext>();
+        var profile = new ResumeProfile { Id = Guid.NewGuid(), Name = "author" };
+        context.ResumeProfiles.Add(profile);
+
         var post = new Post
         {
             Id = Guid.NewGuid(),
             Slug = "delete-slug",
             Title = "Delete Title",
             Content = "Delete Content",
-            PostedBy = "author",
+            ResumeProfileId = profile.Id,
             DatePosted = DateTime.UtcNow
         };
         context.Posts.Add(post);
