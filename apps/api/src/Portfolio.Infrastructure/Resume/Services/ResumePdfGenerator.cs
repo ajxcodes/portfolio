@@ -6,8 +6,9 @@ using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
 using Portfolio.Application.Resume.Contracts.Responses;
+using Portfolio.Application.Resume.Services;
 
-namespace Portfolio.Application.Resume.Services;
+namespace Portfolio.Infrastructure.Resume.Services;
 
 public class ResumePdfGenerator : IResumePdfGenerator
 {
