@@ -1,5 +1,6 @@
 using NetArchTest.Rules;
 using Portfolio.Application.Extensions;
+using Xunit;
 
 namespace Portfolio.Tests.Architecture;
 

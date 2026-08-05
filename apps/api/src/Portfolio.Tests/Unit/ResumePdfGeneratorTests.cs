@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Portfolio.Application.Resume.Contracts.Responses;
-using Portfolio.Application.Resume.Services;
+using Portfolio.Infrastructure.Resume.Services;
 using Shouldly;
 using Xunit;
 
