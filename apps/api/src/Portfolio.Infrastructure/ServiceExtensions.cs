@@ -8,6 +8,8 @@ using Portfolio.Application.Storage.Services;
 using Portfolio.Infrastructure.Storage.Services;
 using Portfolio.Application.AI;
 using Portfolio.Infrastructure.AI;
+using Portfolio.Application.Resume.Services;
+using Portfolio.Infrastructure.Resume.Services;
 
 namespace Portfolio.Infrastructure;
 
@@ -18,6 +20,7 @@ public static class ServiceExtensions
         IConfiguration configuration)
     {
         services.AddScoped<IStorageService, S3StorageService>();
+        services.AddSingleton<IResumePdfGenerator, ResumePdfGenerator>();
 
         var aiProvider = configuration["AI_PROVIDER"] ?? "Ollama";
         if (aiProvider.Equals("Gemini", StringComparison.OrdinalIgnoreCase))

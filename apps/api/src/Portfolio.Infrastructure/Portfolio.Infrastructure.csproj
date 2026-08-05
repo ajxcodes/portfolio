@@ -27,6 +27,7 @@
       <PackageReference Include="AWSSDK.S3" />
       <PackageReference Include="DocumentFormat.OpenXml" />
       <PackageReference Include="HtmlAgilityPack" />
+      <PackageReference Include="QuestPDF" />
       <PackageReference Include="UglyToad.PdfPig" />
     </ItemGroup>
 

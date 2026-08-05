@@ -16,8 +16,7 @@ public static class ServiceExtensions
             .AddScoped<IResumeService, ResumeService>()
             .AddScoped<IAnalyticsService, AnalyticsService>()
             .AddScoped<IAiPromptService, AiPromptService>()
-            .AddScoped<IJobFitService, JobFitService>()
-            .AddSingleton<IResumePdfGenerator, ResumePdfGenerator>();
+            .AddScoped<IJobFitService, JobFitService>();
         
         return services;
     }
