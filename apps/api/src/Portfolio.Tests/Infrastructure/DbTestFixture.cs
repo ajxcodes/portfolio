@@ -27,7 +27,7 @@ public class DbTestFixture : IAsyncLifetime
         DbContainer = new PostgreSqlBuilder("postgres:15-alpine")
             .Build();
 
-        MinioContainer = new MinioBuilder("minio/minio")
+        MinioContainer = new MinioBuilder("cgr.dev/chainguard/minio:latest")
             .WithUsername("minioadmin")
             .WithPassword("minioadminpassword")
             .Build();

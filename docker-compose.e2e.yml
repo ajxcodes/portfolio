@@ -58,7 +58,7 @@ services:
     # Readiness is polled from the runner host in the CI "Wait for API" step.
 
   minio:
-    image: minio/minio:latest
+    image: cgr.dev/chainguard/minio:latest
     ports:
       - "9002:9000"
       - "9003:9001"
