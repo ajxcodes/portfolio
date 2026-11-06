@@ -1,0 +1,31 @@
+name: Critique Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  pull-requests: write
+  issues: write
+  contents: write
+
+jobs:
+  critique:
+    name: Code Review (Critique)
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Critique
+        uses: ajxcodes/critique@latest
+        with:
+          gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          update_pr_description: 'true'
+          post_inline_comments: 'true'
+          post_summary_comment: 'true'
