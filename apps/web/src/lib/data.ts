@@ -84,6 +84,28 @@ export interface BlogPost {
   views?: number;
 }
 
+export interface ProjectLinkItem {
+  id?: string;
+  type: string;
+  url: string;
+  label?: string;
+  displayOrder?: number;
+}
+
+export interface ProjectShowcase {
+  id: string;
+  slug: string;
+  title: string;
+  summary: string;
+  content: string;
+  datePosted: string;
+  visible: boolean;
+  resumeProfileId: string;
+  authorName: string;
+  tags?: string[];
+  projectLinks?: ProjectLinkItem[];
+}
+
 export interface PortfolioData {
   personalInfo: PersonalInfo;
   resume: ResumeData;
@@ -314,3 +336,37 @@ export async function getBlogPostBySlug(slug: string): Promise<BlogPost | undefi
     return undefined;
   }
 }
+
+// Fetch only projects
+export const getProjects = cache(async (): Promise<ProjectShowcase[]> => {
+  const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5808';
+  try {
+    const res = await fetch(`${apiUrl}/api/projects`, {
+      cache: 'no-store',
+    });
+
+    if (res.ok) {
+      const projects = await res.json();
+      return projects
+        ? projects
+            .filter((p: any) => p.visible !== false)
+            .map((p: any) => ({
+              id: p.id,
+              slug: p.slug,
+              title: p.title,
+              summary: p.summary || '',
+              content: p.content,
+              visible: p.visible,
+              resumeProfileId: p.resumeProfileId,
+              authorName: p.authorName,
+              datePosted: p.datePosted,
+              tags: p.tags || [],
+              projectLinks: p.projectLinks || [],
+            }))
+        : [];
+    }
+  } catch (e) {
+    console.error('Failed to fetch/parse projects response:', e);
+  }
+  return [];
+});

@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Portfolio.Domain.Blog;
+using Portfolio.Domain.Content;
 
 namespace Portfolio.Infrastructure.Database.Configuration;
 
@@ -9,14 +10,14 @@ public class PostSyndicationConfiguration : IEntityTypeConfiguration<PostSyndica
     public void Configure(EntityTypeBuilder<PostSyndication> builder)
     {
         builder.HasKey(ps => new { ps.PostId, ps.PlatformId });
-        
+
         builder.Property(ps => ps.ExternalUrl)
             .IsRequired()
             .HasMaxLength(255);
-            
+
         builder.Property(ps => ps.ExternalId)
             .HasMaxLength(100);
-            
+
         builder.Property(ps => ps.SyndicatedAt)
             .IsRequired()
             .HasDefaultValueSql("CURRENT_TIMESTAMP");

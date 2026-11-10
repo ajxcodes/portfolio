@@ -1,3 +1,5 @@
+using Portfolio.Domain.Content;
+
 namespace Portfolio.Domain.Blog;
 
 public class PostSyndication
@@ -9,6 +11,6 @@ public class PostSyndication
     public DateTime SyndicatedAt { get; set; } = DateTime.UtcNow;
 
     // Navigation properties
-    public virtual Post? Post { get; set; }
+    public virtual BlogPost? Post { get; set; }
     public virtual SyndicationPlatform? Platform { get; set; }
 }

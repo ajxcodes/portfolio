@@ -1,5 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
-using Portfolio.Application.Blog.Services;
+using Portfolio.Application.Content.Services;
 using Portfolio.Application.Resume.Services;
 using Portfolio.Application.Analytics.Services;
 using Portfolio.Application.AI.Services;
@@ -12,7 +12,7 @@ public static class ServiceExtensions
     public static IServiceCollection ConfigureApplication(this IServiceCollection services)
     {
         services
-            .AddScoped<IPostService, PostService>()
+            .AddScoped<IContentService, ContentService>()
             .AddScoped<IResumeService, ResumeService>()
             .AddScoped<IAnalyticsService, AnalyticsService>()
             .AddScoped<IAiPromptService, AiPromptService>()

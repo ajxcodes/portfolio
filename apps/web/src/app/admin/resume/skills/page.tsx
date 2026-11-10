@@ -6,6 +6,8 @@ import { Plus, Trash2, Edit2, Check, X, AlertCircle, ChevronDown, Search } from 
 import * as LucideIcons from "lucide-react";
 import { AdminSkeleton } from "@/components/admin/AdminSkeleton";
 
+interface ResumeProfileInfo { id: string; name: string; isActive: boolean; }
+
 const lucideIconNames = Object.keys(LucideIcons).filter((name) => 
   !name.endsWith("Icon") && 
   name !== "createLucideIcon" && 
@@ -105,6 +107,9 @@ export default function SkillsLibraryPage() {
   const [categories, setCategories] = useState<SkillCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
+  const [profiles, setProfiles] = useState<ResumeProfileInfo[]>([]);
+  const [selectedProfileId, setSelectedProfileId] = useState<string>("");
+  const [profilesLoading, setProfilesLoading] = useState(true);
 
   const [newCatName, setNewCatName] = useState("");
   const [newCatIcon, setNewCatIcon] = useState("");
@@ -144,7 +149,26 @@ export default function SkillsLibraryPage() {
     }
   };
 
+  const loadProfiles = async () => {
+    setProfilesLoading(true);
+    try {
+      const headers = await fetchAuthHeaders();
+      const res = await fetch(`${API_BASE_URL}/api/resume`, { headers });
+      if (res.ok) {
+        const data: ResumeProfileInfo[] = await res.json();
+        setProfiles(data || []);
+        const active = (data || []).find((p) => p.isActive);
+        setSelectedProfileId(active?.id || data?.[0]?.id || "");
+      }
+    } catch (e) {
+      console.error("Failed to load resume profiles", e);
+    } finally {
+      setProfilesLoading(false);
+    }
+  };
+
   useEffect(() => {
+    loadProfiles();
     loadCategories();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -249,6 +273,23 @@ export default function SkillsLibraryPage() {
         <div>
           <h1 className="text-2xl font-bold text-primary">skills_library</h1>
           <p className="text-xs text-muted-foreground/85 mt-1">Manage skill categories and global skills available to link in your work experience.</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <label className="text-xs font-bold text-primary/80 uppercase tracking-wider">Active Profile</label>
+          {profilesLoading ? (
+            <div className="w-40 h-8 bg-muted/20 animate-pulse rounded" />
+          ) : (
+            <select
+              value={selectedProfileId}
+              onChange={(e) => setSelectedProfileId(e.target.value)}
+              className="bg-background border border-primary/20 p-2 rounded text-xs focus:outline-none focus:border-primary/50 transition-colors"
+            >
+              {profiles.map((p) => (
+                <option key={p.id} value={p.id}>{p.name} {p.isActive ? "(Active)" : ""}</option>
+              ))}
+              {profiles.length === 0 && <option value="">No profiles</option>}
+            </select>
+          )}
         </div>
       </div>
 
