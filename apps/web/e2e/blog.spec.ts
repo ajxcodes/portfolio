@@ -30,8 +30,8 @@ test.describe('Blog Page', () => {
       await expect(page).toHaveURL(/\/blog\//);
 
       // Verify the details page renders the correct post title
-      const detailsHeader = page.locator('h1');
-      await expect(detailsHeader).toContainText(expectedTitle?.replace('>_', '').trim() || '');
+      const titleText = expectedTitle?.replace('>_', '').trim() || '';
+      await expect(page.locator('header h1, article h1').first()).toContainText(titleText);
     }
   });
 });

@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { ExternalLink, Github, Store, Globe } from "lucide-react";
 import type { ProjectShowcase } from "@/lib/data";
@@ -13,6 +14,19 @@ function linkIcon(type: string) {
 }
 
 export function ProjectsListClient({ initialProjects }: { initialProjects: ProjectShowcase[] }) {
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
+
+  const allTags = useMemo(() => {
+    const tags = new Set<string>();
+    initialProjects.forEach((p) => (p.tags || []).forEach((t) => tags.add(t)));
+    return Array.from(tags).sort();
+  }, [initialProjects]);
+
+  const filteredProjects = useMemo(() => {
+    if (!selectedTag) return initialProjects;
+    return initialProjects.filter((p) => (p.tags || []).includes(selectedTag));
+  }, [initialProjects, selectedTag]);
+
   if (initialProjects.length === 0) {
     return (
       <div className="terminal-card rounded-xl p-10 text-center border-dashed">
@@ -23,7 +37,29 @@ export function ProjectsListClient({ initialProjects }: { initialProjects: Proje
 
   return (
     <div className="space-y-4">
-      {initialProjects.map((project) => (
+      {allTags.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-2" aria-label="Project tag filters">
+          <button
+            type="button"
+            onClick={() => setSelectedTag(null)}
+            className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${selectedTag === null ? "bg-primary text-primary-foreground border-primary" : "bg-primary/10 text-primary border-primary/20 hover:border-primary/40"}`}
+          >
+            all
+          </button>
+          {allTags.map((tag) => (
+            <button
+              key={tag}
+              type="button"
+              onClick={() => setSelectedTag(tag)}
+              className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${selectedTag === tag ? "bg-primary text-primary-foreground border-primary" : "bg-primary/10 text-primary border-primary/20 hover:border-primary/40"}`}
+            >
+              {tag}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {filteredProjects.map((project) => (
         <article
           key={project.id}
           className="terminal-card p-5 rounded-xl border border-primary/10 hover:border-primary/30 transition-all duration-300"

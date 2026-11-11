@@ -76,7 +76,7 @@ public class ContentServiceTests
             ResumeProfileId = Guid.NewGuid(),
             DatePosted = DateTime.UtcNow
         };
-        _repositoryMock.GetAsync(id).Returns(item);
+        _repositoryMock.GetAsync(id, ContentType.Blog).Returns(item);
         _analyticsMock.GetPageViewsCountByPathAsync(Arg.Any<IEnumerable<string>>())
             .Returns(new Dictionary<string, int> { { "/blog/some-post", 42 } });
 
@@ -92,7 +92,7 @@ public class ContentServiceTests
     public async Task GetAsync_ReturnsNull_WhenItemDoesNotExist()
     {
         var id = Guid.NewGuid();
-        _repositoryMock.GetAsync(id).Returns((ContentItem?)null);
+        _repositoryMock.GetAsync(id, ContentType.Blog).Returns((ContentItem?)null);
 
         var result = await _service.GetAsync(id, ContentType.Blog);
 
@@ -186,7 +186,7 @@ public class ContentServiceTests
     {
         var id = Guid.NewGuid();
         var existing = new BlogPost { Id = id, Title = "Old", Slug = "old", Content = "old", ResumeProfileId = Guid.NewGuid() };
-        _repositoryMock.GetAsync(id).Returns(existing);
+        _repositoryMock.GetAsync(id, ContentType.Blog).Returns(existing);
 
         var request = new UpdateContentRequest
         {
@@ -216,7 +216,7 @@ public class ContentServiceTests
     {
         var id = Guid.NewGuid();
         var existing = new Project { Id = id, Title = "Old", Slug = "old", Content = "old", ResumeProfileId = Guid.NewGuid() };
-        _repositoryMock.GetAsync(id).Returns(existing);
+        _repositoryMock.GetAsync(id, ContentType.Project).Returns(existing);
 
         var request = new UpdateContentRequest
         {
@@ -240,7 +240,7 @@ public class ContentServiceTests
     public async Task UpdateAsync_ReturnsNull_WhenProjectDoesNotExist()
     {
         var id = Guid.NewGuid();
-        _repositoryMock.GetAsync(id).Returns((ContentItem?)null);
+        _repositoryMock.GetAsync(id, ContentType.Project).Returns((ContentItem?)null);
 
         var request = new UpdateContentRequest
         {
@@ -260,7 +260,7 @@ public class ContentServiceTests
     {
         var id = Guid.NewGuid();
         var existing = new BlogPost { Id = id, Title = "Old", Slug = "old", Content = "old", ResumeProfileId = Guid.NewGuid() };
-        _repositoryMock.GetAsync(id).Returns(existing);
+        _repositoryMock.GetAsync(id, ContentType.Blog).Returns(existing);
 
         var request = new UpdateContentRequest
         {
@@ -291,7 +291,7 @@ public class ContentServiceTests
     public async Task UpdateAsync_ReturnsNull_WhenItemDoesNotExist()
     {
         var id = Guid.NewGuid();
-        _repositoryMock.GetAsync(id).Returns((ContentItem?)null);
+        _repositoryMock.GetAsync(id, ContentType.Blog).Returns((ContentItem?)null);
 
         var request = new UpdateContentRequest { Title = "T", Slug = "s", Summary = "s", Content = "c", ResumeProfileId = Guid.NewGuid() };
         var result = await _service.UpdateAsync(id, ContentType.Blog, request, "editor");
@@ -304,7 +304,7 @@ public class ContentServiceTests
     {
         var id = Guid.NewGuid();
         var existing = new BlogPost { Id = id, Title = "Old", Slug = "old", Content = "old", ResumeProfileId = Guid.NewGuid() };
-        _repositoryMock.GetAsync(id).Returns(existing);
+        _repositoryMock.GetAsync(id, ContentType.Blog).Returns(existing);
 
         var request = new UpdateContentRequest
         {
@@ -369,5 +369,48 @@ public class ContentServiceTests
         result.Summary.ShouldBeNull();
         result.Slug.ShouldBe("test-slug");
         await _aiServiceMock.DidNotReceive().AskQuestionAsync(Arg.Any<string>(), Arg.Is<string>(s => s.Contains("summary") && !s.Contains("URL-friendly")), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task UpdateAsync_ReplacesProjectLinks_WhenProjectExists()
+    {
+        var id = Guid.NewGuid();
+        var existing = new Project
+        {
+            Id = id,
+            Title = "Old",
+            Slug = "old",
+            Content = "old",
+            ResumeProfileId = Guid.NewGuid(),
+            ProjectLinks = new List<ProjectLink>
+            {
+                new() { ProjectId = id, Type = "github", Url = "https://old.example/repo" }
+            }
+        };
+        _repositoryMock.GetAsync(id, ContentType.Project).Returns(existing);
+
+        var request = new UpdateContentRequest
+        {
+            Title = "Updated Project",
+            Slug = "updated-project",
+            Summary = "Updated summary",
+            Content = "Updated content",
+            ResumeProfileId = existing.ResumeProfileId,
+            Visible = true,
+            ProjectLinks = new List<ProjectLinkRequest>
+            {
+                new() { Type = "homepage", Url = "https://new.example.com", Label = "Home" },
+                new() { Type = "github", Url = "https://new.example/repo", Label = "Code" }
+            }
+        };
+
+        var result = await _service.UpdateAsync(id, ContentType.Project, request, "editor1");
+
+        await _repositoryMock.Received(1).UpdateAsync(Arg.Is<Project>(p =>
+            p.ProjectLinks.Count == 2 &&
+            p.ProjectLinks.Any(l => l.Type == "homepage" && l.Url == "https://new.example.com") &&
+            p.ProjectLinks.Any(l => l.Type == "github" && l.Url == "https://new.example/repo")));
+        await _repositoryMock.Received(1).SaveChangesAsync();
+        result.ShouldNotBeNull();
     }
 }

@@ -159,7 +159,7 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
         <div className="lg:col-span-2 space-y-6">
           <div className="space-y-2">
             <label className="text-xs font-bold text-primary/80 uppercase tracking-wider">Title</label>
-            <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} className="w-full bg-background border border-primary/20 p-3 rounded text-sm focus:outline-none focus:border-primary/50 transition-colors" />
+            <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Project Title..." className="w-full bg-background border border-primary/20 p-3 rounded text-sm focus:outline-none focus:border-primary/50 transition-colors" />
           </div>
           <div className="space-y-2">
             <label className="text-xs font-bold text-primary/80 uppercase tracking-wider">README / Content</label>

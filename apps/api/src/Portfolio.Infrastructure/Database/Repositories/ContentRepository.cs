@@ -41,20 +41,21 @@ public class ContentRepository(PortfolioDbContext context) : IContentRepository
         return posts.Cast<ContentItem>().ToList();
     }
 
-    public async Task<ContentItem?> GetAsync(Guid id)
+    public async Task<ContentItem?> GetAsync(Guid id, ContentType contentType)
     {
-        var project = await context.ContentItems
-            .OfType<Project>()
-            .AsSplitQuery()
-            .Include(p => p.ResumeProfile)
-            .Include(p => p.ContentTags)
-                .ThenInclude(ct => ct.ContentTag)
-            .Include(p => p.ProjectLinks)
-            .FirstOrDefaultAsync(p => p.Id == id);
+        if (contentType == ContentType.Project)
+        {
+            return await context.ContentItems
+                .OfType<Project>()
+                .AsSplitQuery()
+                .Include(p => p.ResumeProfile)
+                .Include(p => p.ContentTags)
+                    .ThenInclude(ct => ct.ContentTag)
+                .Include(p => p.ProjectLinks)
+                .FirstOrDefaultAsync(p => p.Id == id);
+        }
 
-        if (project != null) return project;
-
-        var post = await context.ContentItems
+        return await context.ContentItems
             .OfType<BlogPost>()
             .AsSplitQuery()
             .Include(p => p.ResumeProfile)
@@ -63,25 +64,24 @@ public class ContentRepository(PortfolioDbContext context) : IContentRepository
             .Include(p => p.PostSyndications)
                 .ThenInclude(ps => ps.Platform)
             .FirstOrDefaultAsync(p => p.Id == id);
-
-        return post;
     }
 
-    public async Task<ContentItem?> GetBySlugAsync(string slug)
+    public async Task<ContentItem?> GetBySlugAsync(string slug, ContentType contentType)
     {
-        var project = await context.ContentItems
-            .OfType<Project>()
-            .AsNoTracking()
-            .AsSplitQuery()
-            .Include(p => p.ResumeProfile)
-            .Include(p => p.ContentTags)
-                .ThenInclude(ct => ct.ContentTag)
-            .Include(p => p.ProjectLinks)
-            .FirstOrDefaultAsync(p => p.Slug == slug);
+        if (contentType == ContentType.Project)
+        {
+            return await context.ContentItems
+                .OfType<Project>()
+                .AsNoTracking()
+                .AsSplitQuery()
+                .Include(p => p.ResumeProfile)
+                .Include(p => p.ContentTags)
+                    .ThenInclude(ct => ct.ContentTag)
+                .Include(p => p.ProjectLinks)
+                .FirstOrDefaultAsync(p => p.Slug == slug);
+        }
 
-        if (project != null) return project;
-
-        var post = await context.ContentItems
+        return await context.ContentItems
             .OfType<BlogPost>()
             .AsNoTracking()
             .AsSplitQuery()
@@ -91,8 +91,6 @@ public class ContentRepository(PortfolioDbContext context) : IContentRepository
             .Include(p => p.PostSyndications)
                 .ThenInclude(ps => ps.Platform)
             .FirstOrDefaultAsync(p => p.Slug == slug);
-
-        return post;
     }
 
     public async Task AddAsync(ContentItem item)
@@ -102,7 +100,19 @@ public class ContentRepository(PortfolioDbContext context) : IContentRepository
 
     public Task UpdateAsync(ContentItem item)
     {
-        context.ContentItems.Update(item);
+        if (item is Project project)
+        {
+            // The caller replaces the link collection wholesale: the previous rows are
+            // orphaned (cascade delete) and the replacement rows are new, so they must be
+            // INSERTed. A blanket graph Update() marks them Modified and emits a no-op
+            // UPDATE that matches zero rows.
+            foreach (var link in project.ProjectLinks)
+            {
+                context.Entry(link).State = EntityState.Added;
+            }
+        }
+
+        context.Entry(item).State = EntityState.Modified;
         return Task.CompletedTask;
     }
 

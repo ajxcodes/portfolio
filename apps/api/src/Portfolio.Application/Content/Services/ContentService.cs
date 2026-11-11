@@ -43,8 +43,8 @@ public class ContentService(
 
     public async Task<ContentResponse?> GetAsync(Guid id, ContentType contentType)
     {
-        var item = await repository.GetAsync(id);
-        if (item == null || !IsOfType(item, contentType)) return null;
+        var item = await repository.GetAsync(id, contentType);
+        if (item == null) return null;
 
         var response = ContentResponse.FromDomain(item);
 
@@ -92,8 +92,8 @@ public class ContentService(
 
     public async Task<ContentResponse?> UpdateAsync(Guid id, ContentType contentType, UpdateContentRequest request, string editorUsername)
     {
-        var item = await repository.GetAsync(id);
-        if (item == null || !IsOfType(item, contentType)) return null;
+        var item = await repository.GetAsync(id, contentType);
+        if (item == null) return null;
 
         if (item.ResumeProfileId != request.ResumeProfileId)
         {

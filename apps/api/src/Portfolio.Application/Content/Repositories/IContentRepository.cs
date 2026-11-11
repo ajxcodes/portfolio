@@ -6,8 +6,8 @@ namespace Portfolio.Application.Content.Repositories;
 public interface IContentRepository
 {
     Task<List<ContentItem>> ListAsync(ContentType contentType);
-    Task<ContentItem?> GetAsync(Guid id);
-    Task<ContentItem?> GetBySlugAsync(string slug);
+    Task<ContentItem?> GetAsync(Guid id, ContentType contentType);
+    Task<ContentItem?> GetBySlugAsync(string slug, ContentType contentType);
     Task AddAsync(ContentItem item);
     Task UpdateAsync(ContentItem item);
     Task DeleteAsync(Guid id);
