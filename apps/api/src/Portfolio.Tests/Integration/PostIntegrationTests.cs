@@ -1,7 +1,9 @@
 using System.Net.Http.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Portfolio.Application.Blog.Responses;
-using Portfolio.Domain.Blog;
+using Portfolio.Application.Content.Requests;
+using Portfolio.Application.Content.Responses;
+using Portfolio.Domain.Content;
 using Portfolio.Domain.Resume;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Portfolio.Infrastructure.Database.Contexts;
@@ -27,7 +29,7 @@ public class PostIntegrationTests
     {
         _fixture = fixture;
         _aiServiceMock = Substitute.For<IAiChatService>();
-        
+
         _factory = _fixture.Factory.WithWebHostBuilder(builder =>
         {
             builder.ConfigureServices(services =>
@@ -54,7 +56,7 @@ public class PostIntegrationTests
         var profile = new ResumeProfile { Id = Guid.NewGuid(), Name = "author" };
         context.ResumeProfiles.Add(profile);
 
-        var post1 = new Post
+        var post1 = new BlogPost
         {
             Id = Guid.NewGuid(),
             Slug = "first-post",
@@ -63,7 +65,7 @@ public class PostIntegrationTests
             ResumeProfileId = profile.Id,
             DatePosted = DateTime.UtcNow
         };
-        var post2 = new Post
+        var post2 = new BlogPost
         {
             Id = Guid.NewGuid(),
             Slug = "second-post",
@@ -73,11 +75,11 @@ public class PostIntegrationTests
             DatePosted = DateTime.UtcNow
         };
 
-        context.Posts.AddRange(post1, post2);
+        context.ContentItems.AddRange(post1, post2);
         await context.SaveChangesAsync();
 
         // Act
-        var result = await _client.GetFromJsonOrReportErrorAsync<List<PostResponse>>("/api/blog/posts");
+        var result = await _client.GetFromJsonOrReportErrorAsync<List<ContentResponse>>("/api/blog/posts");
 
         // Assert
         result.ShouldNotBeNull();
@@ -87,10 +89,10 @@ public class PostIntegrationTests
         // Clean up
         using var cleanScope = _fixture.Factory.Services.CreateScope();
         var cleanContext = cleanScope.ServiceProvider.GetRequiredService<PortfolioDbContext>();
-        var dbPost1 = await cleanContext.Posts.FindAsync(post1.Id);
-        var dbPost2 = await cleanContext.Posts.FindAsync(post2.Id);
-        if (dbPost1 != null) cleanContext.Posts.Remove(dbPost1);
-        if (dbPost2 != null) cleanContext.Posts.Remove(dbPost2);
+        var dbPost1 = await cleanContext.ContentItems.FindAsync(post1.Id);
+        var dbPost2 = await cleanContext.ContentItems.FindAsync(post2.Id);
+        if (dbPost1 != null) cleanContext.ContentItems.Remove(dbPost1);
+        if (dbPost2 != null) cleanContext.ContentItems.Remove(dbPost2);
         await cleanContext.SaveChangesAsync();
     }
 
@@ -105,7 +107,7 @@ public class PostIntegrationTests
         context.ResumeProfiles.Add(profile);
 
         var targetId = Guid.NewGuid();
-        var post = new Post
+        var post = new BlogPost
         {
             Id = targetId,
             Slug = "target-post",
@@ -115,11 +117,11 @@ public class PostIntegrationTests
             DatePosted = DateTime.UtcNow
         };
 
-        context.Posts.Add(post);
+        context.ContentItems.Add(post);
         await context.SaveChangesAsync();
 
         // Act
-        var result = await _client.GetFromJsonOrReportErrorAsync<PostResponse>($"/api/blog/posts/{targetId}");
+        var result = await _client.GetFromJsonOrReportErrorAsync<ContentResponse>($"/api/blog/posts/{targetId}");
 
         // Assert
         result.ShouldNotBeNull();
@@ -130,10 +132,10 @@ public class PostIntegrationTests
         // Clean up
         using var cleanScope = _fixture.Factory.Services.CreateScope();
         var cleanContext = cleanScope.ServiceProvider.GetRequiredService<PortfolioDbContext>();
-        var dbPost = await cleanContext.Posts.FindAsync(targetId);
+        var dbPost = await cleanContext.ContentItems.FindAsync(targetId);
         if (dbPost != null)
         {
-            cleanContext.Posts.Remove(dbPost);
+            cleanContext.ContentItems.Remove(dbPost);
             await cleanContext.SaveChangesAsync();
         }
     }
@@ -147,7 +149,7 @@ public class PostIntegrationTests
         context.ResumeProfiles.Add(profile);
         await context.SaveChangesAsync();
 
-        var request = new CreatePostRequest
+        var request = new CreateContentRequest
         {
             Title = "Integration Test",
             Slug = "integration-test",
@@ -161,7 +163,7 @@ public class PostIntegrationTests
         var response = await _client.PostAsJsonAsync("/api/blog/posts", request);
         response.EnsureSuccessStatusCode();
 
-        var result = await response.Content.ReadFromJsonAsync<PostResponse>();
+        var result = await response.Content.ReadFromJsonAsync<ContentResponse>();
         result.ShouldNotBeNull();
         result.Title.ShouldBe("Integration Test");
         result.Slug.ShouldBe("integration-test");
@@ -169,10 +171,10 @@ public class PostIntegrationTests
         // Clean up
         using var cleanScope = _fixture.Factory.Services.CreateScope();
         var cleanContext = cleanScope.ServiceProvider.GetRequiredService<PortfolioDbContext>();
-        var dbPost = await cleanContext.Posts.FindAsync(result.Id);
+        var dbPost = await cleanContext.ContentItems.FindAsync(result.Id);
         if (dbPost != null)
         {
-            cleanContext.Posts.Remove(dbPost);
+            cleanContext.ContentItems.Remove(dbPost);
             await cleanContext.SaveChangesAsync();
         }
     }
@@ -186,7 +188,7 @@ public class PostIntegrationTests
         var profile = new ResumeProfile { Id = Guid.NewGuid(), Name = "author" };
         context.ResumeProfiles.Add(profile);
 
-        var post = new Post
+        var post = new BlogPost
         {
             Id = Guid.NewGuid(),
             Slug = "old-slug",
@@ -195,10 +197,10 @@ public class PostIntegrationTests
             ResumeProfileId = profile.Id,
             DatePosted = DateTime.UtcNow
         };
-        context.Posts.Add(post);
+        context.ContentItems.Add(post);
         await context.SaveChangesAsync();
 
-        var updateRequest = new UpdatePostRequest
+        var updateRequest = new UpdateContentRequest
         {
             Title = "New Title",
             Slug = "new-slug",
@@ -213,8 +215,8 @@ public class PostIntegrationTests
         var response = await _client.PutAsJsonAsync($"/api/blog/posts/{post.Id}", updateRequest);
         response.EnsureSuccessStatusCode();
 
-        var result = await response.Content.ReadFromJsonAsync<PostResponse>();
-        
+        var result = await response.Content.ReadFromJsonAsync<ContentResponse>();
+
         // Assert
         result.ShouldNotBeNull();
         result.Title.ShouldBe("New Title");
@@ -224,10 +226,10 @@ public class PostIntegrationTests
         // Clean up
         using var cleanScope = _fixture.Factory.Services.CreateScope();
         var cleanContext = cleanScope.ServiceProvider.GetRequiredService<PortfolioDbContext>();
-        var dbPost = await cleanContext.Posts.FindAsync(post.Id);
+        var dbPost = await cleanContext.ContentItems.FindAsync(post.Id);
         if (dbPost != null)
         {
-            cleanContext.Posts.Remove(dbPost);
+            cleanContext.ContentItems.Remove(dbPost);
             await cleanContext.SaveChangesAsync();
         }
     }
@@ -241,7 +243,7 @@ public class PostIntegrationTests
         var profile = new ResumeProfile { Id = Guid.NewGuid(), Name = "author" };
         context.ResumeProfiles.Add(profile);
 
-        var post = new Post
+        var post = new BlogPost
         {
             Id = Guid.NewGuid(),
             Slug = "delete-slug",
@@ -250,7 +252,7 @@ public class PostIntegrationTests
             ResumeProfileId = profile.Id,
             DatePosted = DateTime.UtcNow
         };
-        context.Posts.Add(post);
+        context.ContentItems.Add(post);
         await context.SaveChangesAsync();
 
         // Act
@@ -260,7 +262,7 @@ public class PostIntegrationTests
         // Assert
         using var verifyScope = _fixture.Factory.Services.CreateScope();
         var verifyContext = verifyScope.ServiceProvider.GetRequiredService<PortfolioDbContext>();
-        var dbPost = await verifyContext.Posts.FindAsync(post.Id);
+        var dbPost = await verifyContext.ContentItems.FindAsync(post.Id);
         dbPost.ShouldBeNull();
     }
 

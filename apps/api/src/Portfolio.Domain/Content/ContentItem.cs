@@ -1,6 +1,6 @@
-namespace Portfolio.Domain.Blog;
+namespace Portfolio.Domain.Content;
 
-public class Post
+public abstract class ContentItem
 {
     public Guid Id { get; set; }
     public required string Slug { get; set; }
@@ -9,13 +9,12 @@ public class Post
     public required string Content { get; set; }
     public DateTime DatePosted { get; set; }
     public Guid ResumeProfileId { get; set; }
-    public virtual Portfolio.Domain.Resume.ResumeProfile ResumeProfile { get; set; } = null!;
+    public virtual Resume.ResumeProfile ResumeProfile { get; set; } = null!;
     public DateTime? DateModified { get; set; }
     public string? ModifiedBy { get; set; } // modified by username
     public bool Visible { get; set; } = false;
     public string? CanonicalUrl { get; set; }
 
     // Navigation properties
-    public virtual ICollection<PostTag> PostTags { get; set; } = new List<PostTag>();
-    public virtual ICollection<PostSyndication> PostSyndications { get; set; } = new List<PostSyndication>();
+    public virtual ICollection<ContentTagAssignment> ContentTags { get; set; } = new List<ContentTagAssignment>();
 }

@@ -2,7 +2,7 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
-using Portfolio.Domain.Blog;
+using Portfolio.Domain.Content;
 using Portfolio.Domain.Resume;
 using Portfolio.Infrastructure.Database.Contexts;
 using Portfolio.Tests.Infrastructure;
@@ -32,7 +32,7 @@ public class AuditIntegrationTests
         context.ResumeProfiles.Add(profile);
 
         var postId = Guid.NewGuid();
-        var post = new Post
+        var post = new BlogPost
         {
             Id = postId,
             Slug = "audit-test",
@@ -43,11 +43,11 @@ public class AuditIntegrationTests
         };
 
         // 1. Test Insert Auditing
-        context.Posts.Add(post);
+        context.ContentItems.Add(post);
         await context.SaveChangesAsync();
 
         var insertAudit = context.AuditLogs
-            .Where(a => a.Action.Contains("INSERT") && a.Action.Contains("Post"))
+            .Where(a => a.Action.Contains("INSERT") && a.Action.Contains("BlogPost"))
             .OrderByDescending(a => a.Timestamp)
             .FirstOrDefault();
 
@@ -60,7 +60,7 @@ public class AuditIntegrationTests
         await context.SaveChangesAsync();
 
         var updateAudit = context.AuditLogs
-            .Where(a => a.Action.Contains("UPDATE") && a.Action.Contains("Post"))
+            .Where(a => a.Action.Contains("UPDATE") && a.Action.Contains("BlogPost"))
             .OrderByDescending(a => a.Timestamp)
             .FirstOrDefault();
 
@@ -69,11 +69,11 @@ public class AuditIntegrationTests
         updateAudit.Changes!.ShouldContain("Updated Title");
 
         // 3. Test Delete Auditing
-        context.Posts.Remove(post);
+        context.ContentItems.Remove(post);
         await context.SaveChangesAsync();
 
         var deleteAudit = context.AuditLogs
-            .Where(a => a.Action.Contains("DELETE") && a.Action.Contains("Post"))
+            .Where(a => a.Action.Contains("DELETE") && a.Action.Contains("BlogPost"))
             .OrderByDescending(a => a.Timestamp)
             .FirstOrDefault();
 

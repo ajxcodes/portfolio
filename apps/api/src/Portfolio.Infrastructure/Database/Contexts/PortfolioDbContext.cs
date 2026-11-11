@@ -3,6 +3,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Portfolio.Domain.Blog;
+using Portfolio.Domain.Content;
 using Portfolio.Domain.Resume;
 using Portfolio.Domain.Analytics;
 using Portfolio.Domain.Audit;
@@ -16,7 +17,9 @@ public class PortfolioDbContext(DbContextOptions options, IHttpContextAccessor? 
     private static readonly JsonSerializerOptions AuditJsonOptions = new() { WriteIndented = true };
     private readonly IHttpContextAccessor? _httpContextAccessor = httpContextAccessor;
 
-    public DbSet<Post> Posts { get; set; } = null!;
+    public DbSet<ContentItem> ContentItems { get; set; } = null!;
+    public DbSet<BlogPost> BlogPosts { get; set; } = null!;
+    public DbSet<Project> Projects { get; set; } = null!;
     public DbSet<ResumeProfile> ResumeProfiles { get; set; } = null!;
     public DbSet<ResumeProfileLinkType> ResumeProfileLinkTypes { get; set; } = null!;
     public DbSet<ResumeProfileLink> ResumeProfileLinks { get; set; } = null!;
@@ -30,8 +33,9 @@ public class PortfolioDbContext(DbContextOptions options, IHttpContextAccessor? 
     public DbSet<ExperienceHighlight> ExperienceHighlights { get; set; } = null!;
     public DbSet<WorkExperienceSkill> WorkExperienceSkills { get; set; } = null!;
     public DbSet<AuditLog> AuditLogs { get; set; } = null!;
-    public DbSet<Tag> Tags { get; set; } = null!;
-    public DbSet<PostTag> PostTags { get; set; } = null!;
+    public DbSet<ContentTag> ContentTags { get; set; } = null!;
+    public DbSet<ContentTagAssignment> ContentTagAssignments { get; set; } = null!;
+    public DbSet<ProjectLink> ProjectLinks { get; set; } = null!;
     public DbSet<SyndicationPlatform> SyndicationPlatforms { get; set; } = null!;
     public DbSet<PostSyndication> PostSyndications { get; set; } = null!;
 

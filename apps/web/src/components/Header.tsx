@@ -112,20 +112,29 @@ export const Header = ({ name, contact, hasAboutMe, downloadUrl, photoUrlLight, 
             resume
           </Link>
           {hasAboutMe && (
-            <Link 
-              href="/about" 
+            <Link
+              href="/about"
               className={clsx(
-                "transition-colors font-mono text-sm", 
+                "transition-colors font-mono text-sm",
                 pathname === "/about" ? "text-primary font-bold" : "text-foreground/80 hover:text-primary"
               )}
             >
               about
             </Link>
           )}
-          <Link 
-            href="/blog" 
+          <Link
+            href="/projects"
             className={clsx(
-              "transition-colors font-mono text-sm", 
+              "transition-colors font-mono text-sm",
+              pathname.startsWith("/projects") ? "text-primary font-bold" : "text-foreground/80 hover:text-primary"
+            )}
+          >
+            projects
+          </Link>
+          <Link
+            href="/blog"
+            className={clsx(
+              "transition-colors font-mono text-sm",
               pathname.startsWith("/blog") ? "text-primary font-bold" : "text-foreground/80 hover:text-primary"
             )}
           >

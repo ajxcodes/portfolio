@@ -185,52 +185,6 @@ namespace Portfolio.Infrastructure.Migrations
                     b.ToTable("AuditLogs");
                 });
 
-            modelBuilder.Entity("Portfolio.Domain.Blog.Post", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("CanonicalUrl")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Content")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("DateModified")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime>("DatePosted")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("ModifiedBy")
-                        .HasColumnType("text");
-
-                    b.Property<Guid>("ResumeProfileId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Slug")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Summary")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<bool>("Visible")
-                        .HasColumnType("boolean");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ResumeProfileId");
-
-                    b.ToTable("Posts");
-                });
-
             modelBuilder.Entity("Portfolio.Domain.Blog.PostSyndication", b =>
                 {
                     b.Property<Guid>("PostId")
@@ -258,21 +212,6 @@ namespace Portfolio.Infrastructure.Migrations
                     b.HasIndex("PlatformId");
 
                     b.ToTable("PostSyndications");
-                });
-
-            modelBuilder.Entity("Portfolio.Domain.Blog.PostTag", b =>
-                {
-                    b.Property<Guid>("PostId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("TagId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("PostId", "TagId");
-
-                    b.HasIndex("TagId");
-
-                    b.ToTable("PostTags");
                 });
 
             modelBuilder.Entity("Portfolio.Domain.Blog.SyndicationPlatform", b =>
@@ -315,11 +254,67 @@ namespace Portfolio.Infrastructure.Migrations
                     b.ToTable("SyndicationPlatforms");
                 });
 
-            modelBuilder.Entity("Portfolio.Domain.Blog.Tag", b =>
+            modelBuilder.Entity("Portfolio.Domain.Content.ContentItem", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
+
+                    b.Property<string>("CanonicalUrl")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("ContentType")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("DateModified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("DatePosted")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ModifiedBy")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("ResumeProfileId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Summary")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("Visible")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ResumeProfileId");
+
+                    b.ToTable("ContentItems");
+
+                    b.HasDiscriminator<int>("ContentType");
+
+                    b.UseTphMappingStrategy();
+                });
+
+            modelBuilder.Entity("Portfolio.Domain.Content.ContentTag", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("ContentType")
+                        .HasColumnType("integer");
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
@@ -333,10 +328,58 @@ namespace Portfolio.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Name")
+                    b.HasIndex("Name", "ContentType")
                         .IsUnique();
 
-                    b.ToTable("Tags");
+                    b.ToTable("ContentTags");
+                });
+
+            modelBuilder.Entity("Portfolio.Domain.Content.ContentTagAssignment", b =>
+                {
+                    b.Property<Guid>("ContentItemId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TagId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("ContentItemId", "TagId");
+
+                    b.HasIndex("TagId");
+
+                    b.ToTable("ContentTagAssignments");
+                });
+
+            modelBuilder.Entity("Portfolio.Domain.Content.ProjectLink", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Label")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Url")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProjectId");
+
+                    b.ToTable("ProjectLinks");
                 });
 
             modelBuilder.Entity("Portfolio.Domain.Resume.ExperienceHighlight", b =>
@@ -593,6 +636,20 @@ namespace Portfolio.Infrastructure.Migrations
                     b.ToTable("WorkExperienceSkills");
                 });
 
+            modelBuilder.Entity("Portfolio.Domain.Content.BlogPost", b =>
+                {
+                    b.HasBaseType("Portfolio.Domain.Content.ContentItem");
+
+                    b.HasDiscriminator().HasValue(1);
+                });
+
+            modelBuilder.Entity("Portfolio.Domain.Content.Project", b =>
+                {
+                    b.HasBaseType("Portfolio.Domain.Content.ContentItem");
+
+                    b.HasDiscriminator().HasValue(2);
+                });
+
             modelBuilder.Entity("Portfolio.Domain.Analytics.AiQueryLog", b =>
                 {
                     b.HasOne("Portfolio.Domain.Analytics.VisitorSession", "VisitorSession")
@@ -627,17 +684,6 @@ namespace Portfolio.Infrastructure.Migrations
                     b.Navigation("VisitorSession");
                 });
 
-            modelBuilder.Entity("Portfolio.Domain.Blog.Post", b =>
-                {
-                    b.HasOne("Portfolio.Domain.Resume.ResumeProfile", "ResumeProfile")
-                        .WithMany()
-                        .HasForeignKey("ResumeProfileId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("ResumeProfile");
-                });
-
             modelBuilder.Entity("Portfolio.Domain.Blog.PostSyndication", b =>
                 {
                     b.HasOne("Portfolio.Domain.Blog.SyndicationPlatform", "Platform")
@@ -646,7 +692,7 @@ namespace Portfolio.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Portfolio.Domain.Blog.Post", "Post")
+                    b.HasOne("Portfolio.Domain.Content.BlogPost", "Post")
                         .WithMany("PostSyndications")
                         .HasForeignKey("PostId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -657,23 +703,45 @@ namespace Portfolio.Infrastructure.Migrations
                     b.Navigation("Post");
                 });
 
-            modelBuilder.Entity("Portfolio.Domain.Blog.PostTag", b =>
+            modelBuilder.Entity("Portfolio.Domain.Content.ContentItem", b =>
                 {
-                    b.HasOne("Portfolio.Domain.Blog.Post", "Post")
-                        .WithMany("PostTags")
-                        .HasForeignKey("PostId")
+                    b.HasOne("Portfolio.Domain.Resume.ResumeProfile", "ResumeProfile")
+                        .WithMany()
+                        .HasForeignKey("ResumeProfileId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ResumeProfile");
+                });
+
+            modelBuilder.Entity("Portfolio.Domain.Content.ContentTagAssignment", b =>
+                {
+                    b.HasOne("Portfolio.Domain.Content.ContentItem", "ContentItem")
+                        .WithMany("ContentTags")
+                        .HasForeignKey("ContentItemId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Portfolio.Domain.Blog.Tag", "Tag")
-                        .WithMany("PostTags")
+                    b.HasOne("Portfolio.Domain.Content.ContentTag", "ContentTag")
+                        .WithMany("ContentTagAssignments")
                         .HasForeignKey("TagId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Post");
+                    b.Navigation("ContentItem");
 
-                    b.Navigation("Tag");
+                    b.Navigation("ContentTag");
+                });
+
+            modelBuilder.Entity("Portfolio.Domain.Content.ProjectLink", b =>
+                {
+                    b.HasOne("Portfolio.Domain.Content.Project", "Project")
+                        .WithMany("ProjectLinks")
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Project");
                 });
 
             modelBuilder.Entity("Portfolio.Domain.Resume.ExperienceHighlight", b =>
@@ -756,21 +824,19 @@ namespace Portfolio.Infrastructure.Migrations
                     b.Navigation("PageViews");
                 });
 
-            modelBuilder.Entity("Portfolio.Domain.Blog.Post", b =>
-                {
-                    b.Navigation("PostSyndications");
-
-                    b.Navigation("PostTags");
-                });
-
             modelBuilder.Entity("Portfolio.Domain.Blog.SyndicationPlatform", b =>
                 {
                     b.Navigation("PostSyndications");
                 });
 
-            modelBuilder.Entity("Portfolio.Domain.Blog.Tag", b =>
+            modelBuilder.Entity("Portfolio.Domain.Content.ContentItem", b =>
                 {
-                    b.Navigation("PostTags");
+                    b.Navigation("ContentTags");
+                });
+
+            modelBuilder.Entity("Portfolio.Domain.Content.ContentTag", b =>
+                {
+                    b.Navigation("ContentTagAssignments");
                 });
 
             modelBuilder.Entity("Portfolio.Domain.Resume.ResumeProfile", b =>
@@ -805,6 +871,16 @@ namespace Portfolio.Infrastructure.Migrations
                     b.Navigation("Highlights");
 
                     b.Navigation("WorkExperienceSkills");
+                });
+
+            modelBuilder.Entity("Portfolio.Domain.Content.BlogPost", b =>
+                {
+                    b.Navigation("PostSyndications");
+                });
+
+            modelBuilder.Entity("Portfolio.Domain.Content.Project", b =>
+                {
+                    b.Navigation("ProjectLinks");
                 });
 #pragma warning restore 612, 618
         }

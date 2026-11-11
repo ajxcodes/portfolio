@@ -1,6 +1,6 @@
-namespace Portfolio.Application.Blog.Requests;
+namespace Portfolio.Application.Content.Requests;
 
-public class UpdatePostRequest
+public class CreateContentRequest
 {
     public required Guid ResumeProfileId { get; set; }
     public required string Slug { get; set; }
@@ -10,4 +10,5 @@ public class UpdatePostRequest
     public bool Visible { get; set; }
     public string? CanonicalUrl { get; set; }
     public List<string> Tags { get; set; } = new();
+    public List<ProjectLinkRequest> ProjectLinks { get; set; } = new();
 }

@@ -84,6 +84,28 @@ export interface BlogPost {
   views?: number;
 }
 
+export interface ProjectLinkItem {
+  id?: string;
+  type: string;
+  url: string;
+  label?: string;
+  displayOrder?: number;
+}
+
+export interface ProjectShowcase {
+  id: string;
+  slug: string;
+  title: string;
+  summary: string;
+  content: string;
+  datePosted: string;
+  visible: boolean;
+  resumeProfileId: string;
+  authorName: string;
+  tags?: string[];
+  projectLinks?: ProjectLinkItem[];
+}
+
 export interface PortfolioData {
   personalInfo: PersonalInfo;
   resume: ResumeData;
@@ -143,7 +165,7 @@ const defaultData: PortfolioData = {
 // Fetch only active resume profile and skill categories (no blog posts)
 export const getResumeData = cache(async (): Promise<{ personalInfo: PersonalInfo; resume: ResumeData }> => {
   const portfolioData: PortfolioData = JSON.parse(JSON.stringify(defaultData));
-  const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5808';
+  const apiUrl = (typeof window === 'undefined' && process.env.API_BASE_URL) || process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5808';
 
   const [activeRes, skillsRes] = await Promise.all([
     fetch(`${apiUrl}/api/resume/active`, { cache: 'no-store' }).catch(() => null),
@@ -240,7 +262,7 @@ export const getResumeData = cache(async (): Promise<{ personalInfo: PersonalInf
 
 // Fetch only blog posts
 export const getBlogPosts = cache(async (): Promise<BlogPost[]> => {
-  const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5808';
+  const apiUrl = (typeof window === 'undefined' && process.env.API_BASE_URL) || process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5808';
   try {
     const postsRes = await fetch(`${apiUrl}/api/blog/posts`, {
       cache: 'no-store',
@@ -285,7 +307,7 @@ export async function getPortfolioData(): Promise<PortfolioData> {
 // Function to get a single blog post by its slug from the API
 export async function getBlogPostBySlug(slug: string): Promise<BlogPost | undefined> {
   try {
-    const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5808';
+    const apiUrl = (typeof window === 'undefined' && process.env.API_BASE_URL) || process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5808';
     const res = await fetch(`${apiUrl}/api/blog/posts`, {
       cache: 'no-store',
     });
@@ -314,3 +336,37 @@ export async function getBlogPostBySlug(slug: string): Promise<BlogPost | undefi
     return undefined;
   }
 }
+
+// Fetch only projects
+export const getProjects = cache(async (): Promise<ProjectShowcase[]> => {
+  const apiUrl = (typeof window === 'undefined' && process.env.API_BASE_URL) || process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5808';
+  try {
+    const res = await fetch(`${apiUrl}/api/projects`, {
+      cache: 'no-store',
+    });
+
+    if (res.ok) {
+      const projects = await res.json();
+      return projects
+        ? projects
+            .filter((p: any) => p.visible !== false)
+            .map((p: any) => ({
+              id: p.id,
+              slug: p.slug,
+              title: p.title,
+              summary: p.summary || '',
+              content: p.content,
+              visible: p.visible,
+              resumeProfileId: p.resumeProfileId,
+              authorName: p.authorName,
+              datePosted: p.datePosted,
+              tags: p.tags || [],
+              projectLinks: p.projectLinks || [],
+            }))
+        : [];
+    }
+  } catch (e) {
+    console.error('Failed to fetch/parse projects response:', e);
+  }
+  return [];
+});

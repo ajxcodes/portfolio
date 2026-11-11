@@ -1,12 +1,12 @@
 using Bogus;
-using Portfolio.Domain.Blog;
+using Portfolio.Domain.Content;
 
 namespace Portfolio.Faker.Blog;
 
 public static class PostFaker
 {
-    public static IEnumerable<Post> Generate(int count = 1) =>
-        new Faker<Post>()
+    public static IEnumerable<BlogPost> Generate(int count = 1) =>
+        new Faker<BlogPost>()
             .RuleFor(p => p.Id, f => Guid.CreateVersion7())
             .RuleFor(p => p.Title, f => string.Join(" ", f.Lorem.Words(3)))
             .RuleFor(p => p.Content, f => f.Lorem.Paragraphs(2))
