@@ -28,6 +28,12 @@ public class ContentService(
     AI.IAiChatService aiService,
     IRepoReleaseService releaseService) : IContentService
 {
+    /// <summary>
+    /// Overall time budget for enriching a response (or a collection of responses) with release
+    /// data from the external source-code hosting API. Bounding the batch to one budget keeps an
+    /// unreachable or slow upstream from stalling public read paths for N sequential timeouts.
+    /// </summary>
+    private static readonly TimeSpan ReleaseEnrichmentBudget = TimeSpan.FromSeconds(5);
     public async Task<IEnumerable<ContentResponse>> ListAsync(ContentType contentType)
     {
         var items = await repository.ListAsync(contentType);
@@ -45,10 +51,8 @@ public class ContentService(
         }
         else if (contentType == ContentType.Project)
         {
-            foreach (var r in responses)
-            {
-                await EnrichProjectWithReleasesAsync(r);
-            }
+            using var enrichmentCts = new CancellationTokenSource(ReleaseEnrichmentBudget);
+            await Task.WhenAll(responses.Select(r => EnrichProjectWithReleasesAsync(r, enrichmentCts.Token)));
         }
 
         return responses;
@@ -90,7 +94,8 @@ public class ContentService(
         }
         else if (contentType == ContentType.Project)
         {
-            await EnrichProjectWithReleasesAsync(response);
+            using var enrichmentCts = new CancellationTokenSource(ReleaseEnrichmentBudget);
+            await EnrichProjectWithReleasesAsync(response, enrichmentCts.Token);
         }
 
         return response;
@@ -267,7 +272,8 @@ public class ContentService(
         await repository.SaveChangesAsync();
 
         var response = ContentResponse.FromDomain(project);
-        await EnrichProjectWithReleasesAsync(response);
+        using var enrichmentCts = new CancellationTokenSource(ReleaseEnrichmentBudget);
+        await EnrichProjectWithReleasesAsync(response, enrichmentCts.Token);
         return response;
     }
 
@@ -320,20 +326,25 @@ public class ContentService(
         }
     }
 
-    private async Task EnrichProjectWithReleasesAsync(ContentResponse response)
+    private async Task EnrichProjectWithReleasesAsync(ContentResponse response, CancellationToken ct = default)
     {
-        response.Releases = (await ResolveReleasesAsync(response.ProjectLinks)).ToList();
+        response.Releases = (await ResolveReleasesAsync(response.ProjectLinks, ct)).ToList();
     }
 
     private async Task EnrichRelatedProjectsWithReleasesAsync(ContentResponse response)
     {
-        foreach (var related in response.RelatedProjects)
-        {
-            related.Releases = (await ResolveReleasesAsync(related.ProjectLinks)).ToList();
-        }
+        if (response.RelatedProjects.Count == 0) return;
+
+        using var enrichmentCts = new CancellationTokenSource(ReleaseEnrichmentBudget);
+        await Task.WhenAll(response.RelatedProjects.Select(related => EnrichRelatedProjectWithReleasesAsync(related, enrichmentCts.Token)));
     }
 
-    private async Task<IReadOnlyList<RepoRelease>> ResolveReleasesAsync(IEnumerable<ProjectLinkResponse> links)
+    private async Task EnrichRelatedProjectWithReleasesAsync(RelatedProjectResponse related, CancellationToken ct)
+    {
+        related.Releases = (await ResolveReleasesAsync(related.ProjectLinks, ct)).ToList();
+    }
+
+    private async Task<IReadOnlyList<RepoRelease>> ResolveReleasesAsync(IEnumerable<ProjectLinkResponse> links, CancellationToken ct = default)
     {
         var githubLink = links.FirstOrDefault(l => string.Equals(l.Type, "github", StringComparison.OrdinalIgnoreCase));
         if (githubLink == null) return Array.Empty<RepoRelease>();
@@ -343,6 +354,6 @@ public class ContentService(
             return Array.Empty<RepoRelease>();
         }
 
-        return await releaseService.GetReleasesAsync(owner, repo);
+        return await releaseService.GetReleasesAsync(owner, repo, ct);
     }
 }

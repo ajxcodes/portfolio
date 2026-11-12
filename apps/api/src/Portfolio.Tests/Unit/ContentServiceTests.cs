@@ -618,4 +618,62 @@ public class ContentServiceTests
         list.First().RelatedProjects.ShouldContain(p => p.Id == projectId);
         list.First().RelatedProjects.First().Releases.ShouldBeEmpty();
     }
+
+    [Fact]
+    public async Task ListAsync_ResolvesProjectReleasesConcurrently_WithinOneSlowLookupInsteadOfN()
+    {
+        const int projectCount = 5;
+        const int perRepoDelayMilliseconds = 250;
+
+        var projects = Enumerable.Range(1, projectCount).Select(i => new Project
+        {
+            Id = Guid.NewGuid(),
+            Title = $"Project {i}",
+            Slug = $"project-{i}",
+            Content = "readme",
+            ResumeProfileId = Guid.NewGuid(),
+            ProjectLinks = new List<ProjectLink>
+            {
+                new()
+                {
+                    Id = Guid.NewGuid(),
+                    ProjectId = Guid.NewGuid(),
+                    Type = "github",
+                    Url = $"https://github.com/example/repo-{i}",
+                    DisplayOrder = 0
+                }
+            }
+        }).Cast<ContentItem>().ToList();
+
+        _repositoryMock.ListAsync(ContentType.Project).Returns(projects);
+
+        _releaseServiceMock.GetReleasesAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(async callInfo =>
+            {
+                var ct = callInfo.ArgAt<CancellationToken>(2);
+                try
+                {
+                    await Task.Delay(perRepoDelayMilliseconds, ct);
+                }
+                catch (OperationCanceledException)
+                {
+                    // The enrichment budget cancelled this lookup: degrade to an empty list, just
+                    // as the real GitHub adapter does, so a slow upstream never fails the request.
+                }
+
+                return (IReadOnlyList<RepoRelease>)Array.Empty<RepoRelease>();
+            });
+
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        var result = (await _service.ListAsync(ContentType.Project)).ToList();
+        stopwatch.Stop();
+
+        result.Count.ShouldBe(projectCount);
+        result.ShouldAllBe(r => r.Releases.Count == 0);
+
+        // Serial resolution would take ~projectCount * perRepoDelayMilliseconds. Concurrent
+        // resolution is bounded by roughly one lookup, so this fails against the old serial
+        // implementation and passes when the per-repo lookups are fanned out.
+        stopwatch.ElapsedMilliseconds.ShouldBeLessThan(projectCount * perRepoDelayMilliseconds - 150);
+    }
 }
