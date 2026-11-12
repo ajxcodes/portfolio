@@ -69,4 +69,14 @@ public class PostsControllerTests
         var okResult = result.Result.ShouldBeOfType<OkObjectResult>();
         okResult.Value.ShouldBe(response);
     }
+
+    [Fact]
+    public async Task GetBySlugAsync_ReturnsNotFound_WhenSlugIsUnknown()
+    {
+        _serviceMock.GetBySlugAsync("unknown-slug", ContentType.Blog).Returns((ContentResponse?)null);
+
+        var result = await _controller.GetBySlugAsync("unknown-slug");
+
+        result.Result.ShouldBeOfType<NotFoundResult>();
+    }
 }

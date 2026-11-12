@@ -87,7 +87,7 @@ describe('useAiChat', () => {
 
   it('can abort an ongoing request', async () => {
     const { result } = renderHook(() => useAiChat());
-    let abortListener: any = null;
+    const abortListener: any = null;
 
     mockFetchEventSource.mockImplementation(async (url, options) => {
       if (options.signal) {

@@ -45,25 +45,26 @@ export default function AdminProjectsPage() {
     return headers;
   };
 
-  const loadProjects = async () => {
-    setLoading(true);
-    setErrorMsg("");
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/projects`, { cache: "no-store" });
-      if (!res.ok) {
-        throw new Error(`Failed to load projects (${res.status})`);
-      }
-      const data = await res.json();
-      setProjects(data);
-    } catch (err: any) {
-      setErrorMsg(err.message || "Failed to load projects from the API.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    loadProjects();
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/projects`, { cache: "no-store" });
+        if (!res.ok) {
+          throw new Error(`Failed to load projects (${res.status})`);
+        }
+        const data = await res.json();
+        if (!cancelled) {
+          setProjects(data);
+          setErrorMsg("");
+        }
+      } catch (err: any) {
+        if (!cancelled) setErrorMsg(err.message || "Failed to load projects from the API.");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
   }, []);
 
   const handleDelete = async (id: string) => {

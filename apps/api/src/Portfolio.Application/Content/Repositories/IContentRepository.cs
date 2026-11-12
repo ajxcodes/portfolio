@@ -19,5 +19,9 @@ public interface IContentRepository
     Task AddPostSyndicationAsync(PostSyndication syndication);
     Task<List<PostSyndication>> GetPostSyndicationsAsync(Guid postId);
 
+    Task<PostProject?> GetPostProjectAsync(Guid postId, Guid projectId);
+    Task AddPostProjectAsync(PostProject postProject);
+    Task RemovePostProjectAsync(PostProject postProject);
+
     Task SaveChangesAsync();
 }

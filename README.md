@@ -20,6 +20,13 @@ cp .env.template .env
 
 Review and adjust the AI provider (`Ollama` or `Gemini`), Database, and Supabase keys as needed.
 
+**Configuration:**
+
+| Variable | Description | Default |
+| --- | --- | --- |
+| `GITHUB_API_BASE_URL` | Base URL for the GitHub releases API. Override this (for example, in CI/e2e stubs) to point release lookups at a compatible stub. | `https://api.github.com` |
+| `GITHUB_API_TOKEN` | Optional GitHub token sent as a bearer token to raise the GitHub API rate limit when resolving project releases. | *(empty)* |
+
 3. Run the following command from the root of the project to build and start the containers:
 
 `docker-compose up -d`

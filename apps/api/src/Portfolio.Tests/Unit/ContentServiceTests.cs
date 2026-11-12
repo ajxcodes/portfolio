@@ -5,6 +5,7 @@ using Portfolio.Application.Blog.Requests;
 using Portfolio.Application.Content.Repositories;
 using Portfolio.Application.Content.Requests;
 using Portfolio.Application.Content.Services;
+using Portfolio.Application.Releases;
 using Portfolio.Application.Resume.Repositories;
 using Portfolio.Domain.Content;
 using Portfolio.Domain.Resume;
@@ -19,11 +20,12 @@ public class ContentServiceTests
     private readonly IAiChatService _aiServiceMock = Substitute.For<IAiChatService>();
     private readonly IAnalyticsRepository _analyticsMock = Substitute.For<IAnalyticsRepository>();
     private readonly IResumeRepository _resumeMock = Substitute.For<IResumeRepository>();
+    private readonly IRepoReleaseService _releaseServiceMock = Substitute.For<IRepoReleaseService>();
     private readonly ContentService _service;
 
     public ContentServiceTests()
     {
-        _service = new ContentService(_repositoryMock, _resumeMock, _analyticsMock, _aiServiceMock);
+        _service = new ContentService(_repositoryMock, _resumeMock, _analyticsMock, _aiServiceMock, _releaseServiceMock);
     }
 
     [Fact]
@@ -412,5 +414,208 @@ public class ContentServiceTests
             p.ProjectLinks.Any(l => l.Type == "github" && l.Url == "https://new.example/repo")));
         await _repositoryMock.Received(1).SaveChangesAsync();
         result.ShouldNotBeNull();
+    }
+
+    [Fact]
+    public async Task AttachProjectAsync_AddsProjectToRelatedProjects_AndIsIdempotent()
+    {
+        var postId = Guid.NewGuid();
+        var projectId = Guid.NewGuid();
+        var project = new Project
+        {
+            Id = projectId,
+            Title = "Alpha",
+            Slug = "alpha",
+            Content = "readme",
+            ResumeProfileId = Guid.NewGuid()
+        };
+        var post = new BlogPost
+        {
+            Id = postId,
+            Title = "Post",
+            Slug = "post",
+            Content = "content",
+            ResumeProfileId = Guid.NewGuid()
+        };
+
+        _repositoryMock.GetAsync(postId, ContentType.Blog).Returns(post);
+        _repositoryMock.GetAsync(projectId, ContentType.Project).Returns(project);
+        _repositoryMock.GetPostProjectAsync(postId, projectId).Returns((PostProject?)null);
+
+        var result = await _service.AttachProjectAsync(postId, projectId);
+
+        result.ShouldNotBeNull();
+        result!.RelatedProjects.ShouldContain(p => p.Id == projectId);
+        await _repositoryMock.Received(1).AddPostProjectAsync(Arg.Any<PostProject>());
+        await _repositoryMock.Received(1).SaveChangesAsync();
+
+        // A second attach is idempotent: the join row already exists, so nothing is written.
+        _repositoryMock.GetPostProjectAsync(postId, projectId).Returns(post.PostProjects.First());
+
+        var second = await _service.AttachProjectAsync(postId, projectId);
+
+        second.ShouldNotBeNull();
+        second!.RelatedProjects.ShouldContain(p => p.Id == projectId);
+        second!.RelatedProjects.Count.ShouldBe(1);
+        await _repositoryMock.Received(1).AddPostProjectAsync(Arg.Any<PostProject>());
+    }
+
+    [Fact]
+    public async Task AttachProjectAsync_ReturnsNull_WhenPostIdIsNotABlogPost()
+    {
+        var projectId = Guid.NewGuid();
+
+        // GetAsync(postId, ContentType.Blog) filters with OfType<BlogPost>(), so a project id
+        // never resolves to a blog post.
+        _repositoryMock.GetAsync(projectId, ContentType.Blog).Returns((ContentItem?)null);
+
+        var result = await _service.AttachProjectAsync(projectId, projectId);
+
+        result.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task DetachProjectAsync_RemovesProjectFromRelatedProjects_AndReturnsNullWhenNotAttached()
+    {
+        var postId = Guid.NewGuid();
+        var projectId = Guid.NewGuid();
+        var project = new Project
+        {
+            Id = projectId,
+            Title = "Alpha",
+            Slug = "alpha",
+            Content = "readme",
+            ResumeProfileId = Guid.NewGuid()
+        };
+        var post = new BlogPost
+        {
+            Id = postId,
+            Title = "Post",
+            Slug = "post",
+            Content = "content",
+            ResumeProfileId = Guid.NewGuid()
+        };
+        post.PostProjects.Add(new PostProject
+        {
+            PostId = postId,
+            ProjectId = projectId,
+            Post = post,
+            Project = project
+        });
+
+        _repositoryMock.GetAsync(postId, ContentType.Blog).Returns(post);
+
+        var result = await _service.DetachProjectAsync(postId, projectId);
+
+        result.ShouldNotBeNull();
+        result!.RelatedProjects.ShouldBeEmpty();
+        await _repositoryMock.Received(1).RemovePostProjectAsync(Arg.Any<PostProject>());
+        await _repositoryMock.Received(1).SaveChangesAsync();
+
+        var missing = await _service.DetachProjectAsync(postId, Guid.NewGuid());
+
+        missing.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task UpdateStartDateAsync_SetsAndClearsProjectStartDate_AndNeverTouchesUpdateContentRequest()
+    {
+        var id = Guid.NewGuid();
+        var project = new Project
+        {
+            Id = id,
+            Title = "Alpha",
+            Slug = "alpha",
+            Content = "readme",
+            ResumeProfileId = Guid.NewGuid()
+        };
+        _repositoryMock.GetAsync(id, ContentType.Project).Returns(project);
+
+        var updated = await _service.UpdateStartDateAsync(id, new DateTime(2026, 1, 15, 0, 0, 0, DateTimeKind.Utc));
+
+        updated.ShouldNotBeNull();
+        updated!.StartDate.ShouldBe(new DateTime(2026, 1, 15, 0, 0, 0, DateTimeKind.Utc));
+        await _repositoryMock.Received(1).UpdateAsync(project);
+        await _repositoryMock.Received(1).SaveChangesAsync();
+
+        var cleared = await _service.UpdateStartDateAsync(id, null);
+
+        cleared.ShouldNotBeNull();
+        cleared!.StartDate.ShouldBeNull();
+
+        // The shared update contract must never carry a StartDate: a project save that omits
+        // the date must not erase a backfilled value.
+        typeof(UpdateContentRequest).GetProperty("StartDate").ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task GetBySlugAsync_ReturnsPostWithRelatedProjects_AndGetAsyncResolvesReleasesWhileListAsyncDoesNot()
+    {
+        var postId = Guid.NewGuid();
+        var projectId = Guid.NewGuid();
+        var project = new Project
+        {
+            Id = projectId,
+            Title = "Alpha",
+            Slug = "alpha",
+            Content = "readme",
+            ResumeProfileId = Guid.NewGuid(),
+            ProjectLinks = new List<ProjectLink>
+            {
+                new()
+                {
+                    Id = Guid.NewGuid(),
+                    ProjectId = projectId,
+                    Type = "github",
+                    Url = "https://github.com/example/alpha-seed",
+                    DisplayOrder = 0
+                }
+            }
+        };
+        var post = new BlogPost
+        {
+            Id = postId,
+            Title = "Post",
+            Slug = "post",
+            Content = "content",
+            ResumeProfileId = Guid.NewGuid()
+        };
+        post.PostProjects.Add(new PostProject
+        {
+            PostId = postId,
+            ProjectId = projectId,
+            Post = post,
+            Project = project
+        });
+
+        _repositoryMock.GetBySlugAsync("post", ContentType.Blog).Returns(post);
+        _repositoryMock.GetAsync(postId, ContentType.Blog).Returns(post);
+        _repositoryMock.ListAsync(ContentType.Blog).Returns(new List<ContentItem> { post });
+        _analyticsMock.GetPageViewsCountByPathAsync(Arg.Any<IEnumerable<string>>())
+            .Returns(new Dictionary<string, int>());
+        _releaseServiceMock.GetReleasesAsync("example", "alpha-seed", Arg.Any<CancellationToken>())
+            .Returns(new List<RepoRelease>
+            {
+                new() { TagName = "v1.0.0", Url = "https://github.com/example/alpha-seed/releases/tag/v1.0.0" }
+            });
+
+        var bySlug = await _service.GetBySlugAsync("post", ContentType.Blog);
+
+        bySlug.ShouldNotBeNull();
+        bySlug!.RelatedProjects.ShouldContain(p => p.Id == projectId);
+        bySlug!.RelatedProjects.First().Releases.ShouldNotBeEmpty();
+
+        var byId = await _service.GetAsync(postId, ContentType.Blog);
+
+        byId.ShouldNotBeNull();
+        byId!.RelatedProjects.ShouldContain(p => p.Id == projectId);
+        byId!.RelatedProjects.First().Releases.ShouldNotBeEmpty();
+
+        // The blog list never resolves releases.
+        var list = (await _service.ListAsync(ContentType.Blog)).ToList();
+
+        list.ShouldHaveSingleItem();
+        list.First().RelatedProjects.ShouldContain(p => p.Id == projectId);
+        list.First().RelatedProjects.First().Releases.ShouldBeEmpty();
     }
 }

@@ -104,7 +104,24 @@ export default function ResumeProfilesPage() {
   };
 
   useEffect(() => {
-    loadProfiles();
+    let cancelled = false;
+    (async () => {
+      setErrorMsg("");
+      try {
+        const headers = await fetchAuthHeaders();
+        const res = await fetch(`${API_BASE_URL}/api/resume`, { headers });
+        if (!res.ok) {
+          throw new Error(`Failed to load profiles (${res.status})`);
+        }
+        const data = await res.json();
+        if (!cancelled) setProfiles(data);
+      } catch (err: any) {
+        if (!cancelled) setErrorMsg(err.message || "Failed to load profiles from the API.");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

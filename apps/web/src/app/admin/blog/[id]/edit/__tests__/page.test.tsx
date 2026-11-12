@@ -10,7 +10,7 @@ jest.mock('next/navigation', () => ({
 
 // Mock next/dynamic
 jest.mock('next/dynamic', () => () => {
-  const DynamicComponent = (props: any) => {
+  function DynamicComponent(props: any) {
     // If it's the WysiwygEditor, render our textarea
     if (props.onChange) {
       return (
@@ -22,7 +22,8 @@ jest.mock('next/dynamic', () => () => {
       );
     }
     return <div data-testid="dynamic-component" />;
-  };
+  }
+  DynamicComponent.displayName = 'DynamicComponent';
   return DynamicComponent;
 });
 
@@ -81,6 +82,9 @@ describe('EditBlogPage', () => {
       if (url.includes('/api/resume')) {
         return Promise.resolve({ ok: true, json: () => Promise.resolve([{ id: 'p1', name: 'P1', isActive: true }]) });
       }
+      if (url.includes('/api/projects') && !url.includes('/api/blog/posts/')) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve([]) });
+      }
       if (url.includes('/api/blog/posts/post-1') && (!options || options.method === 'GET' || options.method === undefined)) {
         return Promise.resolve({
           ok: true,
@@ -115,6 +119,9 @@ describe('EditBlogPage', () => {
     mockFetch.mockImplementation((url, options) => {
       if (url.includes('/api/resume')) {
         return Promise.resolve({ ok: true, json: () => Promise.resolve([{ id: 'p1', name: 'P1', isActive: true }]) });
+      }
+      if (url.includes('/api/projects') && !url.includes('/api/blog/posts/')) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve([]) });
       }
       if (url.includes('/api/blog/posts/post-1')) {
         if (!options || options.method === 'GET' || options.method === undefined) {
@@ -176,6 +183,9 @@ describe('EditBlogPage', () => {
       if (url.includes('/api/resume')) {
         return Promise.resolve({ ok: true, json: () => Promise.resolve([{ id: 'p1', name: 'P1', isActive: true }]) });
       }
+      if (url.includes('/api/projects') && !url.includes('/api/blog/posts/')) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve([]) });
+      }
       if (url.includes('/api/blog/posts/post-1') && (!options || options.method === 'GET' || options.method === undefined)) {
         return Promise.resolve({
           ok: true,
@@ -222,6 +232,9 @@ describe('EditBlogPage', () => {
       if (url.includes('/api/resume')) {
         return Promise.resolve({ ok: true, json: () => Promise.resolve([{ id: 'p1', name: 'P1', isActive: true }]) });
       }
+      if (url.includes('/api/projects') && !url.includes('/api/blog/posts/')) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve([]) });
+      }
       return Promise.resolve({
         ok: false,
         text: () => Promise.resolve('Failed to load post')
@@ -239,6 +252,9 @@ describe('EditBlogPage', () => {
     mockFetch.mockImplementation((url, options) => {
       if (url.includes('/api/resume')) {
         return Promise.resolve({ ok: true, json: () => Promise.resolve([{ id: 'p1', name: 'P1', isActive: true }]) });
+      }
+      if (url.includes('/api/projects') && !url.includes('/api/blog/posts/')) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve([]) });
       }
       if (options && options.method === 'PUT') {
         return Promise.resolve({
@@ -303,6 +319,67 @@ describe('EditBlogPage', () => {
 
     await waitFor(() => {
       expect(screen.getByText(/Failed to generate metadata/i)).toBeInTheDocument();
+    });
+  });
+
+  it('attaches and detaches a project from the post', async () => {
+    mockFetch.mockImplementation((url, options) => {
+      if (url.includes('/api/resume')) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve([{ id: 'p1', name: 'P1', isActive: true }]) });
+      }
+      if (url.includes('/api/projects') && !url.includes('/api/blog/posts/')) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve([{ id: 'p2', title: 'Beta', slug: 'beta' }]) });
+      }
+      if (url.includes('/api/blog/posts/post-1/projects/p2') && options?.method === 'POST') {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
+      }
+      if (url.includes('/api/blog/posts/post-1/projects/p2') && options?.method === 'DELETE') {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
+      }
+      if (url.includes('/api/blog/posts/post-1') && (!options || options.method === 'GET' || options.method === undefined)) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ ...mockPost, relatedProjects: [] })
+        });
+      }
+      return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
+    });
+
+    render(<EditBlogPage params={mockParams} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Beta')).toBeInTheDocument();
+    });
+
+    const checkbox = screen.getByLabelText(/Beta/i);
+    fireEvent.click(checkbox);
+    await waitFor(() => {
+      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('/api/blog/posts/post-1/projects/p2'), expect.objectContaining({ method: 'POST' }));
+    });
+
+    fireEvent.click(checkbox);
+    await waitFor(() => {
+      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('/api/blog/posts/post-1/projects/p2'), expect.objectContaining({ method: 'DELETE' }));
+    });
+  });
+
+  it('shows error when toggling a related project fails and handles no projects', async () => {
+    mockFetch.mockImplementation((url, options) => {
+      if (url.includes('/api/resume')) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve([{ id: 'p1', name: 'P1', isActive: true }]) });
+      }
+      if (url.includes('/api/projects') && !url.includes('/api/blog/posts/')) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve([]) });
+      }
+      if (url.includes('/api/blog/posts/post-1') && (!options || options.method === 'GET' || options.method === undefined)) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve(mockPost) });
+      }
+      return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
+    });
+
+    render(<EditBlogPage params={mockParams} />);
+    await waitFor(() => {
+      expect(screen.getByText(/No projects available/i)).toBeInTheDocument();
     });
   });
 });

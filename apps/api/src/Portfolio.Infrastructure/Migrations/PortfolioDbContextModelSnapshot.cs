@@ -349,6 +349,21 @@ namespace Portfolio.Infrastructure.Migrations
                     b.ToTable("ContentTagAssignments");
                 });
 
+            modelBuilder.Entity("Portfolio.Domain.Content.PostProject", b =>
+                {
+                    b.Property<Guid>("PostId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("PostId", "ProjectId");
+
+                    b.HasIndex("ProjectId");
+
+                    b.ToTable("PostProjects");
+                });
+
             modelBuilder.Entity("Portfolio.Domain.Content.ProjectLink", b =>
                 {
                     b.Property<Guid>("Id")
@@ -647,6 +662,9 @@ namespace Portfolio.Infrastructure.Migrations
                 {
                     b.HasBaseType("Portfolio.Domain.Content.ContentItem");
 
+                    b.Property<DateTime?>("StartDate")
+                        .HasColumnType("timestamp with time zone");
+
                     b.HasDiscriminator().HasValue(2);
                 });
 
@@ -731,6 +749,25 @@ namespace Portfolio.Infrastructure.Migrations
                     b.Navigation("ContentItem");
 
                     b.Navigation("ContentTag");
+                });
+
+            modelBuilder.Entity("Portfolio.Domain.Content.PostProject", b =>
+                {
+                    b.HasOne("Portfolio.Domain.Content.BlogPost", "Post")
+                        .WithMany("PostProjects")
+                        .HasForeignKey("PostId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Portfolio.Domain.Content.Project", "Project")
+                        .WithMany("PostProjects")
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Post");
+
+                    b.Navigation("Project");
                 });
 
             modelBuilder.Entity("Portfolio.Domain.Content.ProjectLink", b =>
@@ -875,11 +912,15 @@ namespace Portfolio.Infrastructure.Migrations
 
             modelBuilder.Entity("Portfolio.Domain.Content.BlogPost", b =>
                 {
+                    b.Navigation("PostProjects");
+
                     b.Navigation("PostSyndications");
                 });
 
             modelBuilder.Entity("Portfolio.Domain.Content.Project", b =>
                 {
+                    b.Navigation("PostProjects");
+
                     b.Navigation("ProjectLinks");
                 });
 #pragma warning restore 612, 618

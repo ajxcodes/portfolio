@@ -168,8 +168,40 @@ export default function SkillsLibraryPage() {
   };
 
   useEffect(() => {
-    loadProfiles();
-    loadCategories();
+    let cancelled = false;
+    (async () => {
+      try {
+        const headers = await fetchAuthHeaders();
+        const res = await fetch(`${API_BASE_URL}/api/resume`, { headers });
+        if (res.ok) {
+          const data: ResumeProfileInfo[] = await res.json();
+          if (!cancelled) {
+            setProfiles(data || []);
+            const active = (data || []).find((p) => p.isActive);
+            setSelectedProfileId(active?.id || data?.[0]?.id || "");
+          }
+        }
+      } catch (e) {
+        console.error("Failed to load resume profiles", e);
+      } finally {
+        if (!cancelled) setProfilesLoading(false);
+      }
+    })();
+    (async () => {
+      setErrorMsg("");
+      try {
+        const headers = await fetchAuthHeaders();
+        const res = await fetch(`${API_BASE_URL}/api/resume/skills`, { headers });
+        if (!res.ok) throw new Error("Failed to load skills");
+        const data = await res.json();
+        if (!cancelled) setCategories(data || []);
+      } catch (err: any) {
+        if (!cancelled) setErrorMsg(err.message || "Error loading skills");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

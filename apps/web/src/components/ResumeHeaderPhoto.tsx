@@ -2,7 +2,7 @@
 
 import { useTheme } from "next-themes";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useIsHydrated } from "@/hooks/useIsHydrated";
 
 interface ResumeHeaderPhotoProps {
   size?: number;
@@ -11,18 +11,14 @@ interface ResumeHeaderPhotoProps {
   photoUrlDark?: string;
 }
 
-export const ResumeHeaderPhoto = ({ 
-  size = 200, 
+export const ResumeHeaderPhoto = ({
+  size = 200,
   altText,
   photoUrlLight,
   photoUrlDark
 }: ResumeHeaderPhotoProps) => {
-  const [mounted, setMounted] = useState(false);
+  const mounted = useIsHydrated();
   const { resolvedTheme } = useTheme();
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   const containerStyle = {
     width: `${size}px`,

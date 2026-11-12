@@ -30,6 +30,7 @@ export default function CreateProjectPage() {
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
   const [links, setLinks] = useState<ProjectLinkInput[]>([]);
+  const [startDate, setStartDate] = useState("");
   const [resumeProfiles, setResumeProfiles] = useState<ResumeProfileInfo[]>([]);
   const [resumeProfileId, setResumeProfileId] = useState("");
   const [profilesLoading, setProfilesLoading] = useState(true);
@@ -96,6 +97,7 @@ export default function CreateProjectPage() {
           visible,
           canonicalUrl: null,
           resumeProfileId,
+          startDate: startDate ? startDate : null,
           tags,
           projectLinks: links.filter(l => l.url.trim()).map(l => ({ type: l.type, url: l.url, label: l.label || null }))
         }),
@@ -173,6 +175,16 @@ export default function CreateProjectPage() {
                 ))}
               </div>
               <input type="text" value={tagInput} onChange={(e) => setTagInput(e.target.value)} onKeyDown={handleAddTag} className="w-full bg-background border border-primary/20 p-2 rounded text-xs focus:outline-none focus:border-primary/50 transition-colors" placeholder="Add a tag and press Enter" />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-primary/80 uppercase tracking-wider">Start Date</label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-full bg-background border border-primary/20 p-2 rounded text-xs focus:outline-none focus:border-primary/50 transition-colors"
+              />
             </div>
 
             <div className="space-y-2">

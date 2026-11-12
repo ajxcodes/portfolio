@@ -57,4 +57,24 @@ public class ProjectsControllerTests
 
         result.Result.ShouldBeOfType<NotFoundResult>();
     }
+
+    [Fact]
+    public async Task UpdateStartDateAsync_ReturnsOkWithUpdatedProject_AndNotFoundForUnknownId()
+    {
+        var id = Guid.NewGuid();
+        var post = new ContentResponse { Id = id, Title = "Proj", Slug = "proj", Content = "content", DatePosted = DateTime.UtcNow, ResumeProfileId = Guid.NewGuid(), AuthorName = "user" };
+        _serviceMock.UpdateStartDateAsync(id, Arg.Any<DateTime?>()).Returns(post);
+
+        var okResult = await _controller.UpdateStartDateAsync(id, new UpdateStartDateRequest { StartDate = new DateTime(2026, 1, 15, 0, 0, 0, DateTimeKind.Utc) });
+
+        var ok = okResult.Result.ShouldBeOfType<OkObjectResult>();
+        ok.Value.ShouldBe(post);
+
+        var missingId = Guid.NewGuid();
+        _serviceMock.UpdateStartDateAsync(missingId, Arg.Any<DateTime?>()).Returns((ContentResponse?)null);
+
+        var missing = await _controller.UpdateStartDateAsync(missingId, new UpdateStartDateRequest());
+
+        missing.Result.ShouldBeOfType<NotFoundResult>();
+    }
 }

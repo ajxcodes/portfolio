@@ -7,7 +7,6 @@ import { fetchEventSource } from '@microsoft/fetch-event-source';
 export function useTerminalShell(blogPosts: BlogPost[], resume: ResumeData) {
   const router = useRouter();
   const [input, setInput] = useState('');
-  const [history, setHistory] = useState<TerminalHistoryItem[]>([]);
   const [isAiMode, setIsAiMode] = useState(false);
   const [isAiTyping, setIsAiTyping] = useState(false);
   const [isWarmingUp, setIsWarmingUp] = useState(false);
@@ -19,29 +18,33 @@ export function useTerminalShell(blogPosts: BlogPost[], resume: ResumeData) {
   // Persistent history setup
   const HISTORY_KEY = 'terminal_history';
   const COMMANDS_KEY = 'terminal_command_history';
-  const [cmdHistory, setCmdHistory] = useState<string[]>([]);
-  const [cmdIndex, setCmdIndex] = useState(-1);
-
-  // Initialize history
-  useEffect(() => {
+  const [cmdHistory, setCmdHistory] = useState<string[]>(() => {
+    if (typeof window === 'undefined') return [];
     const savedCmds = localStorage.getItem(COMMANDS_KEY);
-    if (savedCmds) {
-      try { setCmdHistory(JSON.parse(savedCmds)); } catch (e) {}
+    if (!savedCmds) return [];
+    try { return JSON.parse(savedCmds); } catch { return []; }
+  });
+  const [cmdIndex, setCmdIndex] = useState(-1);
+  const [history, setHistory] = useState<TerminalHistoryItem[]>(() => {
+    if (typeof window === 'undefined') {
+      return [
+        { type: 'output', text: 'ajxcodes Interactive Shell' },
+        { type: 'output', text: '(c) ajxcodes. All rights reserved.' },
+        { type: 'output', text: 'Type "help" to list available commands.' },
+        { type: 'output', text: '' },
+      ];
     }
     const savedHistory = localStorage.getItem(HISTORY_KEY);
     if (savedHistory) {
-      try { 
-        setHistory(JSON.parse(savedHistory));
-        return;
-      } catch (e) {}
+      try { return JSON.parse(savedHistory); } catch {}
     }
-    setHistory([
+    return [
       { type: 'output', text: 'ajxcodes Interactive Shell' },
       { type: 'output', text: '(c) ajxcodes. All rights reserved.' },
       { type: 'output', text: 'Type "help" to list available commands.' },
       { type: 'output', text: '' },
-    ]);
-  }, []);
+    ];
+  });
 
   // Save history
   useEffect(() => {

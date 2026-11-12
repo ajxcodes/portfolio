@@ -34,6 +34,7 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
   const [links, setLinks] = useState<ProjectLinkInput[]>([]);
+  const [startDate, setStartDate] = useState("");
   const [resumeProfiles, setResumeProfiles] = useState<ResumeProfileInfo[]>([]);
   const [resumeProfileId, setResumeProfileId] = useState("");
   const [profilesLoading, setProfilesLoading] = useState(true);
@@ -75,6 +76,7 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
         setResumeProfileId(data.resumeProfileId || "");
         setTags(data.tags || []);
         setLinks((data.projectLinks || []).map((l: any) => ({ type: l.type || "homepage", url: l.url || "", label: l.label || "" })));
+        setStartDate(data.startDate ? String(data.startDate).slice(0, 10) : "");
       } catch (err: any) {
         setErrorMsg(err.message || "Failed to load project.");
       } finally {
@@ -124,6 +126,18 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
         }),
       });
       if (!res.ok) throw new Error(await res.text() || "Failed to update project.");
+
+      // The start date has its own endpoint so a project save that omits the date never
+      // erases a backfilled value.
+      const startDateResponse = await fetch(`${API_BASE_URL}/api/projects/${id}/start-date`, {
+        method: "PUT",
+        headers,
+        body: JSON.stringify({ startDate: startDate ? startDate : null }),
+      });
+      if (!startDateResponse.ok) {
+        throw new Error(await startDateResponse.text() || "Failed to update the project start date.");
+      }
+
       router.push("/admin/projects");
       router.refresh();
     } catch (err: any) {
@@ -200,6 +214,15 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
                 ))}
               </div>
               <input type="text" value={tagInput} onChange={(e) => setTagInput(e.target.value)} onKeyDown={handleAddTag} className="w-full bg-background border border-primary/20 p-2 rounded text-xs focus:outline-none focus:border-primary/50 transition-colors" placeholder="Add a tag and press Enter" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-primary/80 uppercase tracking-wider">Start Date</label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-full bg-background border border-primary/20 p-2 rounded text-xs focus:outline-none focus:border-primary/50 transition-colors"
+              />
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">

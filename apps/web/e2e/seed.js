@@ -171,8 +171,10 @@ async function seed() {
     resumeProfileId: profile.id,
     tags: ['shared-tag', 'blog-only']
   });
+  let seededBlogId = null;
   if (blogRes.ok) {
     const blog = await blogRes.json();
+    seededBlogId = blog.id;
     console.log(`Created seeded blog post: ${blog.id}`);
   } else {
     console.warn(`Seed blog post creation failed: ${blogRes.status} ${await blogRes.text()}`);
@@ -210,15 +212,34 @@ async function seed() {
     }
   ];
 
+  let alphaProjectId = null;
   for (const project of projects) {
     await deleteBySlug('/api/projects', project.slug);
     const res = await request(`${apiUrl}/api/projects`, { method: 'POST' }, project);
     if (res.ok) {
       const created = await res.json();
+      if (project.slug === 'alpha-seed-project') {
+        alphaProjectId = created.id;
+      }
       console.log(`Created seeded project: ${created.title} (${created.id})`);
     } else {
       console.warn(`Seed project creation failed for ${project.title}: ${res.status} ${await res.text()}`);
     }
+  }
+
+  // 7. Attach the Alpha project to the seeded blog post (post created before projects).
+  if (seededBlogId && alphaProjectId) {
+    const attachRes = await request(
+      `${apiUrl}/api/blog/posts/${seededBlogId}/projects/${alphaProjectId}`,
+      { method: 'POST' }
+    );
+    if (attachRes.ok) {
+      console.log(`Attached project ${alphaProjectId} to blog post ${seededBlogId}`);
+    } else {
+      console.warn(`Failed to attach project to blog post: ${attachRes.status} ${await attachRes.text()}`);
+    }
+  } else {
+    console.warn('Skipped attaching project to blog post because ids were missing.');
   }
 
   console.log('Database seeded successfully!');

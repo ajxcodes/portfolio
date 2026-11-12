@@ -24,6 +24,14 @@ public class PostsController(IContentService service) : ControllerBase
         return Ok(response);
     }
 
+    [HttpGet("slug/{slug}")]
+    public async Task<ActionResult<ContentResponse>> GetBySlugAsync(string slug)
+    {
+        var response = await service.GetBySlugAsync(slug, ContentType.Blog);
+        if (response == null) return NotFound();
+        return Ok(response);
+    }
+
     [HttpPost]
     [Authorize]
     public async Task<ActionResult<ContentResponse>> CreateAsync(CreateContentRequest request)
@@ -56,6 +64,24 @@ public class PostsController(IContentService service) : ControllerBase
         [FromBody] GenerateMetadataRequest request)
     {
         var response = await service.GenerateMetadataAsync(request);
+        return Ok(response);
+    }
+
+    [HttpPost("{id}/projects/{projectId}")]
+    [Authorize]
+    public async Task<ActionResult<ContentResponse>> AttachProjectAsync(Guid id, Guid projectId)
+    {
+        var response = await service.AttachProjectAsync(id, projectId);
+        if (response == null) return NotFound();
+        return Ok(response);
+    }
+
+    [HttpDelete("{id}/projects/{projectId}")]
+    [Authorize]
+    public async Task<ActionResult<ContentResponse>> DetachProjectAsync(Guid id, Guid projectId)
+    {
+        var response = await service.DetachProjectAsync(id, projectId);
+        if (response == null) return NotFound();
         return Ok(response);
     }
 }

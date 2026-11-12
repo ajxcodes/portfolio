@@ -6,6 +6,12 @@ interface ResumeProfileInfo {
   isActive: boolean;
 }
 
+interface ProjectOption {
+  id: string;
+  title: string;
+  slug: string;
+}
+
 import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -41,23 +47,68 @@ export default function EditBlogPostPage({ params }: { params: Promise<{ id: str
   const [resumeProfiles, setResumeProfiles] = useState<ResumeProfileInfo[]>([]);
   const [resumeProfileId, setResumeProfileId] = useState("");
   const [profilesLoading, setProfilesLoading] = useState(true);
+  const [projects, setProjects] = useState<ProjectOption[]>([]);
+  const [projectsLoading, setProjectsLoading] = useState(true);
+  const [attachedProjectIds, setAttachedProjectIds] = useState<string[]>([]);
+
+  const fetchAuthHeaders = async () => {
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.access_token) {
+      headers["Authorization"] = `Bearer ${session.access_token}`;
+    }
+    return headers;
+  };
 
   useEffect(() => {
-    async function loadProfiles() {
+    let cancelled = false;
+
+    const loadProfiles = async () => {
       try {
         const headers = await fetchAuthHeaders();
         const res = await fetch(`${API_BASE_URL}/api/resume`, { headers });
         if (res.ok) {
           const data: ResumeProfileInfo[] = await res.json();
-          setResumeProfiles(data);
+          if (!cancelled) setResumeProfiles(data);
         }
       } catch (e) {
         console.error("Failed to load resume profiles", e);
       } finally {
-        setProfilesLoading(false);
+        if (!cancelled) setProfilesLoading(false);
       }
-    }
+    };
     loadProfiles();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadProjects = async () => {
+      try {
+        const headers = await fetchAuthHeaders();
+        const res = await fetch(`${API_BASE_URL}/api/projects`, { headers });
+        if (res.ok) {
+          const data: ProjectOption[] = await res.json();
+          if (!cancelled) setProjects(data);
+        }
+      } catch (e) {
+        console.error("Failed to load projects", e);
+      } finally {
+        if (!cancelled) setProjectsLoading(false);
+      }
+    };
+    loadProjects();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -75,28 +126,16 @@ export default function EditBlogPostPage({ params }: { params: Promise<{ id: str
     setTags(tags.filter(t => t !== tagToRemove));
   };
 
-  const fetchAuthHeaders = async () => {
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-    };
-
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session?.access_token) {
-      headers["Authorization"] = `Bearer ${session.access_token}`;
-    }
-    return headers;
-  };
-
   useEffect(() => {
     const loadPost = async () => {
       try {
         const headers = await fetchAuthHeaders();
-        const res = await fetch(`${API_BASE_URL}/api/blog/posts/${id}`, { 
+        const res = await fetch(`${API_BASE_URL}/api/blog/posts/${id}`, {
           headers,
           cache: "no-store"
         });
         if (!res.ok) throw new Error("Failed to load post data");
-        
+
         const data = await res.json();
         setTitle(data.title || "");
         setSlug(data.slug || "");
@@ -106,6 +145,11 @@ export default function EditBlogPostPage({ params }: { params: Promise<{ id: str
         setCanonicalUrl(data.canonicalUrl || "");
         setResumeProfileId(data.resumeProfileId || "");
         setTags(data.tags || []);
+        setAttachedProjectIds(
+          Array.isArray(data.relatedProjects)
+            ? data.relatedProjects.map((rp: { id: string }) => rp.id)
+            : []
+        );
       } catch (err: any) {
         setErrorMsg(err.message || "Failed to load post.");
       } finally {
@@ -117,6 +161,30 @@ export default function EditBlogPostPage({ params }: { params: Promise<{ id: str
       loadPost();
     }
   }, [id]);
+
+  const toggleProject = async (projectId: string, attach: boolean) => {
+    setErrorMsg("");
+    try {
+      const headers = await fetchAuthHeaders();
+      const res = await fetch(`${API_BASE_URL}/api/blog/posts/${id}/projects/${projectId}`, {
+        method: attach ? "POST" : "DELETE",
+        headers,
+      });
+
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(errText || "Failed to update the related projects.");
+      }
+
+      setAttachedProjectIds((current) =>
+        attach
+          ? (current.includes(projectId) ? current : [...current, projectId])
+          : current.filter((existing) => existing !== projectId)
+      );
+    } catch (err: any) {
+      setErrorMsg(err.message || "An error occurred updating the related projects.");
+    }
+  };
 
   const handleAutoFill = async () => {
     if (!title && !content) {
@@ -311,6 +379,30 @@ export default function EditBlogPostPage({ params }: { params: Promise<{ id: str
                 className="w-full bg-background border border-primary/20 p-2 rounded text-xs focus:outline-none focus:border-primary/50 transition-colors"
                 placeholder="Add a tag and press Enter"
               />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-primary/80 uppercase tracking-wider">Related Projects</label>
+              {projectsLoading ? (
+                <div className="w-full bg-muted/20 animate-pulse border border-primary/10 p-2 rounded h-9"></div>
+              ) : projects.length === 0 ? (
+                <p className="text-xs text-muted-foreground/80">No projects available.</p>
+              ) : (
+                <div className="space-y-1.5" data-testid="related-projects-picker">
+                  {projects.map((project) => (
+                    <label key={project.id} className="flex items-center gap-2 text-xs cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={attachedProjectIds.includes(project.id)}
+                        onChange={(e) => toggleProject(project.id, e.target.checked)}
+                        className="w-4 h-4 accent-primary"
+                      />
+                      <span className="text-foreground/90">{project.title}</span>
+                      <span className="text-muted-foreground/60 font-mono">/{project.slug}</span>
+                    </label>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">

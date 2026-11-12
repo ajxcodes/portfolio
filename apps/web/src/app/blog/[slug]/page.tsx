@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { getBlogPostBySlug } from '@/lib/data';
+import RelatedProjectCard from '@/components/RelatedProjectCard';
 import ReactMarkdown from 'react-markdown';
 import rehypeSanitize from 'rehype-sanitize';
 
@@ -15,6 +16,8 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   const { slug } = await params;
   const post = await getBlogPostBySlug(slug);
   if (!post) return notFound();
+
+  const relatedProjects = (post.relatedProjects ?? []).filter((project) => project.visible !== false);
 
   return (
     <article className="max-w-3xl mx-auto terminal-card p-8 md:p-12 rounded-xl shadow-xl relative overflow-hidden pt-14">
@@ -39,6 +42,17 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           {post.content ?? post.summary ?? ''}
         </ReactMarkdown>
       </section>
+
+      {relatedProjects.length > 0 && (
+        <section className="mt-10 border-t border-primary/10 pt-8" data-testid="related-projects-section">
+          <h2 className="text-xl font-bold font-mono text-primary mb-4">Related Projects</h2>
+          <div className="grid gap-4">
+            {relatedProjects.map((project) => (
+              <RelatedProjectCard key={project.id} project={project} />
+            ))}
+          </div>
+        </section>
+      )}
     </article>
   );
 }

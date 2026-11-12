@@ -47,26 +47,27 @@ export default function AuditLogsPage() {
     return headers;
   };
 
-  const loadAuditLogs = async () => {
-    setLoading(true);
-    setErrorMsg("");
-    try {
-      const headers = await fetchAuthHeaders();
-      const res = await fetch(`${API_BASE_URL}/api/audit?limit=50`, { headers });
-      if (!res.ok) {
-        throw new Error(`Failed to load audit logs (${res.status})`);
-      }
-      const data = await res.json();
-      setLogs(data);
-    } catch (err: any) {
-      setErrorMsg(err.message || "Failed to load database change audits.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    loadAuditLogs();
+    let cancelled = false;
+    (async () => {
+      try {
+        const headers = await fetchAuthHeaders();
+        const res = await fetch(`${API_BASE_URL}/api/audit?limit=50`, { headers });
+        if (!res.ok) {
+          throw new Error(`Failed to load audit logs (${res.status})`);
+        }
+        const data = await res.json();
+        if (!cancelled) {
+          setLogs(data);
+          setErrorMsg("");
+        }
+      } catch (err: any) {
+        if (!cancelled) setErrorMsg(err.message || "Failed to load database change audits.");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

@@ -3,7 +3,11 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { ProjectsListClient } from '../ProjectsListClient';
 
 jest.mock('next/link', () => {
-  return ({ children, href }: { children: React.ReactNode; href: string }) => <a href={href}>{children}</a>;
+  function LinkMock({ children, href }: { children: React.ReactNode; href: string }) {
+    return <a href={href}>{children}</a>;
+  }
+  LinkMock.displayName = 'LinkMock';
+  return LinkMock;
 });
 
 jest.mock('lucide-react', () => ({

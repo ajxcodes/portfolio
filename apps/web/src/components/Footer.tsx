@@ -3,19 +3,21 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useIsHydrated } from "@/hooks/useIsHydrated";
 import { supabase } from "@/lib/supabaseBrowser";
 
 export function Footer() {
-  const [mounted, setMounted] = useState(false);
-  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const mounted = useIsHydrated();
+  // In local dev bypass mode the admin identity is known up front, so it is seeded with a
+  // lazy initialiser instead of being written back into state from an effect.
+  const [userEmail, setUserEmail] = useState<string | null>(() =>
+    process.env.NEXT_PUBLIC_LOCAL_DEV_BYPASS_AUTH === "true" ? "local-admin@portfolio.local" : null
+  );
   const pathname = usePathname();
   const router = useRouter();
 
   useEffect(() => {
-    setMounted(true);
-
     if (process.env.NEXT_PUBLIC_LOCAL_DEV_BYPASS_AUTH === "true") {
-      setUserEmail("local-admin@portfolio.local");
       return;
     }
 

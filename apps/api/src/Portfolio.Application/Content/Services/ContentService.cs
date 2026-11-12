@@ -2,6 +2,7 @@ using Portfolio.Application.Blog.Requests;
 using Portfolio.Application.Blog.Responses;
 using Portfolio.Application.Content.Requests;
 using Portfolio.Application.Content.Responses;
+using Portfolio.Application.Releases;
 using Portfolio.Domain.Content;
 
 namespace Portfolio.Application.Content.Services;
@@ -10,17 +11,22 @@ public interface IContentService
 {
     Task<IEnumerable<ContentResponse>> ListAsync(ContentType contentType);
     Task<ContentResponse?> GetAsync(Guid id, ContentType contentType);
+    Task<ContentResponse?> GetBySlugAsync(string slug, ContentType contentType);
     Task<ContentResponse> CreateAsync(ContentType contentType, CreateContentRequest request);
     Task<ContentResponse?> UpdateAsync(Guid id, ContentType contentType, UpdateContentRequest request, string editorUsername);
     Task DeleteAsync(Guid id, ContentType contentType);
     Task<GenerateMetadataResponse> GenerateMetadataAsync(GenerateMetadataRequest request);
+    Task<ContentResponse?> AttachProjectAsync(Guid postId, Guid projectId);
+    Task<ContentResponse?> DetachProjectAsync(Guid postId, Guid projectId);
+    Task<ContentResponse?> UpdateStartDateAsync(Guid id, DateTime? startDate);
 }
 
 public class ContentService(
     Content.Repositories.IContentRepository repository,
     Resume.Repositories.IResumeRepository resumeRepository,
     Analytics.Repositories.IAnalyticsRepository analyticsRepository,
-    AI.IAiChatService aiService) : IContentService
+    AI.IAiChatService aiService,
+    IRepoReleaseService releaseService) : IContentService
 {
     public async Task<IEnumerable<ContentResponse>> ListAsync(ContentType contentType)
     {
@@ -35,6 +41,13 @@ public class ContentService(
             foreach (var r in responses)
             {
                 r.Views = viewCounts.GetValueOrDefault($"/blog/{r.Slug}", 0);
+            }
+        }
+        else if (contentType == ContentType.Project)
+        {
+            foreach (var r in responses)
+            {
+                await EnrichProjectWithReleasesAsync(r);
             }
         }
 
@@ -52,6 +65,32 @@ public class ContentService(
         {
             var viewCounts = await analyticsRepository.GetPageViewsCountByPathAsync(new[] { $"/blog/{response.Slug}" });
             response.Views = viewCounts.GetValueOrDefault($"/blog/{response.Slug}", 0);
+            await EnrichRelatedProjectsWithReleasesAsync(response);
+        }
+        else if (contentType == ContentType.Project)
+        {
+            await EnrichProjectWithReleasesAsync(response);
+        }
+
+        return response;
+    }
+
+    public async Task<ContentResponse?> GetBySlugAsync(string slug, ContentType contentType)
+    {
+        var item = await repository.GetBySlugAsync(slug, contentType);
+        if (item == null) return null;
+
+        var response = ContentResponse.FromDomain(item);
+
+        if (contentType == ContentType.Blog)
+        {
+            var viewCounts = await analyticsRepository.GetPageViewsCountByPathAsync(new[] { $"/blog/{response.Slug}" });
+            response.Views = viewCounts.GetValueOrDefault($"/blog/{response.Slug}", 0);
+            await EnrichRelatedProjectsWithReleasesAsync(response);
+        }
+        else if (contentType == ContentType.Project)
+        {
+            await EnrichProjectWithReleasesAsync(response);
         }
 
         return response;
@@ -82,6 +121,7 @@ public class ContentService(
         if (item is Project project)
         {
             ApplyProjectLinks(project, request.ProjectLinks);
+            project.StartDate = request.StartDate;
         }
 
         await repository.AddAsync(item);
@@ -158,7 +198,7 @@ public class ContentService(
             var contentSummary = response.Summary ?? request.Summary ?? "No summary";
             var prompt = $"Generate a clean, URL-friendly slug (lowercase, hyphen-separated, no special characters) for a blog post titled '{request.Title}'. The post is about: '{contentSummary}'. Output ONLY the slug.";
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
-            var slug = await aiService.AskQuestionAsync("You are a strict URL slug generator. Return only the slug string.", prompt, cts.Token);
+            var slug = await aiService.AskQuestionAsync("You are a strict URL slug generator. Return only the requested string.", prompt, cts.Token);
 
             slug = slug.ToLowerInvariant().Trim();
             slug = System.Text.RegularExpressions.Regex.Replace(slug, @"[^a-z0-9\-]", "-");
@@ -167,6 +207,67 @@ public class ContentService(
             response.Slug = slug;
         }
 
+        return response;
+    }
+
+    public async Task<ContentResponse?> AttachProjectAsync(Guid postId, Guid projectId)
+    {
+        var post = await repository.GetAsync(postId, ContentType.Blog);
+        if (post is not BlogPost blogPost) return null;
+
+        var project = await repository.GetAsync(projectId, ContentType.Project);
+        if (project is not Project projectEntity) return null;
+
+        var existing = await repository.GetPostProjectAsync(postId, projectId);
+        if (existing == null)
+        {
+            var join = new PostProject
+            {
+                PostId = postId,
+                ProjectId = projectId,
+                Post = blogPost,
+                Project = projectEntity
+            };
+
+            blogPost.PostProjects.Add(join);
+            await repository.AddPostProjectAsync(join);
+            await repository.SaveChangesAsync();
+        }
+
+        var response = ContentResponse.FromDomain(blogPost);
+        await EnrichRelatedProjectsWithReleasesAsync(response);
+        return response;
+    }
+
+    public async Task<ContentResponse?> DetachProjectAsync(Guid postId, Guid projectId)
+    {
+        var post = await repository.GetAsync(postId, ContentType.Blog);
+        if (post is not BlogPost blogPost) return null;
+
+        var join = blogPost.PostProjects.FirstOrDefault(pp => pp.ProjectId == projectId);
+        if (join == null) return null;
+
+        blogPost.PostProjects.Remove(join);
+        await repository.RemovePostProjectAsync(join);
+        await repository.SaveChangesAsync();
+
+        var response = ContentResponse.FromDomain(blogPost);
+        await EnrichRelatedProjectsWithReleasesAsync(response);
+        return response;
+    }
+
+    public async Task<ContentResponse?> UpdateStartDateAsync(Guid id, DateTime? startDate)
+    {
+        var item = await repository.GetAsync(id, ContentType.Project);
+        if (item is not Project project) return null;
+
+        project.StartDate = startDate;
+
+        await repository.UpdateAsync(project);
+        await repository.SaveChangesAsync();
+
+        var response = ContentResponse.FromDomain(project);
+        await EnrichProjectWithReleasesAsync(response);
         return response;
     }
 
@@ -217,5 +318,31 @@ public class ContentService(
                 Project = project
             });
         }
+    }
+
+    private async Task EnrichProjectWithReleasesAsync(ContentResponse response)
+    {
+        response.Releases = (await ResolveReleasesAsync(response.ProjectLinks)).ToList();
+    }
+
+    private async Task EnrichRelatedProjectsWithReleasesAsync(ContentResponse response)
+    {
+        foreach (var related in response.RelatedProjects)
+        {
+            related.Releases = (await ResolveReleasesAsync(related.ProjectLinks)).ToList();
+        }
+    }
+
+    private async Task<IReadOnlyList<RepoRelease>> ResolveReleasesAsync(IEnumerable<ProjectLinkResponse> links)
+    {
+        var githubLink = links.FirstOrDefault(l => string.Equals(l.Type, "github", StringComparison.OrdinalIgnoreCase));
+        if (githubLink == null) return Array.Empty<RepoRelease>();
+
+        if (!GitHubRepoLocator.TryExtractOwnerAndRepo(githubLink.Url, out var owner, out var repo))
+        {
+            return Array.Empty<RepoRelease>();
+        }
+
+        return await releaseService.GetReleasesAsync(owner, repo);
     }
 }

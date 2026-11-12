@@ -15,8 +15,8 @@ describe('useTerminalShell', () => {
   });
 
   const mockBlogPosts = [
-    { title: 'Test Post', url: 'https://test.com/post', date: '2026-01-01', description: 'Test description', slug: 'test' }
-  ];
+    { id: 'p1', title: 'Test Post', url: 'https://test.com/post', date: '2026-01-01', description: 'Test description', slug: 'test', summary: 'Test description', content: '', datePosted: '2026-01-01', visible: true, resumeProfileId: 'r1', authorName: 'A', tags: [] }
+  ] as any;
   
   const mockResume = {
     profile: { name: 'Test User', currentRole: 'Developer' },

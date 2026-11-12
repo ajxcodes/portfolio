@@ -103,10 +103,9 @@ export default function AnalyticsPage() {
   const toggleViews = useCallback(() => setShowTotalViews(prev => !prev), []);
   const toggleAdminViews = useCallback(() => setShowAdminViews(prev => !prev), []);
 
-  const filteredPageViews = useMemo(() => {
-    if (!summary?.recentPageViews) return [];
-    return summary.recentPageViews.filter(view => showAdminViews || !view.pagePath?.startsWith('/admin'));
-  }, [summary?.recentPageViews, showAdminViews]);
+  const filteredPageViews = !summary?.recentPageViews
+    ? []
+    : summary.recentPageViews.filter(view => showAdminViews || !view.pagePath?.startsWith('/admin'));
 
   const viewsByDate = useMemo(() => {
     if (!filteredPageViews.length) return [];
@@ -264,26 +263,25 @@ export default function AnalyticsPage() {
     return headers;
   };
 
-  const loadAnalytics = async () => {
-    setLoading(true);
-    setErrorMsg("");
-    try {
-      const headers = await fetchAuthHeaders();
-      const res = await fetch(`${API_BASE_URL}/api/analytics/summary?limit=30`, { headers });
-      if (!res.ok) {
-        throw new Error(`Failed to load analytics (${res.status})`);
-      }
-      const data = await res.json();
-      setSummary(data);
-    } catch (err: any) {
-      setErrorMsg(err.message || "Failed to load telemetry summary.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    loadAnalytics();
+    let cancelled = false;
+    (async () => {
+      setErrorMsg("");
+      try {
+        const headers = await fetchAuthHeaders();
+        const res = await fetch(`${API_BASE_URL}/api/analytics/summary?limit=30`, { headers });
+        if (!res.ok) {
+          throw new Error(`Failed to load analytics (${res.status})`);
+        }
+        const data = await res.json();
+        if (!cancelled) setSummary(data);
+      } catch (err: any) {
+        if (!cancelled) setErrorMsg(err.message || "Failed to load telemetry summary.");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
