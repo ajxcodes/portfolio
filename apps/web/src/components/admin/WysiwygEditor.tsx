@@ -24,9 +24,10 @@ import {
   ListsToggle
 } from '@mdxeditor/editor';
 import '@mdxeditor/editor/style.css';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useTheme } from 'next-themes';
 import { supabase } from '@/lib/supabaseBrowser';
+import { useIsHydrated } from '@/hooks/useIsHydrated';
 
 interface WysiwygEditorProps {
   markdown: string;
@@ -36,11 +37,7 @@ interface WysiwygEditorProps {
 export default function WysiwygEditor({ markdown, onChange }: WysiwygEditorProps) {
   const [error, setError] = useState<string | null>(null);
   const { resolvedTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useIsHydrated();
 
   const handleImageUpload = async (file: File) => {
     try {

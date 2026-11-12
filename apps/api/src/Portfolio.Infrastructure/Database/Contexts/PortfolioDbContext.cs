@@ -38,6 +38,7 @@ public class PortfolioDbContext(DbContextOptions options, IHttpContextAccessor? 
     public DbSet<ProjectLink> ProjectLinks { get; set; } = null!;
     public DbSet<SyndicationPlatform> SyndicationPlatforms { get; set; } = null!;
     public DbSet<PostSyndication> PostSyndications { get; set; } = null!;
+    public DbSet<PostProject> PostProjects { get; set; } = null!;
 
     public override int SaveChanges()
     {

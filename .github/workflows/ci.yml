@@ -100,6 +100,9 @@ jobs:
     - name: Build Frontend Application
       run: pnpm run build
 
+    - name: Lint Frontend Application
+      run: pnpm run lint
+
   frontend-tests:
     name: Frontend Unit Tests (Jest / RTL)
     needs: [frontend-build]

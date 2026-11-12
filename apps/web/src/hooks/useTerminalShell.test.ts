@@ -20,8 +20,8 @@ const mockFetchEventSource = fetchEventSource as jest.Mock;
 
 describe('useTerminalShell Hook and Strategies', () => {
   const mockBlogPosts: BlogPost[] = [
-    { slug: 'setting-up-pi-hole', title: 'Pi-hole Setup', summary: 'A guide to block ads.' },
-    { slug: 'dotnet-10-news', title: '.NET 10 Updates', summary: 'Exciting C# features.' }
+    { id: 'b1', slug: 'setting-up-pi-hole', title: 'Pi-hole Setup', summary: 'A guide to block ads.', content: '', datePosted: '2026-01-01', visible: true, resumeProfileId: 'r1', authorName: 'A' },
+    { id: 'b2', slug: 'dotnet-10-news', title: '.NET 10 Updates', summary: 'Exciting C# features.', content: '', datePosted: '2026-01-02', visible: true, resumeProfileId: 'r1', authorName: 'A' }
   ];
 
   const mockResume: ResumeData = {

@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import clsx from "clsx";
 import { ChevronDownIcon, ChevronUpIcon } from './icons';
 import { calculateTenure } from '@/lib/utils';
+import { useIsHydrated } from '@/hooks/useIsHydrated';
 
 interface ExperienceItemProps {
   experience: Experience;
@@ -15,17 +16,17 @@ interface ExperienceItemProps {
 export const ExperienceItem = ({ experience: exp, isHighlighted, isDimmed, matchingSkills }: ExperienceItemProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isSkillsExpanded, setIsSkillsExpanded] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
+  const isMounted = useIsHydrated();
   const tenure = calculateTenure(exp.period);
 
   useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  useEffect(() => {
     if (matchingSkills.length > 0) {
-      setIsExpanded(true);
-      setIsSkillsExpanded(true);
+      // The expansion happens in a callback so the effect body itself never writes state.
+      const timer = setTimeout(() => {
+        setIsExpanded(true);
+        setIsSkillsExpanded(true);
+      }, 0);
+      return () => clearTimeout(timer);
     }
   }, [matchingSkills.length]);
 

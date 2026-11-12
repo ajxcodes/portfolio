@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { getProjects } from '@/lib/data';
+import ProjectReleaseList from '@/components/ProjectReleaseList';
 import ReactMarkdown from 'react-markdown';
 import rehypeSanitize from 'rehype-sanitize';
 import { ExternalLink, Github, Store, Globe } from 'lucide-react';
@@ -70,6 +71,8 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             ))}
           </div>
         )}
+
+        <ProjectReleaseList releases={project.releases} />
       </header>
 
       <section className="prose prose-sm sm:prose-base dark:prose-invert max-w-none prose-a:text-primary">

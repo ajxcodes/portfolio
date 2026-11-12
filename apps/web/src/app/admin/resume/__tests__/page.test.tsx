@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import ResumeProfilesPage from '../page';
+import { supabase } from '@/lib/supabaseBrowser';
 
 jest.mock('lucide-react', () => ({
   UserSquare: () => <div data-testid="user-square-icon" />,
@@ -11,9 +12,11 @@ jest.mock('lucide-react', () => ({
 }));
 
 jest.mock('next/link', () => {
-  return ({ children, href }: { children: React.ReactNode; href: string }) => {
+  function LinkMock({ children, href }: { children: React.ReactNode; href: string }) {
     return <a href={href}>{children}</a>;
-  };
+  }
+  LinkMock.displayName = 'LinkMock';
+  return LinkMock;
 });
 
 jest.mock('next/navigation', () => ({
@@ -251,7 +254,7 @@ describe('ResumeProfilesPage', () => {
 
   it('fetches with authorization header when session exists', async () => {
     // Mock the session for this test only
-    const { supabase } = require('@/lib/supabaseBrowser');
+    // supabase imported at top level
     supabase.auth.getSession.mockResolvedValueOnce({ 
       data: { session: { access_token: 'mock-token' } } 
     });

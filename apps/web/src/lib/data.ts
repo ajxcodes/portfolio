@@ -70,6 +70,24 @@ export interface ResumeData {
   photoUrlDark?: string;
 }
 
+export interface RepoRelease {
+  tagName: string;
+  name?: string | null;
+  url: string;
+  publishedAt?: string | null;
+  isPrerelease?: boolean;
+}
+
+export interface RelatedProject {
+  id: string;
+  title: string;
+  slug: string;
+  summary: string;
+  visible: boolean;
+  projectLinks?: ProjectLinkItem[];
+  releases?: RepoRelease[];
+}
+
 export interface BlogPost {
   id: string;
   slug: string;
@@ -82,6 +100,7 @@ export interface BlogPost {
   authorName: string;
   tags?: string[];
   views?: number;
+  relatedProjects?: RelatedProject[];
 }
 
 export interface ProjectLinkItem {
@@ -104,6 +123,8 @@ export interface ProjectShowcase {
   authorName: string;
   tags?: string[];
   projectLinks?: ProjectLinkItem[];
+  startDate?: string | null;
+  releases?: RepoRelease[];
 }
 
 export interface PortfolioData {
@@ -113,6 +134,38 @@ export interface PortfolioData {
 }
 
 import { cache } from 'react';
+
+// Maps the API payload of a project attached to a blog post onto the web model.
+function mapRelatedProjects(relatedProjects: any): RelatedProject[] {
+  if (!Array.isArray(relatedProjects)) return [];
+
+  return relatedProjects
+    .filter((rp: any) => rp && rp.id)
+    .map((rp: any) => ({
+      id: rp.id,
+      title: rp.title || '',
+      slug: rp.slug || '',
+      summary: rp.summary || '',
+      visible: rp.visible !== false,
+      projectLinks: rp.projectLinks || [],
+      releases: rp.releases || [],
+    }));
+}
+
+// Maps the API payload of a published release onto the web model.
+function mapReleases(releases: any): RepoRelease[] {
+  if (!Array.isArray(releases)) return [];
+
+  return releases
+    .filter((r: any) => r && r.tagName)
+    .map((r: any) => ({
+      tagName: r.tagName,
+      name: r.name ?? null,
+      url: r.url || '',
+      publishedAt: r.publishedAt ?? null,
+      isPrerelease: r.isPrerelease === true,
+    }));
+}
 
 // In-memory local default data used as a fallback if the API database is offline
 const defaultData: PortfolioData = {
@@ -281,7 +334,8 @@ export const getBlogPosts = cache(async (): Promise<BlogPost[]> => {
         authorName: p.authorName,
         datePosted: p.datePosted,
         tags: p.tags,
-        views: p.views
+        views: p.views,
+        relatedProjects: mapRelatedProjects(p.relatedProjects)
       })) : [];
     }
   } catch (e) {
@@ -308,13 +362,13 @@ export async function getPortfolioData(): Promise<PortfolioData> {
 export async function getBlogPostBySlug(slug: string): Promise<BlogPost | undefined> {
   try {
     const apiUrl = (typeof window === 'undefined' && process.env.API_BASE_URL) || process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5808';
-    const res = await fetch(`${apiUrl}/api/blog/posts`, {
+    const res = await fetch(`${apiUrl}/api/blog/posts/slug/${encodeURIComponent(slug)}`, {
       cache: 'no-store',
     });
     if (res.ok) {
-      const posts = await res.json();
-      const post = posts.find((p: any) => p.slug === slug);
-      if (post) {
+      const post = await res.json();
+      // The by-slug endpoint returns a single post object, never a list.
+      if (post && !Array.isArray(post)) {
         return {
           id: post.id,
           slug: post.slug,
@@ -326,7 +380,8 @@ export async function getBlogPostBySlug(slug: string): Promise<BlogPost | undefi
           authorName: post.authorName,
           datePosted: post.datePosted,
           tags: post.tags,
-          views: post.views
+          views: post.views,
+          relatedProjects: mapRelatedProjects(post.relatedProjects)
         };
       }
     }
@@ -362,6 +417,8 @@ export const getProjects = cache(async (): Promise<ProjectShowcase[]> => {
               datePosted: p.datePosted,
               tags: p.tags || [],
               projectLinks: p.projectLinks || [],
+              startDate: p.startDate ?? null,
+              releases: mapReleases(p.releases),
             }))
         : [];
     }

@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2, CheckCircle2, Circle, AlertCircle, X, Download } from "lucide-react";
+import { useIsHydrated } from "@/hooks/useIsHydrated";
 
 interface DownloadProgressModalProps {
   isOpen: boolean;
@@ -16,15 +17,11 @@ export const DownloadProgressModal = ({
   onClose,
   apiBaseUrl,
 }: DownloadProgressModalProps) => {
-  const [mounted, setMounted] = useState(false);
+  const mounted = useIsHydrated();
   const [progress, setProgress] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
   const [errorMsg, setErrorMsg] = useState("");
   const [downloadUrl, setDownloadUrl] = useState("");
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   const steps = [
     "Analyzing profile data",
@@ -35,11 +32,14 @@ export const DownloadProgressModal = ({
 
   useEffect(() => {
     if (!isOpen) {
-      setProgress(0);
-      setCurrentStep(0);
-      setErrorMsg("");
-      setDownloadUrl("");
-      return;
+      // The reset happens in a callback so the effect body itself never writes state.
+      const timer = setTimeout(() => {
+        setProgress(0);
+        setCurrentStep(0);
+        setErrorMsg("");
+        setDownloadUrl("");
+      }, 0);
+      return () => clearTimeout(timer);
     }
 
     let isMounted = true;

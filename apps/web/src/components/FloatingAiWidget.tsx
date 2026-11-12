@@ -56,13 +56,11 @@ export function FloatingAiWidget({ blogPosts = [], resume }: FloatingAiWidgetPro
   
   const [isJobFitOpen, setIsJobFitOpen] = useState(false);
   const [showIdleJobFitBtn, setShowIdleJobFitBtn] = useState(false);
-  const [hasDismissedJobFitBtn, setHasDismissedJobFitBtn] = useState(false);
-  
-  useEffect(() => {
-    if (localStorage.getItem('jobFitBtnDismissed') === 'true') {
-      setHasDismissedJobFitBtn(true);
-    }
-  }, []);
+  // The dismissal flag lives in localStorage, so it is seeded with a lazy initialiser
+  // instead of being read back into state from an effect.
+  const [hasDismissedJobFitBtn, setHasDismissedJobFitBtn] = useState(
+    () => typeof window !== 'undefined' && localStorage.getItem('jobFitBtnDismissed') === 'true'
+  );
 
   const idleTimerRef = useRef<NodeJS.Timeout | null>(null);
   const jobFitRef = useRef<HTMLDivElement>(null);
@@ -90,13 +88,13 @@ export function FloatingAiWidget({ blogPosts = [], resume }: FloatingAiWidgetPro
     if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
 
     if (hasDismissedJobFitBtn || isJobFitOpen || isTyping) {
-      setShowIdleJobFitBtn(false);
-      return;
+      const timer = setTimeout(() => setShowIdleJobFitBtn(false), 0);
+      return () => clearTimeout(timer);
     }
 
     if (messages.length === 0) {
-      setShowIdleJobFitBtn(true);
-      return;
+      const timer = setTimeout(() => setShowIdleJobFitBtn(true), 0);
+      return () => clearTimeout(timer);
     }
 
     // If it's already showing, don't hide it
@@ -113,7 +111,8 @@ export function FloatingAiWidget({ blogPosts = [], resume }: FloatingAiWidgetPro
 
   useEffect(() => {
     if (isHomePage && activeTab === 'terminal') {
-      setActiveTab('gui');
+      const timer = setTimeout(() => setActiveTab('gui'), 0);
+      return () => clearTimeout(timer);
     }
   }, [isHomePage, activeTab]);
 
@@ -162,7 +161,8 @@ export function FloatingAiWidget({ blogPosts = [], resume }: FloatingAiWidgetPro
 
   // Close widget on route change
   useEffect(() => {
-    setIsOpen(false);
+    const timer = setTimeout(() => setIsOpen(false), 0);
+    return () => clearTimeout(timer);
   }, [pathname]);
 
   const handleSubmit = (e: React.FormEvent) => {

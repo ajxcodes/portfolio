@@ -1,16 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
+import { useIsHydrated } from "@/hooks/useIsHydrated";
 import { SunIcon, MoonIcon, SystemThemeIcon } from "@/components/icons";
 
 export const ThemeSwitcher = () => {
-  const [mounted, setMounted] = useState(false);
+  const mounted = useIsHydrated();
   const { theme, setTheme } = useTheme();
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   if (!mounted) {
     // Render a skeleton placeholder to prevent layout shift and hydration mismatch

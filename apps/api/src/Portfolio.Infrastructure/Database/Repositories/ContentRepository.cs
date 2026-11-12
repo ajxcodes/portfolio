@@ -35,6 +35,9 @@ public class ContentRepository(PortfolioDbContext context) : IContentRepository
                 .ThenInclude(ct => ct.ContentTag)
             .Include(p => p.PostSyndications)
                 .ThenInclude(ps => ps.Platform)
+            .Include(p => p.PostProjects)
+                .ThenInclude(pp => pp.Project)
+                    .ThenInclude(pr => pr!.ProjectLinks)
             .OrderByDescending(p => p.DatePosted)
             .ToListAsync();
 
@@ -63,6 +66,9 @@ public class ContentRepository(PortfolioDbContext context) : IContentRepository
                 .ThenInclude(ct => ct.ContentTag)
             .Include(p => p.PostSyndications)
                 .ThenInclude(ps => ps.Platform)
+            .Include(p => p.PostProjects)
+                .ThenInclude(pp => pp.Project)
+                    .ThenInclude(pr => pr!.ProjectLinks)
             .FirstOrDefaultAsync(p => p.Id == id);
     }
 
@@ -90,6 +96,9 @@ public class ContentRepository(PortfolioDbContext context) : IContentRepository
                 .ThenInclude(ct => ct.ContentTag)
             .Include(p => p.PostSyndications)
                 .ThenInclude(ps => ps.Platform)
+            .Include(p => p.PostProjects)
+                .ThenInclude(pp => pp.Project)
+                    .ThenInclude(pr => pr!.ProjectLinks)
             .FirstOrDefaultAsync(p => p.Slug == slug);
     }
 
@@ -106,9 +115,15 @@ public class ContentRepository(PortfolioDbContext context) : IContentRepository
             // orphaned (cascade delete) and the replacement rows are new, so they must be
             // INSERTed. A blanket graph Update() marks them Modified and emits a no-op
             // UPDATE that matches zero rows.
+            // Links that are already tracked (e.g. the start-date path, which does not touch
+            // the links at all) must be left alone - forcing them to Added would emit a
+            // duplicate-key INSERT.
             foreach (var link in project.ProjectLinks)
             {
-                context.Entry(link).State = EntityState.Added;
+                if (context.Entry(link).State == EntityState.Detached)
+                {
+                    context.Entry(link).State = EntityState.Added;
+                }
             }
         }
 
@@ -155,6 +170,25 @@ public class ContentRepository(PortfolioDbContext context) : IContentRepository
             .Include(ps => ps.Platform)
             .Where(ps => ps.PostId == postId)
             .ToListAsync();
+    }
+
+    public Task<PostProject?> GetPostProjectAsync(Guid postId, Guid projectId)
+    {
+        return context.PostProjects
+            .Include(pp => pp.Project)
+                .ThenInclude(pr => pr!.ProjectLinks)
+            .FirstOrDefaultAsync(pp => pp.PostId == postId && pp.ProjectId == projectId);
+    }
+
+    public async Task AddPostProjectAsync(PostProject postProject)
+    {
+        await context.PostProjects.AddAsync(postProject);
+    }
+
+    public Task RemovePostProjectAsync(PostProject postProject)
+    {
+        context.PostProjects.Remove(postProject);
+        return Task.CompletedTask;
     }
 
     public Task SaveChangesAsync()

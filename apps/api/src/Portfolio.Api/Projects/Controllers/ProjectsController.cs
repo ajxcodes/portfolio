@@ -47,4 +47,13 @@ public class ProjectsController(IContentService service) : ControllerBase
         await service.DeleteAsync(id, ContentType.Project);
         return NoContent();
     }
+
+    [HttpPut("{id}/start-date")]
+    [Authorize]
+    public async Task<ActionResult<ContentResponse>> UpdateStartDateAsync(Guid id, UpdateStartDateRequest request)
+    {
+        var response = await service.UpdateStartDateAsync(id, request.StartDate);
+        if (response == null) return NotFound();
+        return Ok(response);
+    }
 }

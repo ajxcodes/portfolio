@@ -9,6 +9,7 @@ public class CreateContentRequest
     public required string Content { get; set; }
     public bool Visible { get; set; }
     public string? CanonicalUrl { get; set; }
+    public DateTime? StartDate { get; set; }
     public List<string> Tags { get; set; } = new();
     public List<ProjectLinkRequest> ProjectLinks { get; set; } = new();
 }

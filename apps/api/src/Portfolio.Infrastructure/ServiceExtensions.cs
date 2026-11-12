@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Portfolio.Infrastructure.Database.Contexts;
@@ -10,6 +11,8 @@ using Portfolio.Application.AI;
 using Portfolio.Infrastructure.AI;
 using Portfolio.Application.Resume.Services;
 using Portfolio.Infrastructure.Resume.Services;
+using Portfolio.Application.Releases;
+using Portfolio.Infrastructure.Releases;
 
 namespace Portfolio.Infrastructure;
 
@@ -37,6 +40,18 @@ public static class ServiceExtensions
             client.Timeout = TimeSpan.FromSeconds(10);
             client.DefaultRequestHeaders.Clear();
         });
+
+        services.AddMemoryCache();
+
+        services.AddHttpClient<GitHubReleaseService>(client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(10);
+            client.DefaultRequestHeaders.Clear();
+        });
+
+        services.AddScoped<IRepoReleaseService>(sp => new CachedRepoReleaseService(
+            sp.GetRequiredService<GitHubReleaseService>(),
+            sp.GetRequiredService<IMemoryCache>()));
 
         return services.ConfigureDatabase();
     }

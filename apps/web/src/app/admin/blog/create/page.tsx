@@ -37,6 +37,18 @@ export default function CreateBlogPostPage() {
   const [resumeProfileId, setResumeProfileId] = useState("");
   const [profilesLoading, setProfilesLoading] = useState(true);
 
+  const fetchAuthHeaders = async () => {
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.access_token) {
+      headers["Authorization"] = `Bearer ${session.access_token}`;
+    }
+    return headers;
+  };
+
   useEffect(() => {
     async function loadProfiles() {
       try {
@@ -74,18 +86,6 @@ export default function CreateBlogPostPage() {
 
   const handleRemoveTag = (tagToRemove: string) => {
     setTags(tags.filter(t => t !== tagToRemove));
-  };
-
-  const fetchAuthHeaders = async () => {
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-    };
-
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session?.access_token) {
-      headers["Authorization"] = `Bearer ${session.access_token}`;
-    }
-    return headers;
   };
 
   const handleAutoFill = async () => {

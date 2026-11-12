@@ -2,25 +2,21 @@
 
 import { useTheme } from "next-themes";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useIsHydrated } from "@/hooks/useIsHydrated";
 
-export const Avatar = ({ 
-  size = 128, 
+export const Avatar = ({
+  size = 128,
   altText,
   photoUrlLight,
   photoUrlDark
-}: { 
-  size?: number; 
-  altText: string; 
-  photoUrlLight?: string; 
-  photoUrlDark?: string; 
+}: {
+  size?: number;
+  altText: string;
+  photoUrlLight?: string;
+  photoUrlDark?: string;
 }) => {
-  const [mounted, setMounted] = useState(false);
+  const mounted = useIsHydrated();
   const { resolvedTheme } = useTheme();
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   if (!mounted) {
     // Render a placeholder or nothing on the server to avoid hydration mismatch

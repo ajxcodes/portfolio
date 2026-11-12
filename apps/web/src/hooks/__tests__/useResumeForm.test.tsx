@@ -605,8 +605,7 @@ describe("useResumeForm Hook", () => {
   });
   it("should handle session sync", async () => {
     (adminService.fetchProfile as jest.Mock).mockResolvedValueOnce({ name: "Test" });
-    const { supabase } = require("@/lib/supabaseBrowser");
-    (supabase.auth.getUser as jest.Mock).mockResolvedValueOnce({ data: { user: null } });
+        (supabase.auth.getUser as jest.Mock).mockResolvedValueOnce({ data: { user: null } });
     
     const { result } = await renderAndResolveHook();
 
@@ -654,8 +653,7 @@ describe("useResumeForm Hook", () => {
   });
   it("should handle file upload for dark theme", async () => {
     (adminService.fetchProfile as jest.Mock).mockResolvedValueOnce({ name: "Test" });
-    const { supabase } = require("@/lib/supabaseBrowser");
-    (supabase.auth.getUser as jest.Mock).mockResolvedValueOnce({ data: { user: null } });
+        (supabase.auth.getUser as jest.Mock).mockResolvedValueOnce({ data: { user: null } });
     const { result } = await renderAndResolveHook();
 
     const file = new File(["dummy content"], "test.png", { type: "image/png" });
@@ -675,13 +673,11 @@ describe("useResumeForm Hook", () => {
   it("should handle save profile and redirect", async () => {
     jest.useFakeTimers();
     (adminService.fetchProfile as jest.Mock).mockResolvedValueOnce({ name: "Test" });
-    const { supabase } = require("@/lib/supabaseBrowser");
-    (supabase.auth.getUser as jest.Mock).mockResolvedValueOnce({ data: { user: null } });
+        (supabase.auth.getUser as jest.Mock).mockResolvedValueOnce({ data: { user: null } });
     const { result } = await renderAndResolveHook();
 
     (adminService.saveProfile as jest.Mock).mockResolvedValueOnce({});
-    const { useRouter } = require("next/navigation");
-    const pushMock = useRouter().push;
+    // pushMock available from module scope
 
     await act(async () => {
       await result.current.handleSubmit({ preventDefault: jest.fn() } as unknown as React.FormEvent);
@@ -697,8 +693,7 @@ describe("useResumeForm Hook", () => {
 
   it("should handle highlight actions", async () => {
     (adminService.fetchProfile as jest.Mock).mockResolvedValueOnce({ name: "Test" });
-    const { supabase } = require("@/lib/supabaseBrowser");
-    (supabase.auth.getUser as jest.Mock).mockResolvedValueOnce({ data: { user: null } });
+        (supabase.auth.getUser as jest.Mock).mockResolvedValueOnce({ data: { user: null } });
     const { result } = await renderAndResolveHook();
 
     await act(async () => {
@@ -726,8 +721,7 @@ describe("useResumeForm Hook", () => {
 
   it("should handle github sync", async () => {
     (adminService.fetchProfile as jest.Mock).mockResolvedValueOnce({ name: "Test" });
-    const { supabase } = require("@/lib/supabaseBrowser");
-    (supabase.auth.getUser as jest.Mock).mockResolvedValueOnce({ data: { user: null } });
+        (supabase.auth.getUser as jest.Mock).mockResolvedValueOnce({ data: { user: null } });
     const { result } = await renderAndResolveHook();
 
     await act(async () => {

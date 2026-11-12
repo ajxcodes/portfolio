@@ -30,6 +30,14 @@ services:
       timeout: 5s
       retries: 10
 
+  github-stub:
+    image: python:3-alpine
+    command: ["python", "-u", "/stub/server.py"]
+    volumes:
+      - ./apps/web/e2e/github-stub:/stub:ro
+    ports:
+      - "3002:3000"
+
   api:
     build:
       context: ./apps/api
@@ -51,9 +59,12 @@ services:
       S3_SECRET_KEY: minioadminpassword
       S3_BUCKET_NAME: portfolio-media
       S3_PUBLIC_URL: http://127.0.0.1:9002/portfolio-media
+      GITHUB_API_BASE_URL: http://github-stub:3000
     depends_on:
       db:
         condition: service_healthy
+      github-stub:
+        condition: service_started
     # No container-side healthcheck — the aspnet slim image has no curl/wget.
     # Readiness is polled from the runner host in the CI "Wait for API" step.
 

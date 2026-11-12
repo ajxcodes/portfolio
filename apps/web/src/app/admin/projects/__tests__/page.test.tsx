@@ -3,7 +3,11 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import AdminProjectsPage from '../page';
 
 jest.mock('next/link', () => {
-  return ({ children, href }: { children: React.ReactNode; href: string }) => <a href={href}>{children}</a>;
+  function LinkMock({ children, href }: { children: React.ReactNode; href: string }) {
+    return <a href={href}>{children}</a>;
+  }
+  LinkMock.displayName = 'LinkMock';
+  return LinkMock;
 });
 
 jest.mock('@/lib/supabaseBrowser', () => ({

@@ -37,7 +37,7 @@ export const Header = ({ name, contact, hasAboutMe, downloadUrl, photoUrlLight, 
     const pageTitleEl = document.getElementById("page-title");
     const contactLinksEl = document.getElementById("contact-links-section");
 
-    let titleObserver: IntersectionObserver;
+    let titleObserver: IntersectionObserver | undefined;
     if (pageTitleEl) {
       titleObserver = new IntersectionObserver(
         ([entry]) => setIsPageTitleVisible(entry.isIntersecting),
@@ -45,10 +45,10 @@ export const Header = ({ name, contact, hasAboutMe, downloadUrl, photoUrlLight, 
       );
       titleObserver.observe(pageTitleEl);
     } else {
-      setIsPageTitleVisible(false);
+      queueMicrotask(() => setIsPageTitleVisible(false));
     }
 
-    let contactObserver: IntersectionObserver;
+    let contactObserver: IntersectionObserver | undefined;
     if (contactLinksEl) {
       contactObserver = new IntersectionObserver(
         ([entry]) => setIsPageContactLinksVisible(entry.isIntersecting),
@@ -57,7 +57,7 @@ export const Header = ({ name, contact, hasAboutMe, downloadUrl, photoUrlLight, 
       contactObserver.observe(contactLinksEl);
     } else {
       // If the contact section isn't on the page, it's not visible.
-      setIsPageContactLinksVisible(false);
+      queueMicrotask(() => setIsPageContactLinksVisible(false));
     }
 
     return () => {

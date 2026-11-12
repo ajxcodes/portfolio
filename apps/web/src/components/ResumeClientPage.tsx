@@ -12,6 +12,7 @@ import { ProjectCard } from './ProjectCard';
 import { calculateTenure, calculateTotalExperience } from '@/lib/utils';
 import { ResumeData, PersonalInfo, PreviousExperience, Education } from "@/lib/data";
 import { BotIcon } from './icons';
+import { useIsHydrated } from '@/hooks/useIsHydrated';
 import { useEffect } from 'react';
 
 const TypewriterText = () => {
@@ -32,8 +33,10 @@ const TypewriterText = () => {
     if (!isDeleting && displayText === currentText) {
       timeout = setTimeout(() => setIsDeleting(true), 2000);
     } else if (isDeleting && displayText === '') {
-      setIsDeleting(false);
-      setTextIndex((prev) => (prev + 1) % texts.length);
+      timeout = setTimeout(() => {
+        setIsDeleting(false);
+        setTextIndex((prev) => (prev + 1) % texts.length);
+      }, 0);
     } else {
       timeout = setTimeout(() => {
         setDisplayText(currentText.substring(0, displayText.length + (isDeleting ? -1 : 1)));
@@ -58,12 +61,8 @@ interface ResumeClientPageProps {
 
 export const ResumeClientPage = ({ resume, personalInfo }: ResumeClientPageProps) => {
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
-  const [isMounted, setIsMounted] = useState(false);
+  const isMounted = useIsHydrated();
   const ctaRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
   useEffect(() => {
     if (!ctaRef.current) return;

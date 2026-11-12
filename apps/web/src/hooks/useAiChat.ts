@@ -17,25 +17,22 @@ export interface AiMessage {
 }
 
 export function useAiChat() {
-  const [messages, setMessages] = useState<AiMessage[]>([]);
+  const STORAGE_KEY = 'ai_chat_history';
+  const [messages, setMessages] = useState<AiMessage[]>(() => {
+    if (typeof window === 'undefined') return [];
+    const savedMessages = localStorage.getItem(STORAGE_KEY);
+    if (!savedMessages) return [];
+    try {
+      return JSON.parse(savedMessages);
+    } catch (e) {
+      console.error("Failed to parse saved chat history", e);
+      return [];
+    }
+  });
   const [isTyping, setIsTyping] = useState(false);
   const [isWarmingUp, setIsWarmingUp] = useState(false);
   const warmupTimerRef = useRef<NodeJS.Timeout | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
-
-  const STORAGE_KEY = 'ai_chat_history';
-
-  // Initialize history
-  useEffect(() => {
-    const savedMessages = localStorage.getItem(STORAGE_KEY);
-    if (savedMessages) {
-      try {
-        setMessages(JSON.parse(savedMessages));
-      } catch (e) {
-        console.error("Failed to parse saved chat history", e);
-      }
-    }
-  }, []);
 
   // Save history
   useEffect(() => {

@@ -10,16 +10,10 @@ function LoginContent() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [infoMsg, setInfoMsg] = useState("");
-
-
-
-  useEffect(() => {
-    // Check if error parameter exists in URL
-    const errParam = searchParams.get("error");
-    if (errParam === "Unauthorized") {
-      setErrorMsg("Your email is not authorized to access this administration panel.");
-    }
-  }, [searchParams]);
+  const unauthorizedError = searchParams.get("error") === "Unauthorized"
+    ? "Your email is not authorized to access this administration panel."
+    : "";
+  const displayError = errorMsg || unauthorizedError;
 
   const handleOAuth = async (provider: "github" | "google") => {
     setLoading(true);
@@ -77,9 +71,9 @@ function LoginContent() {
           <p className="text-xs text-muted-foreground/80">Sign in to manage your portfolio</p>
         </div>
 
-        {errorMsg && (
+        {displayError && (
           <div className="mb-6 p-4 bg-destructive/10 border border-destructive/20 text-destructive text-xs rounded-md">
-            {errorMsg}
+            {displayError}
           </div>
         )}
 
